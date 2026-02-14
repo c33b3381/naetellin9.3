@@ -342,6 +342,7 @@ const WorldEditor = ({
   const [objectName, setObjectName] = useState('');
   const [objectLevel, setObjectLevel] = useState(1);
   const [objectScale, setObjectScale] = useState(1);
+  const [objectRotation, setObjectRotation] = useState(0); // Rotation in degrees (0-360)
   const [isPlacingMode, setIsPlacingMode] = useState(false);
   const [showObjectList, setShowObjectList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
