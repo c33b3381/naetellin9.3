@@ -4369,6 +4369,12 @@ const GameWorld = () => {
             
             if (mesh) {
               mesh.userData.editorId = obj.id;
+              
+              // Apply rotation if saved
+              if (obj.rotation && obj.rotation.y !== undefined) {
+                mesh.rotation.y = (obj.rotation.y * Math.PI) / 180; // Convert degrees to radians
+              }
+              
               editorObjectsRef.current.push(mesh);
               console.log('World object created successfully:', obj.name, 'at mesh position:', mesh.position);
             } else {
