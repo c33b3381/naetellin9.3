@@ -451,6 +451,7 @@ const GameWorld = () => {
   
   // Map Editor Mode state (F5 - Warcraft 3 style sky-view camera)
   const [isMapEditorMode, setIsMapEditorMode] = useState(false);
+  const [isFlightMode, setIsFlightMode] = useState(false); // F6 - Fast flight mode in map editor
   const mapEditorCameraState = useRef({
     x: 0,
     z: 0,
@@ -461,7 +462,7 @@ const GameWorld = () => {
     tilt: 1.0, // Camera tilt angle (radians, 0.5=angled, 1.5=top-down)
     minTilt: 0.5,
     maxTilt: 1.5,
-    moveSpeed: 20, // units per second
+    moveSpeed: 20, // units per second (40 in flight mode)
     isPanning: false,
     lastMouseX: 0,
     lastMouseY: 0
