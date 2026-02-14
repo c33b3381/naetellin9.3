@@ -5007,6 +5007,7 @@ const GameWorld = () => {
               name: placement.name,
               level: placement.level,
               scale: placement.scale,
+              rotation: { x: 0, y: placement.rotation || 0, z: 0 }, // Save rotation in degrees
               position: { x: intersectPoint.x, y: 0, z: intersectPoint.z },
               zone: zone
             };
@@ -5025,6 +5026,11 @@ const GameWorld = () => {
               placement.name,
               placement.level
             );
+            
+            // Apply rotation to the mesh
+            if (mesh && placement.rotation) {
+              mesh.rotation.y = (placement.rotation * Math.PI) / 180; // Convert degrees to radians
+            }
             
             console.log('[NPC Placement] Created mesh:', mesh);
             
