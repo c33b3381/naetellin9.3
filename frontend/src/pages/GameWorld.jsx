@@ -4929,15 +4929,26 @@ const GameWorld = () => {
         const deltaX = e.clientX - cameraState.current.lastMouseX;
         const deltaY = e.clientY - cameraState.current.lastMouseY;
         
-        // Rotate camera horizontally
-        cameraState.current.rotationY -= deltaX * 0.005;
-        
-        // Rotate camera vertically (with limits)
-        cameraState.current.rotationX += deltaY * 0.005;
-        cameraState.current.rotationX = Math.max(
-          cameraState.current.minPitch,
-          Math.min(cameraState.current.maxPitch, cameraState.current.rotationX)
-        );
+        if (isMapEditorMode && e.ctrlKey) {
+          // Map Editor Mode: Ctrl+RMB Drag to pan camera
+          const panSpeed = 0.5;
+          mapEditorCameraState.current.x -= deltaX * panSpeed;
+          mapEditorCameraState.current.z -= deltaY * panSpeed;
+          
+          // Clamp to world bounds
+          mapEditorCameraState.current.x = Math.max(-280, Math.min(280, mapEditorCameraState.current.x));
+          mapEditorCameraState.current.z = Math.max(-280, Math.min(280, mapEditorCameraState.current.z));
+        } else if (!isMapEditorMode) {
+          // Game Mode: Rotate camera horizontally
+          cameraState.current.rotationY -= deltaX * 0.005;
+          
+          // Rotate camera vertically (with limits)
+          cameraState.current.rotationX += deltaY * 0.005;
+          cameraState.current.rotationX = Math.max(
+            cameraState.current.minPitch,
+            Math.min(cameraState.current.maxPitch, cameraState.current.rotationX)
+          );
+        }
         
         cameraState.current.lastMouseX = e.clientX;
         cameraState.current.lastMouseY = e.clientY;
