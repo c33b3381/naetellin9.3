@@ -4038,12 +4038,20 @@ const GameWorld = () => {
               group.add(eye);
             }
             
+            // Determine NPC subtype for trainers
+            let trainerClass = null;
+            if (fullType.includes('trainer_warrior')) trainerClass = 'warrior';
+            else if (fullType.includes('trainer_mage')) trainerClass = 'mage';
+            else if (fullType.includes('trainer_ranger')) trainerClass = 'ranger';
+            else if (fullType.includes('trainer_paladin')) trainerClass = 'paladin';
+            
             group.userData = { 
-              type: isMonster ? 'monster' : (isAnimal ? 'animal' : 'npc'),
+              type: isMonster ? 'monster' : (isAnimal ? 'animal' : (trainerClass ? 'trainer' : 'npc')),
               hostile: isMonster,
               level: level,
               interactable: true,
-              monsterType: fullType.replace('monster_', '').replace('npc_', '').replace('animal_', '')
+              monsterType: fullType.replace('monster_', '').replace('npc_', '').replace('animal_', ''),
+              trainerClass: trainerClass
             };
             console.log('[createWorldAsset] Created creature, group children:', group.children.length);
           } else {
