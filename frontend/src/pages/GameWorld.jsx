@@ -4957,14 +4957,14 @@ const GameWorld = () => {
     };
     
     const handleWheel = (e) => {
-      if (isMapEditorMode) {
-        // Map Editor Mode: Adjust camera height
+      if (isMapEditorMode && !isFlightMode) {
+        // Map Editor Mode (not in flight): Adjust camera height
         mapEditorCameraState.current.height -= e.deltaY * 0.1;
         mapEditorCameraState.current.height = Math.max(
           mapEditorCameraState.current.minHeight,
           Math.min(mapEditorCameraState.current.maxHeight, mapEditorCameraState.current.height)
         );
-      } else {
+      } else if (!isMapEditorMode) {
         // Game Mode: Zoom in/out
         cameraState.current.distance += e.deltaY * 0.01;
         cameraState.current.distance = Math.max(
@@ -4972,6 +4972,7 @@ const GameWorld = () => {
           Math.min(cameraState.current.maxDistance, cameraState.current.distance)
         );
       }
+      // In flight mode, mouse wheel is disabled (height auto-follows terrain)
     };
     
     const handleContextMenu = (e) => {
