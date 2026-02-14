@@ -336,17 +336,7 @@ async def get_game_state(auth: dict = Depends(verify_token)):
         "position": player.get('position', {"x": 0, "y": 0, "z": 0, "zone": "starter_village"})
     }
 
-@api_router.get("/world/objects")
-async def get_world_objects(zone: str = "starter_village"):
-    """Get all placed world objects for a zone"""
-    objects = await db.world_objects.find({"zone": zone}, {"_id": 0}).to_list(None)
-    return {"objects": objects}
-
-@api_router.get("/world/enemies")
-async def get_placed_enemies():
-    """Get all placed enemies"""
-    enemies = await db.placed_enemies.find({}, {"_id": 0}).to_list(None)
-    return {"enemies": enemies}
+# World objects and enemies endpoints moved to line 858+ with improved implementations
 
 @api_router.get("/world/paths")
 async def get_paths(zone: str = "starter_village"):
