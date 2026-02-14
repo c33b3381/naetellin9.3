@@ -5311,10 +5311,13 @@ const GameWorld = () => {
           break;
         case 'F6':
           e.preventDefault();
+          e.stopPropagation();
+          console.log('F6 pressed - isMapEditorMode:', isMapEditorMode, 'isFlightMode:', isFlightMode);
           // F6 only works in map editor mode
           if (isMapEditorMode) {
             setIsFlightMode(prev => {
               const newFlightMode = !prev;
+              console.log('Toggling flight mode to:', newFlightMode);
               if (newFlightMode) {
                 // Entering flight mode - set to player height * 4
                 if (playerRef.current) {
@@ -5323,10 +5326,13 @@ const GameWorld = () => {
                     mapEditorCameraState.current.z
                   );
                   mapEditorCameraState.current.height = terrainHeight + 8; // ~4x player height (player is ~2 units tall)
+                  console.log('Flight mode activated - height set to:', mapEditorCameraState.current.height);
                 }
               }
               return newFlightMode;
             });
+          } else {
+            console.log('F6 pressed but not in map editor mode');
           }
           break;
         case 'Delete':
