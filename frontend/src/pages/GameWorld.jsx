@@ -389,6 +389,7 @@ const GameWorld = () => {
   const pendingPlacementRef = useRef(null);
   const currentZoneRef = useRef('starter_village');
   const placedObjectsRef = useRef([]);
+  const previewMeshRef = useRef(null); // Preview mesh for object placement
   
   // Combat state for monster HP
   const [monsterHealth, setMonsterHealth] = useState({});
