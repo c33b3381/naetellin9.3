@@ -5301,8 +5301,32 @@ const GameWorld = () => {
               mapEditorCameraState.current.x = playerRef.current.position.x;
               mapEditorCameraState.current.z = playerRef.current.position.z;
             }
+            // Exit flight mode when leaving map editor mode
+            if (!newMode && isFlightMode) {
+              setIsFlightMode(false);
+            }
             return newMode;
           });
+          break;
+        case 'F6':
+          e.preventDefault();
+          // F6 only works in map editor mode
+          if (isMapEditorMode) {
+            setIsFlightMode(prev => {
+              const newFlightMode = !prev;
+              if (newFlightMode) {
+                // Entering flight mode - set to player height * 4
+                if (playerRef.current) {
+                  const terrainHeight = getTerrainHeightAt(
+                    mapEditorCameraState.current.x,
+                    mapEditorCameraState.current.z
+                  );
+                  mapEditorCameraState.current.height = terrainHeight + 8; // ~4x player height (player is ~2 units tall)
+                }
+              }
+              return newFlightMode;
+            });
+          }
           break;
         case 'Delete':
         case 'Backspace':
