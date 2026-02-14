@@ -5575,14 +5575,14 @@ const GameWorld = () => {
           addNotification(`Entering ${WORLD_ZONES[detectedZone].name}`, 'info');
         }
         
-        // Update camera position - different modes
-        if (isMapEditorMode) {
+        // Update camera position - different modes (use refs to avoid stale closures)
+        if (isMapEditorModeRef.current) {
           // Map Editor Mode - Sky-view camera (Warcraft 3 style)
           const mapCam = mapEditorCameraState.current;
           
           // Handle WASD movement for map editor camera
-          // 2x speed in flight mode
-          const speedMultiplier = isFlightMode ? 2 : 1;
+          // 2x speed in flight mode (use ref)
+          const speedMultiplier = isFlightModeRef.current ? 2 : 1;
           const moveSpeed = mapCam.moveSpeed * speedMultiplier * delta;
           if (movementState.current.forward) {
             mapCam.x += Math.sin(mapCam.rotationY) * moveSpeed;
@@ -5606,7 +5606,7 @@ const GameWorld = () => {
           mapCam.z = Math.max(-280, Math.min(280, mapCam.z));
           
           // Flight Mode: Auto-adjust height to follow terrain + 8 units (4x player height)
-          if (isFlightMode) {
+          if (isFlightModeRef.current) {
             const terrainHeight = getTerrainHeight(mapCam.x, mapCam.z);
             const targetHeight = terrainHeight + 8;
             // Smooth height transition
