@@ -5317,7 +5317,7 @@ const GameWorld = () => {
               if (newFlightMode) {
                 // Entering flight mode - set to player height * 4
                 if (playerRef.current) {
-                  const terrainHeight = getTerrainHeightAt(
+                  const terrainHeight = getTerrainHeight(
                     mapEditorCameraState.current.x,
                     mapEditorCameraState.current.z
                   );
