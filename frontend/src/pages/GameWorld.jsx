@@ -449,6 +449,24 @@ const GameWorld = () => {
     terrainToolRef.current = tool;
   };
   
+  // Map Editor Mode state (F5 - Warcraft 3 style sky-view camera)
+  const [isMapEditorMode, setIsMapEditorMode] = useState(false);
+  const mapEditorCameraState = useRef({
+    x: 0,
+    z: 0,
+    height: 80,
+    minHeight: 20,
+    maxHeight: 200,
+    rotationY: 0,
+    tilt: 1.0, // Camera tilt angle (radians, 0.5=angled, 1.5=top-down)
+    minTilt: 0.5,
+    maxTilt: 1.5,
+    moveSpeed: 20, // units per second
+    isPanning: false,
+    lastMouseX: 0,
+    lastMouseY: 0
+  });
+  
   // Path system state
   const [pathNodes, setPathNodes] = useState([]); // Array of {x, y, z} positions
   const [pathWidth, setPathWidth] = useState(2); // Width of path in units
