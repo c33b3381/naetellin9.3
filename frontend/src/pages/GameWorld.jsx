@@ -4068,14 +4068,181 @@ const GameWorld = () => {
             console.log('[createWorldAsset] Created creature, group children:', group.children.length);
           } else {
             console.log('[createWorldAsset] Fallback case for:', fullType);
-            // Fallback - simple cube placeholder
-            const placeholder = new THREE.Mesh(
-              new THREE.BoxGeometry(scale, scale, scale),
-              new THREE.MeshStandardMaterial({ color: 0xff00ff })
-            );
-            placeholder.position.y = scale / 2;
-            group.add(placeholder);
-            group.userData = { type: 'unknown' };
+            // Generic fallback renderer - create reasonable defaults based on object type
+            const createGenericObject = () => {
+              const s = scale;
+              
+              // Furniture
+              if (fullType.startsWith('bed_')) {
+                const bed = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.4 * s, 2 * s), wood());
+                bed.position.y = 0.2 * s;
+                group.add(bed);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              if (fullType.includes('chair') || fullType.includes('stool') || fullType.includes('throne')) {
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5 * s, 0.1 * s, 0.5 * s), wood());
+                seat.position.y = 0.5 * s;
+                group.add(seat);
+                const back = new THREE.Mesh(new THREE.BoxGeometry(0.5 * s, 0.7 * s, 0.1 * s), wood());
+                back.position.set(0, 0.85 * s, -0.2 * s);
+                group.add(back);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              if (fullType.includes('table') || fullType.includes('desk')) {
+                const top = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.1 * s, 1 * s), wood());
+                top.position.y = 0.8 * s;
+                group.add(top);
+                for (let corner of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+                  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1 * s, 0.8 * s, 0.1 * s), wood());
+                  leg.position.set(corner[0] * 0.65 * s, 0.4 * s, corner[1] * 0.4 * s);
+                  group.add(leg);
+                }
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              if (fullType.includes('wardrobe') || fullType.includes('cabinet') || fullType.includes('bookcase')) {
+                const cabinet = new THREE.Mesh(new THREE.BoxGeometry(1.2 * s, 2 * s, 0.6 * s), wood());
+                cabinet.position.y = 1 * s;
+                group.add(cabinet);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Crafting stations
+              if (fullType.includes('_table') || fullType.includes('_bench') || fullType.includes('_station') || fullType.includes('_desk')) {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(1.2 * s, 0.1 * s, 0.8 * s), wood());
+                base.position.y = 0.9 * s;
+                group.add(base);
+                const tool = new THREE.Mesh(new THREE.BoxGeometry(0.3 * s, 0.5 * s, 0.3 * s), metal());
+                tool.position.set(0.3 * s, 1.2 * s, 0);
+                group.add(tool);
+                for (let corner of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+                  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1 * s, 0.9 * s, 0.1 * s), wood());
+                  leg.position.set(corner[0] * 0.5 * s, 0.45 * s, corner[1] * 0.3 * s);
+                  group.add(leg);
+                }
+                group.userData = { type: 'crafting', interactable: true };
+                return;
+              }
+              
+              // Market stalls
+              if (fullType.includes('market_stall')) {
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(2 * s, 0.1 * s, 1.5 * s), new THREE.MeshStandardMaterial({ color: 0xdc2626 }));
+                roof.position.y = 2 * s;
+                group.add(roof);
+                const counter = new THREE.Mesh(new THREE.BoxGeometry(1.8 * s, 0.8 * s, 0.6 * s), wood());
+                counter.position.y = 0.8 * s;
+                group.add(counter);
+                for (let i = 0; i < 4; i++) {
+                  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * s, 0.08 * s, 2 * s, 6), wood());
+                  post.position.set((i % 2 === 0 ? -0.9 : 0.9) * s, 1 * s, (Math.floor(i / 2) - 0.5) * 0.6 * s);
+                  group.add(post);
+                }
+                group.userData = { type: 'building', interactable: true };
+                return;
+              }
+              
+              // Agriculture
+              if (fullType.includes('farm_plot')) {
+                const plot = new THREE.Mesh(new THREE.BoxGeometry(3 * s, 0.1 * s, 3 * s), new THREE.MeshStandardMaterial({ color: 0x4a3f35 }));
+                plot.position.y = 0.05 * s;
+                group.add(plot);
+                if (fullType.includes('wheat') || fullType.includes('corn') || fullType.includes('vegetables')) {
+                  for (let i = 0; i < 12; i++) {
+                    const plant = new THREE.Mesh(new THREE.BoxGeometry(0.1 * s, 0.4 * s, 0.1 * s), new THREE.MeshStandardMaterial({ color: 0x4a7c23 }));
+                    plant.position.set((Math.random() - 0.5) * 2.5 * s, 0.3 * s, (Math.random() - 0.5) * 2.5 * s);
+                    group.add(plant);
+                  }
+                }
+                group.userData = { type: 'agriculture' };
+                return;
+              }
+              if (fullType.includes('scarecrow')) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 2 * s, 6), wood());
+                post.position.y = 1 * s;
+                group.add(post);
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1 * s, 0.8 * s, 0.3 * s), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+                body.position.y = 1.3 * s;
+                group.add(body);
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4 * s, 0.4 * s, 0.4 * s), new THREE.MeshStandardMaterial({ color: 0xdaa520 }));
+                head.position.y = 1.9 * s;
+                group.add(head);
+                group.userData = { type: 'agriculture' };
+                return;
+              }
+              
+              // Dungeon items
+              if (fullType.includes('cage') || fullType.includes('prison') || fullType.includes('cell')) {
+                for (let i = 0; i < 8; i++) {
+                  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.05 * s, 2 * s, 6), metal());
+                  bar.position.set((i - 3.5) * 0.3 * s, 1 * s, 0);
+                  group.add(bar);
+                }
+                const top = new THREE.Mesh(new THREE.BoxGeometry(2.5 * s, 0.1 * s, 1 * s), metal());
+                top.position.y = 2 * s;
+                group.add(top);
+                group.userData = { type: 'dungeon' };
+                return;
+              }
+              if (fullType.includes('chains')) {
+                for (let i = 0; i < 3; i++) {
+                  const link = new THREE.Mesh(new THREE.TorusGeometry(0.15 * s, 0.05 * s, 8, 6), metal());
+                  link.position.y = 1.5 * s - i * 0.4 * s;
+                  group.add(link);
+                }
+                group.userData = { type: 'dungeon' };
+                return;
+              }
+              
+              // Simple prop fallback based on keywords
+              if (fullType.includes('lamp') || fullType.includes('torch') || fullType.includes('light')) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 2 * s, 6), metal());
+                post.position.y = 1 * s;
+                group.add(post);
+                const light = new THREE.Mesh(new THREE.SphereGeometry(0.3 * s, 8, 8),
+                  new THREE.MeshStandardMaterial({ color: 0xffa500, emissive: 0xffa500, emissiveIntensity: 0.5 }));
+                light.position.y = 2.2 * s;
+                group.add(light);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              if (fullType.includes('statue') || fullType.includes('monument') || fullType.includes('obelisk')) {
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.6 * s, 0.8 * s, 0.3 * s, 8), stone());
+                base.position.y = 0.15 * s;
+                group.add(base);
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.4 * s, 0.4 * s, 2.5 * s, 8), stone());
+                pillar.position.y = 1.4 * s;
+                group.add(pillar);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              if (fullType.includes('chest') || fullType.includes('treasure')) {
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.6 * s, 0.6 * s), wood());
+                chest.position.y = 0.3 * s;
+                group.add(chest);
+                const lid = new THREE.Mesh(new THREE.BoxGeometry(0.82 * s, 0.15 * s, 0.62 * s), wood());
+                lid.position.set(0, 0.675 * s, -0.1 * s);
+                lid.rotation.x = -0.5;
+                group.add(lid);
+                group.userData = { type: 'special', interactable: true };
+                return;
+              }
+              
+              // Generic box for anything else
+              const box = new THREE.Mesh(
+                new THREE.BoxGeometry(s, s, s),
+                new THREE.MeshStandardMaterial({ color: 0x888888 })
+              );
+              box.position.y = s / 2;
+              group.add(box);
+              group.userData = { type: 'prop' };
+            };
+            
+            createGenericObject();
           }
           break;
       }
