@@ -5090,7 +5090,39 @@ const GameWorld = () => {
             movementState.current.velocityY = 0.2;
           }
           break;
-        case 'KeyR': movementState.current.autoRun = !movementState.current.autoRun; break;
+        case 'KeyR':
+          if (isMapEditorMode) {
+            // Map Editor: Increase tilt (more top-down)
+            mapEditorCameraState.current.tilt = Math.min(
+              mapEditorCameraState.current.maxTilt,
+              mapEditorCameraState.current.tilt + 0.1
+            );
+          } else {
+            // Game Mode: Toggle auto-run
+            movementState.current.autoRun = !movementState.current.autoRun;
+          }
+          break;
+        case 'KeyF':
+          if (isMapEditorMode) {
+            // Map Editor: Decrease tilt (more angled)
+            mapEditorCameraState.current.tilt = Math.max(
+              mapEditorCameraState.current.minTilt,
+              mapEditorCameraState.current.tilt - 0.1
+            );
+          }
+          break;
+        case 'KeyQ':
+          if (isMapEditorMode) {
+            // Map Editor: Rotate camera left
+            mapEditorCameraState.current.rotationY += 0.1;
+          }
+          break;
+        case 'KeyE':
+          if (isMapEditorMode) {
+            // Map Editor: Rotate camera right
+            mapEditorCameraState.current.rotationY -= 0.1;
+          }
+          break;
         case 'Tab':
           e.preventDefault();
           // Target nearest enemy
