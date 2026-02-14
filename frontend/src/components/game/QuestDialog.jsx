@@ -1,0 +1,272 @@
+import { useState } from 'react';
+import { X, Scroll, Coins, Star, Sword, Check } from 'lucide-react';
+
+// Test quests for the quest giver
+const AVAILABLE_QUESTS = {
+  'goblin_slayer': {
+    id: 'goblin_slayer',
+    name: 'Goblin Slayer',
+    giver: 'Quest Giver',
+    description: 'The village has been plagued by goblins! Travel to the forest and slay 5 goblins to protect the villagers.',
+    objectives: [
+      { id: 'kill_goblins', description: 'Kill Goblins', current: 0, required: 5 }
+    ],
+    rewards: {
+      xp: 100,
+      gold: 25
+    },
+    difficulty: 'easy',
+    level: 1
+  },
+  'forest_explorer': {
+    id: 'forest_explorer',
+    name: 'Forest Explorer',
+    giver: 'Quest Giver',
+    description: 'The elders need someone to scout the Dark Forest. Venture into the forest zone and return safely.',
+    objectives: [
+      { id: 'visit_forest', description: 'Visit the Dark Forest', current: 0, required: 1 }
+    ],
+    rewards: {
+      xp: 50,
+      gold: 10
+    },
+    difficulty: 'easy',
+    level: 1
+  }
+};
+
+const QuestDialog = ({ 
+  isOpen, 
+  onClose, 
+  npcName = 'Quest Giver',
+  playerQuests = [],
+  onAcceptQuest
+}) => {
+  const [selectedQuest, setSelectedQuest] = useState(null);
+  const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail
+  
+  // Filter out quests the player already has
+  const availableQuests = Object.values(AVAILABLE_QUESTS).filter(
+    quest => !playerQuests.some(pq => pq.id === quest.id)
+  );
+  
+  const handleAccept = () => {
+    if (selectedQuest && onAcceptQuest) {
+      onAcceptQuest(selectedQuest);
+      setDialogState('accepted');
+      setTimeout(() => {
+        onClose();
+        setDialogState('greeting');
+        setSelectedQuest(null);
+      }, 1500);
+    }
+  };
+  
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case 'easy': return '#22c55e';
+      case 'medium': return '#f59e0b';
+      case 'hard': return '#dc2626';
+      default: return '#78716c';
+    }
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto" data-testid="quest-dialog">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      
+      {/* Dialog Panel */}
+      <div className="relative bg-[#1a1a1a] border-2 border-[#fbbf24] rounded-lg shadow-2xl w-[500px] max-h-[80vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#78350f] to-[#92400e] px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#fbbf24]/20 border-2 border-[#fbbf24] flex items-center justify-center">
+              <Scroll className="w-5 h-5 text-[#fbbf24]" />
+            </div>
+            <div>
+              <h2 className="font-cinzel text-lg text-[#fbbf24]">{npcName}</h2>
+              <p className="text-xs text-[#fcd34d]">Quest Giver</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-[#fbbf24] hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        {/* Content */}
+        <div className="p-4">
+          {dialogState === 'greeting' && (
+            <div className="space-y-4">
+              {/* NPC Speech */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <p className="text-[#f5f5f4] italic">
+                  "Greetings, adventurer! I have tasks that need completing. Are you brave enough to help our village?"
+                </p>
+              </div>
+              
+              {/* Dialog Options */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setDialogState('quests')}
+                  className="w-full text-left px-4 py-3 bg-[#0c0a09] hover:bg-[#fbbf24]/10 border border-[#44403c] hover:border-[#fbbf24] rounded transition-all flex items-center gap-3"
+                  data-testid="show-quests-btn"
+                >
+                  <Scroll className="w-5 h-5 text-[#fbbf24]" />
+                  <span className="text-[#f5f5f4]">What quests do you have?</span>
+                  {availableQuests.length > 0 && (
+                    <span className="ml-auto bg-[#fbbf24] text-[#1a1a1a] text-xs font-bold px-2 py-0.5 rounded">
+                      {availableQuests.length}
+                    </span>
+                  )}
+                </button>
+                
+                <button
+                  onClick={onClose}
+                  className="w-full text-left px-4 py-3 bg-[#0c0a09] hover:bg-[#44403c]/50 border border-[#44403c] rounded transition-all"
+                >
+                  <span className="text-[#a8a29e]">Goodbye.</span>
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {dialogState === 'quests' && (
+            <div className="space-y-4">
+              <button 
+                onClick={() => setDialogState('greeting')}
+                className="text-xs text-[#fbbf24] hover:underline flex items-center gap-1"
+              >
+                ← Back
+              </button>
+              
+              {availableQuests.length === 0 ? (
+                <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c] text-center">
+                  <p className="text-[#78716c]">No quests available right now. Check back later!</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {availableQuests.map(quest => (
+                    <button
+                      key={quest.id}
+                      onClick={() => {
+                        setSelectedQuest(quest);
+                        setDialogState('questDetail');
+                      }}
+                      className="w-full text-left p-3 bg-[#0c0a09] hover:bg-[#fbbf24]/10 border border-[#44403c] hover:border-[#fbbf24] rounded transition-all"
+                      data-testid={`quest-option-${quest.id}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-cinzel text-[#fbbf24]">{quest.name}</p>
+                          <p className="text-xs text-[#a8a29e] mt-1 line-clamp-2">{quest.description}</p>
+                        </div>
+                        <span 
+                          className="text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+                          style={{ 
+                            backgroundColor: `${getDifficultyColor(quest.difficulty)}20`,
+                            color: getDifficultyColor(quest.difficulty)
+                          }}
+                        >
+                          {quest.difficulty}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {dialogState === 'questDetail' && selectedQuest && (
+            <div className="space-y-4">
+              <button 
+                onClick={() => setDialogState('quests')}
+                className="text-xs text-[#fbbf24] hover:underline flex items-center gap-1"
+              >
+                ← Back to quests
+              </button>
+              
+              {/* Quest Header */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-cinzel text-xl text-[#fbbf24]">{selectedQuest.name}</h3>
+                  <span 
+                    className="text-xs font-bold uppercase px-2 py-1 rounded"
+                    style={{ 
+                      backgroundColor: `${getDifficultyColor(selectedQuest.difficulty)}20`,
+                      color: getDifficultyColor(selectedQuest.difficulty)
+                    }}
+                  >
+                    {selectedQuest.difficulty}
+                  </span>
+                </div>
+                <p className="text-sm text-[#a8a29e] italic">"{selectedQuest.description}"</p>
+              </div>
+              
+              {/* Objectives */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <h4 className="text-xs text-[#78716c] uppercase tracking-wider mb-2">Objectives</h4>
+                <div className="space-y-2">
+                  {selectedQuest.objectives.map(obj => (
+                    <div key={obj.id} className="flex items-center gap-2 text-sm">
+                      <div className="w-4 h-4 rounded border border-[#44403c] flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-sm bg-[#44403c]" />
+                      </div>
+                      <span className="text-[#f5f5f4]">{obj.description}</span>
+                      <span className="text-[#78716c] ml-auto">0/{obj.required}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Rewards */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <h4 className="text-xs text-[#78716c] uppercase tracking-wider mb-2">Rewards</h4>
+                <div className="flex items-center gap-4">
+                  {selectedQuest.rewards.xp && (
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-[#a855f7]" />
+                      <span className="text-sm text-[#a855f7]">+{selectedQuest.rewards.xp} XP</span>
+                    </div>
+                  )}
+                  {selectedQuest.rewards.gold && (
+                    <div className="flex items-center gap-1">
+                      <Coins className="w-4 h-4 text-[#fbbf24]" />
+                      <span className="text-sm text-[#fbbf24]">+{selectedQuest.rewards.gold} Gold</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Accept Button */}
+              <button
+                onClick={handleAccept}
+                className="w-full py-3 bg-[#fbbf24] hover:bg-[#f59e0b] text-[#1a1a1a] font-bold rounded flex items-center justify-center gap-2 transition-all"
+                data-testid="accept-quest-btn"
+              >
+                <Sword className="w-5 h-5" />
+                Accept Quest
+              </button>
+            </div>
+          )}
+          
+          {dialogState === 'accepted' && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#22c55e]/20 border-2 border-[#22c55e] flex items-center justify-center">
+                <Check className="w-8 h-8 text-[#22c55e]" />
+              </div>
+              <h3 className="font-cinzel text-xl text-[#22c55e] mb-2">Quest Accepted!</h3>
+              <p className="text-sm text-[#a8a29e]">Good luck, adventurer!</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default QuestDialog;
+export { AVAILABLE_QUESTS };
