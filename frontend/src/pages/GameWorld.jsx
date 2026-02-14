@@ -4968,14 +4968,14 @@ const GameWorld = () => {
     };
     
     const handleWheel = (e) => {
-      if (isMapEditorMode && !isFlightMode) {
+      if (isMapEditorModeRef.current && !isFlightModeRef.current) {
         // Map Editor Mode (not in flight): Adjust camera height
         mapEditorCameraState.current.height -= e.deltaY * 0.1;
         mapEditorCameraState.current.height = Math.max(
           mapEditorCameraState.current.minHeight,
           Math.min(mapEditorCameraState.current.maxHeight, mapEditorCameraState.current.height)
         );
-      } else if (!isMapEditorMode) {
+      } else if (!isMapEditorModeRef.current) {
         // Game Mode: Zoom in/out
         cameraState.current.distance += e.deltaY * 0.01;
         cameraState.current.distance = Math.max(
