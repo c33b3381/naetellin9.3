@@ -452,6 +452,8 @@ const GameWorld = () => {
   // Map Editor Mode state (F5 - Warcraft 3 style sky-view camera)
   const [isMapEditorMode, setIsMapEditorMode] = useState(false);
   const [isFlightMode, setIsFlightMode] = useState(false); // F6 - Fast flight mode in map editor
+  const isMapEditorModeRef = useRef(false); // Ref for closure fix in event handlers
+  const isFlightModeRef = useRef(false); // Ref for closure fix in event handlers
   const mapEditorCameraState = useRef({
     x: 0,
     z: 0,
