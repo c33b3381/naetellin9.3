@@ -756,6 +756,7 @@ class WorldObject(BaseModel):
     id: str
     type: str
     subType: Optional[str] = None
+    fullType: Optional[str] = None  # Full type identifier for proper loading (e.g., npc_trainer_warrior)
     name: str
     level: int = 1
     scale: float = 1.0
