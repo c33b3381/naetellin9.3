@@ -5585,20 +5585,24 @@ const GameWorld = () => {
           const speedMultiplier = isFlightModeRef.current ? 2 : 1;
           const moveSpeed = mapCam.moveSpeed * speedMultiplier * delta;
           if (movementState.current.forward) {
-            mapCam.x += Math.sin(mapCam.rotationY) * moveSpeed;
-            mapCam.z += Math.cos(mapCam.rotationY) * moveSpeed;
-          }
-          if (movementState.current.backward) {
+            // Forward = W key - move in negative direction of camera rotation
             mapCam.x -= Math.sin(mapCam.rotationY) * moveSpeed;
             mapCam.z -= Math.cos(mapCam.rotationY) * moveSpeed;
           }
-          if (movementState.current.left) {
-            mapCam.x -= Math.cos(mapCam.rotationY) * moveSpeed;
-            mapCam.z += Math.sin(mapCam.rotationY) * moveSpeed;
+          if (movementState.current.backward) {
+            // Backward = S key - move in positive direction of camera rotation
+            mapCam.x += Math.sin(mapCam.rotationY) * moveSpeed;
+            mapCam.z += Math.cos(mapCam.rotationY) * moveSpeed;
           }
-          if (movementState.current.right) {
+          if (movementState.current.left) {
+            // Left = A key - strafe left (perpendicular to forward)
             mapCam.x += Math.cos(mapCam.rotationY) * moveSpeed;
             mapCam.z -= Math.sin(mapCam.rotationY) * moveSpeed;
+          }
+          if (movementState.current.right) {
+            // Right = D key - strafe right (perpendicular to forward)
+            mapCam.x -= Math.cos(mapCam.rotationY) * moveSpeed;
+            mapCam.z += Math.sin(mapCam.rotationY) * moveSpeed;
           }
           
           // Clamp to world bounds
