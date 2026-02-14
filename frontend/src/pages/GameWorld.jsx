@@ -643,50 +643,6 @@ const GameWorld = () => {
   
   useEffect(() => {
     pendingPlacementRef.current = pendingPlacement;
-    
-    // Create/remove preview mesh
-    if (pendingPlacement && sceneRef.current) {
-      // Remove old preview if exists
-      if (previewMeshRef.current) {
-        sceneRef.current.remove(previewMeshRef.current);
-        previewMeshRef.current = null;
-      }
-      
-      // Create new preview mesh
-      const previewGroup = createWorldAsset(
-        0, 0, // Will be positioned by mouse move
-        pendingPlacement.fullType || pendingPlacement.type,
-        pendingPlacement.scale || 1,
-        pendingPlacement.level || 1,
-        pendingPlacement.name
-      );
-      
-      if (previewGroup) {
-        // Make preview semi-transparent
-        previewGroup.traverse((child) => {
-          if (child.material) {
-            child.material = child.material.clone();
-            child.material.transparent = true;
-            child.material.opacity = 0.5;
-            child.material.emissive = new THREE.Color(0x00ff00);
-            child.material.emissiveIntensity = 0.3;
-          }
-        });
-        
-        // Apply rotation from placement data
-        if (pendingPlacement.rotation) {
-          previewGroup.rotation.y = (pendingPlacement.rotation * Math.PI) / 180;
-        }
-        
-        previewGroup.position.y = -1000; // Start off screen
-        sceneRef.current.add(previewGroup);
-        previewMeshRef.current = previewGroup;
-      }
-    } else if (previewMeshRef.current && sceneRef.current) {
-      // Remove preview when placement is done
-      sceneRef.current.remove(previewMeshRef.current);
-      previewMeshRef.current = null;
-    }
   }, [pendingPlacement]);
   
   useEffect(() => {
