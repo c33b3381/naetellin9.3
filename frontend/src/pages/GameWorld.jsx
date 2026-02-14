@@ -5563,7 +5563,9 @@ const GameWorld = () => {
           const mapCam = mapEditorCameraState.current;
           
           // Handle WASD movement for map editor camera
-          const moveSpeed = mapCam.moveSpeed * delta;
+          // 2x speed in flight mode
+          const speedMultiplier = isFlightMode ? 2 : 1;
+          const moveSpeed = mapCam.moveSpeed * speedMultiplier * delta;
           if (movementState.current.forward) {
             mapCam.x += Math.sin(mapCam.rotationY) * moveSpeed;
             mapCam.z += Math.cos(mapCam.rotationY) * moveSpeed;
@@ -5584,6 +5586,14 @@ const GameWorld = () => {
           // Clamp to world bounds
           mapCam.x = Math.max(-280, Math.min(280, mapCam.x));
           mapCam.z = Math.max(-280, Math.min(280, mapCam.z));
+          
+          // Flight Mode: Auto-adjust height to follow terrain + 8 units (4x player height)
+          if (isFlightMode) {
+            const terrainHeight = getTerrainHeight(mapCam.x, mapCam.z);
+            const targetHeight = terrainHeight + 8;
+            // Smooth height transition
+            mapCam.height += (targetHeight - mapCam.height) * 5 * delta;
+          }
           
           // Position camera above the map
           const camX = mapCam.x + Math.sin(mapCam.rotationY) * Math.cos(mapCam.tilt) * 10;
