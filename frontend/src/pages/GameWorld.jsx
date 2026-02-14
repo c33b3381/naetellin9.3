@@ -4941,7 +4941,7 @@ const GameWorld = () => {
         const deltaX = e.clientX - cameraState.current.lastMouseX;
         const deltaY = e.clientY - cameraState.current.lastMouseY;
         
-        if (isMapEditorMode && e.ctrlKey) {
+        if (isMapEditorModeRef.current && e.ctrlKey) {
           // Map Editor Mode: Ctrl+RMB Drag to pan camera
           const panSpeed = 0.5;
           mapEditorCameraState.current.x -= deltaX * panSpeed;
@@ -4950,7 +4950,7 @@ const GameWorld = () => {
           // Clamp to world bounds
           mapEditorCameraState.current.x = Math.max(-280, Math.min(280, mapEditorCameraState.current.x));
           mapEditorCameraState.current.z = Math.max(-280, Math.min(280, mapEditorCameraState.current.z));
-        } else if (!isMapEditorMode) {
+        } else if (!isMapEditorModeRef.current) {
           // Game Mode: Rotate camera horizontally
           cameraState.current.rotationY -= deltaX * 0.005;
           
