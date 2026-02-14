@@ -6509,6 +6509,25 @@ const GameWorld = () => {
         </div>
       )}
       
+      {/* Map Editor Mode Indicator */}
+      {isMapEditorMode && (
+        <div className="absolute top-4 left-4 z-30">
+          <div className="bg-[#3b82f6]/90 border-2 border-[#60a5fa] px-4 py-3 rounded-lg shadow-lg animate-pulse">
+            <p className="text-white font-bold text-sm font-rajdhani mb-2">
+              🗺️ MAP EDITOR MODE (Press F5 to exit)
+            </p>
+            <div className="text-xs text-[#e0f2fe] font-rajdhani space-y-0.5">
+              <p><span className="font-semibold text-[#fbbf24]">WASD</span> - Pan Camera</p>
+              <p><span className="font-semibold text-[#fbbf24]">Ctrl+RMB Drag</span> - Pan (Alternative)</p>
+              <p><span className="font-semibold text-[#fbbf24]">Mouse Wheel</span> - Adjust Height</p>
+              <p><span className="font-semibold text-[#fbbf24]">Q/E</span> - Rotate Left/Right</p>
+              <p><span className="font-semibold text-[#fbbf24]">R/F</span> - Tilt (Top-Down/Angled)</p>
+              <p className="mt-1 text-[#bae6fd]">F1-F4: Use editors in map editor mode</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Controls hint */}
       <div className="absolute bottom-24 left-4 z-20 pointer-events-none">
         <div className="bg-[#0c0a09]/80 border border-[#44403c] px-3 py-2 rounded text-xs text-[#a8a29e] font-rajdhani space-y-0.5">
