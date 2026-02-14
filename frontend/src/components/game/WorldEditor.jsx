@@ -617,6 +617,46 @@ const WorldEditor = ({
               />
               <span className="text-xs text-[#fbbf24]">{objectScale.toFixed(1)}x</span>
             </div>
+            
+            {/* Rotation */}
+            <div>
+              <label className="text-xs text-[#a8a29e] font-rajdhani block mb-1">Rotation</label>
+              <input
+                type="range"
+                min="0"
+                max="360"
+                step="15"
+                value={objectRotation}
+                onChange={(e) => setObjectRotation(Number(e.target.value))}
+                className="w-full"
+              />
+              <span className="text-xs text-[#fbbf24]">{objectRotation}°</span>
+            </div>
+          </div>
+          
+          {/* Quick Rotation Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setObjectRotation((prev) => (prev - 45 + 360) % 360)}
+              className="flex-1 py-2 bg-[#1a1a1a] border border-[#44403c] text-[#fbbf24] rounded hover:bg-[#252525] transition-all"
+              title="Rotate -45°"
+            >
+              ↺ -45°
+            </button>
+            <button
+              onClick={() => setObjectRotation(0)}
+              className="flex-1 py-2 bg-[#1a1a1a] border border-[#44403c] text-[#fbbf24] rounded hover:bg-[#252525] transition-all"
+              title="Reset Rotation"
+            >
+              ⟲ Reset
+            </button>
+            <button
+              onClick={() => setObjectRotation((prev) => (prev + 45) % 360)}
+              className="flex-1 py-2 bg-[#1a1a1a] border border-[#44403c] text-[#fbbf24] rounded hover:bg-[#252525] transition-all"
+              title="Rotate +45°"
+            >
+              ↻ +45°
+            </button>
           </div>
 
           {/* Place Button */}
