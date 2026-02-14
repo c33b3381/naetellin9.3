@@ -5313,8 +5313,8 @@ const GameWorld = () => {
               mapEditorCameraState.current.x = playerRef.current.position.x;
               mapEditorCameraState.current.z = playerRef.current.position.z;
             }
-            // Exit flight mode when leaving map editor mode
-            if (!newMode && isFlightMode) {
+            // Exit flight mode when leaving map editor mode (use ref for current value)
+            if (!newMode && isFlightModeRef.current) {
               setIsFlightMode(false);
             }
             return newMode;
@@ -5323,9 +5323,9 @@ const GameWorld = () => {
         case 'F6':
           e.preventDefault();
           e.stopPropagation();
-          console.log('F6 pressed - isMapEditorMode:', isMapEditorMode, 'isFlightMode:', isFlightMode);
-          // F6 only works in map editor mode
-          if (isMapEditorMode) {
+          console.log('F6 pressed - isMapEditorMode:', isMapEditorModeRef.current, 'isFlightMode:', isFlightModeRef.current);
+          // F6 only works in map editor mode (use ref for current value)
+          if (isMapEditorModeRef.current) {
             setIsFlightMode(prev => {
               const newFlightMode = !prev;
               console.log('Toggling flight mode to:', newFlightMode);
