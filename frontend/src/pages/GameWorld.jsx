@@ -6547,14 +6547,15 @@ const GameWorld = () => {
       {/* Map Editor Mode Indicator */}
       {isMapEditorMode && (
         <div className="absolute top-4 left-4 z-30">
-          <div className="bg-[#3b82f6]/90 border-2 border-[#60a5fa] px-4 py-3 rounded-lg shadow-lg animate-pulse">
+          <div className={`${isFlightMode ? 'bg-[#22c55e]/90 border-[#4ade80]' : 'bg-[#3b82f6]/90 border-[#60a5fa]'} border-2 px-4 py-3 rounded-lg shadow-lg animate-pulse`}>
             <p className="text-white font-bold text-sm font-rajdhani mb-2">
-              🗺️ MAP EDITOR MODE (Press F5 to exit)
+              {isFlightMode ? '✈️ FLIGHT MODE (2x Speed)' : '🗺️ MAP EDITOR MODE'} - Press F5 to exit
             </p>
             <div className="text-xs text-[#e0f2fe] font-rajdhani space-y-0.5">
-              <p><span className="font-semibold text-[#fbbf24]">WASD</span> - Pan Camera</p>
+              <p><span className="font-semibold text-[#fbbf24]">F6</span> - Toggle Flight Mode {isFlightMode ? '(ON - Auto-terrain follow)' : '(OFF)'}</p>
+              <p><span className="font-semibold text-[#fbbf24]">WASD</span> - Pan Camera {isFlightMode ? '(2x Speed)' : ''}</p>
               <p><span className="font-semibold text-[#fbbf24]">Ctrl+RMB Drag</span> - Pan (Alternative)</p>
-              <p><span className="font-semibold text-[#fbbf24]">Mouse Wheel</span> - Adjust Height</p>
+              <p><span className="font-semibold text-[#fbbf24]">Mouse Wheel</span> - Adjust Height {isFlightMode ? '(Disabled)' : ''}</p>
               <p><span className="font-semibold text-[#fbbf24]">Q/E</span> - Rotate Left/Right</p>
               <p><span className="font-semibold text-[#fbbf24]">R/F</span> - Tilt (Top-Down/Angled)</p>
               <p className="mt-1 text-[#bae6fd]">F1-F4: Use editors in map editor mode</p>
