@@ -4131,7 +4131,17 @@ const GameWorld = () => {
             console.log('EXTRACTED POSITION:', pos);
             
             // Use fullType if available, otherwise construct from type/subType
-            const fullType = obj.fullType || obj.subType || obj.type;
+            let fullType = obj.fullType;
+            if (!fullType && obj.subType) {
+              // Construct fullType from type + subType for backward compatibility
+              if (obj.type === 'npc' || obj.type === 'monster' || obj.type === 'animal') {
+                fullType = `${obj.type}_${obj.subType}`;
+              } else {
+                fullType = obj.subType;
+              }
+            } else if (!fullType) {
+              fullType = obj.type;
+            }
             
             console.log('Creating world object:', fullType, 'at position:', pos, 'x:', pos.x, 'z:', pos.z);
             
