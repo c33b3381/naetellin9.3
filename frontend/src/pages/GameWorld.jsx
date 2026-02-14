@@ -5124,7 +5124,7 @@ const GameWorld = () => {
           }
           break;
         case 'KeyR':
-          if (isMapEditorMode) {
+          if (isMapEditorModeRef.current) {
             // Map Editor: Increase tilt (more top-down)
             mapEditorCameraState.current.tilt = Math.min(
               mapEditorCameraState.current.maxTilt,
@@ -5136,7 +5136,7 @@ const GameWorld = () => {
           }
           break;
         case 'KeyF':
-          if (isMapEditorMode) {
+          if (isMapEditorModeRef.current) {
             // Map Editor: Decrease tilt (more angled)
             mapEditorCameraState.current.tilt = Math.max(
               mapEditorCameraState.current.minTilt,
@@ -5145,13 +5145,13 @@ const GameWorld = () => {
           }
           break;
         case 'KeyQ':
-          if (isMapEditorMode) {
+          if (isMapEditorModeRef.current) {
             // Map Editor: Rotate camera left
             mapEditorCameraState.current.rotationY += 0.1;
           }
           break;
         case 'KeyE':
-          if (isMapEditorMode) {
+          if (isMapEditorModeRef.current) {
             // Map Editor: Rotate camera right
             mapEditorCameraState.current.rotationY -= 0.1;
           }
