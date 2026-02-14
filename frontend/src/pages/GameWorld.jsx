@@ -5480,13 +5480,56 @@ const GameWorld = () => {
           addNotification(`Entering ${WORLD_ZONES[detectedZone].name}`, 'info');
         }
         
-        // Update camera position (WoW-style orbit)
-        const camX = player.position.x + Math.sin(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
-        const camY = player.position.y + 2 + Math.sin(cam.rotationX) * cam.distance;
-        const camZ = player.position.z + Math.cos(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
-        
-        camera.position.set(camX, Math.max(1, camY), camZ);
-        camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+        // Update camera position - different modes
+        if (isMapEditorMode) {
+          // Map Editor Mode - Sky-view camera (Warcraft 3 style)
+          const mapCam = mapEditorCameraState.current;
+          
+          // Handle WASD movement for map editor camera
+          const moveSpeed = mapCam.moveSpeed * delta;
+          if (movementState.current.forward) {
+            mapCam.x += Math.sin(mapCam.rotationY) * moveSpeed;
+            mapCam.z += Math.cos(mapCam.rotationY) * moveSpeed;
+          }
+          if (movementState.current.backward) {
+            mapCam.x -= Math.sin(mapCam.rotationY) * moveSpeed;
+            mapCam.z -= Math.cos(mapCam.rotationY) * moveSpeed;
+          }
+          if (movementState.current.left) {
+            mapCam.x -= Math.cos(mapCam.rotationY) * moveSpeed;
+            mapCam.z += Math.sin(mapCam.rotationY) * moveSpeed;
+          }
+          if (movementState.current.right) {
+            mapCam.x += Math.cos(mapCam.rotationY) * moveSpeed;
+            mapCam.z -= Math.sin(mapCam.rotationY) * moveSpeed;
+          }
+          
+          // Clamp to world bounds
+          mapCam.x = Math.max(-280, Math.min(280, mapCam.x));
+          mapCam.z = Math.max(-280, Math.min(280, mapCam.z));
+          
+          // Position camera above the map
+          const camX = mapCam.x + Math.sin(mapCam.rotationY) * Math.cos(mapCam.tilt) * 10;
+          const camY = mapCam.height;
+          const camZ = mapCam.z + Math.cos(mapCam.rotationY) * Math.cos(mapCam.tilt) * 10;
+          
+          camera.position.set(camX, camY, camZ);
+          camera.lookAt(mapCam.x, 0, mapCam.z);
+          
+          // Hide player in map editor mode
+          player.visible = false;
+        } else {
+          // Normal Game Mode - WoW-style orbit camera
+          const camX = player.position.x + Math.sin(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
+          const camY = player.position.y + 2 + Math.sin(cam.rotationX) * cam.distance;
+          const camZ = player.position.z + Math.cos(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
+          
+          camera.position.set(camX, Math.max(1, camY), camZ);
+          camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+          
+          // Show player in game mode
+          player.visible = true;
+        }
         
         // Update target indicator position if target selected
         const currentTarget = selectedTargetRef.current;
