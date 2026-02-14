@@ -5179,6 +5179,19 @@ const GameWorld = () => {
         brushIndicatorRef.current.visible = false;
       }
       
+      // Update preview mesh position when in placement mode
+      if (previewMeshRef.current && pendingPlacementRef.current && terrainMeshRef.current) {
+        const terrainIntersects = raycasterRef.current.intersectObject(terrainMeshRef.current);
+        if (terrainIntersects.length > 0) {
+          const point = terrainIntersects[0].point;
+          const terrainHeight = getTerrainHeight(point.x, point.z);
+          previewMeshRef.current.position.set(point.x, terrainHeight, point.z);
+          previewMeshRef.current.visible = true;
+        } else {
+          previewMeshRef.current.visible = false;
+        }
+      }
+      
       if (cameraState.current.isRightMouseDown) {
         const deltaX = e.clientX - cameraState.current.lastMouseX;
         const deltaY = e.clientY - cameraState.current.lastMouseY;
