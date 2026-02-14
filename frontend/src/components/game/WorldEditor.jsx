@@ -394,7 +394,8 @@ const WorldEditor = ({
       category: selectedCategory,
       name: objectName || typeInfo?.label || selectedType,
       level: objectLevel,
-      scale: objectScale
+      scale: objectScale,
+      rotation: objectRotation // Add rotation to placement data
     });
   };
 
