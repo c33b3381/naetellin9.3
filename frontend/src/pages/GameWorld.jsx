@@ -604,6 +604,15 @@ const GameWorld = () => {
     enemyEditorActiveRef.current = isEnemyEditorOpen;
   }, [isEnemyEditorOpen]);
   
+  // Keep map editor mode refs in sync (CRITICAL for F5/F6 key handler closures)
+  useEffect(() => {
+    isMapEditorModeRef.current = isMapEditorMode;
+  }, [isMapEditorMode]);
+  
+  useEffect(() => {
+    isFlightModeRef.current = isFlightMode;
+  }, [isFlightMode]);
+  
   // Keep pendingEnemyPlacement ref in sync (CRITICAL for closure fix)
   useEffect(() => {
     pendingEnemyPlacementRef.current = pendingEnemyPlacement;
