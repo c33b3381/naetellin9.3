@@ -5239,6 +5239,18 @@ const GameWorld = () => {
           e.preventDefault();
           setIsItemEditorOpen(prev => !prev);
           break;
+        case 'F5':
+          e.preventDefault();
+          setIsMapEditorMode(prev => {
+            const newMode = !prev;
+            if (newMode && playerRef.current) {
+              // Store player position when entering map editor mode
+              mapEditorCameraState.current.x = playerRef.current.position.x;
+              mapEditorCameraState.current.z = playerRef.current.position.z;
+            }
+            return newMode;
+          });
+          break;
         case 'Delete':
         case 'Backspace':
           // Delete selected edit object
