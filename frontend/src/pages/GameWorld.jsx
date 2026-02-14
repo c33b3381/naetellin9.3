@@ -4945,12 +4945,21 @@ const GameWorld = () => {
     };
     
     const handleWheel = (e) => {
-      // Zoom in/out
-      cameraState.current.distance += e.deltaY * 0.01;
-      cameraState.current.distance = Math.max(
-        cameraState.current.minDistance,
-        Math.min(cameraState.current.maxDistance, cameraState.current.distance)
-      );
+      if (isMapEditorMode) {
+        // Map Editor Mode: Adjust camera height
+        mapEditorCameraState.current.height -= e.deltaY * 0.1;
+        mapEditorCameraState.current.height = Math.max(
+          mapEditorCameraState.current.minHeight,
+          Math.min(mapEditorCameraState.current.maxHeight, mapEditorCameraState.current.height)
+        );
+      } else {
+        // Game Mode: Zoom in/out
+        cameraState.current.distance += e.deltaY * 0.01;
+        cameraState.current.distance = Math.max(
+          cameraState.current.minDistance,
+          Math.min(cameraState.current.maxDistance, cameraState.current.distance)
+        );
+      }
     };
     
     const handleContextMenu = (e) => {
