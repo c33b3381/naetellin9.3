@@ -6694,7 +6694,7 @@ const GameWorld = () => {
             const enemyIdHash = enemyId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
             const numSlots = 8;
             const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
-            const spreadDistance = meleeRange * 0.8;
+            const spreadDistance = 2; // Close combat - 2 units from player
             
             // Gently drift to assigned spread position while in melee range
             const idealX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
