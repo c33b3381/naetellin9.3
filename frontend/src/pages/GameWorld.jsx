@@ -439,6 +439,8 @@ const GameWorld = () => {
   const [completedQuests, setCompletedQuests] = useState([]);
   const [trackedQuestId, setTrackedQuestId] = useState(null);
   const [questGiverName, setQuestGiverName] = useState('Quest Giver');
+  const [questGiverType, setQuestGiverType] = useState('questgiver');
+  const [currentNPCQuest, setCurrentNPCQuest] = useState(null); // Custom quest from NPC via Quest Maker
   
   // Terrain Editor state
   const [isTerrainEditorOpen, setIsTerrainEditorOpen] = useState(false);
