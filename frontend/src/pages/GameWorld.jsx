@@ -2757,6 +2757,22 @@ const GameWorld = () => {
     // ==================== GRAVEYARD AREA ====================
     const GRAVEYARD_CENTER = { x: -40, z: -40 };
     
+    // Helper function to get actual terrain mesh height using raycasting
+    const getActualTerrainHeight = (x, z) => {
+      const terrainMesh = scene.getObjectByName('terrain');
+      if (terrainMesh) {
+        const rayOrigin = new THREE.Vector3(x, 100, z);
+        const rayDirection = new THREE.Vector3(0, -1, 0);
+        const raycaster = new THREE.Raycaster(rayOrigin, rayDirection);
+        const intersects = raycaster.intersectObject(terrainMesh);
+        if (intersects.length > 0) {
+          return intersects[0].point.y;
+        }
+      }
+      // Fallback to formula-based height
+      return getTerrainHeight(x, z);
+    };
+    
     // Create gravestone
     const createGravestone = (x, z, scale = 1, variant = 0) => {
       const stoneGroup = new THREE.Group();
