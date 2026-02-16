@@ -2396,20 +2396,20 @@ const GameWorld = () => {
   }, []);
   
   // Update player position when position changes in store (after game state loads)
+  const positionRestoredRef = useRef(false);
   useEffect(() => {
     // Don't override position if player just teleported (death/respawn) or is ghost
     if (justTeleportedRef.current || isGhostRef.current || isDeadRef.current) return;
     
-    if (playerRef.current && savedPosition && ready) {
-      const currentPos = playerRef.current.position;
-      // Only update if significantly different (to avoid fighting with movement)
-      const distance = Math.sqrt(
-        Math.pow(currentPos.x - (savedPosition.x || 0), 2) + 
-        Math.pow(currentPos.z - (savedPosition.z || 0), 2)
-      );
-      // If player is at origin and saved position is different, restore it
-      if (currentPos.x === 0 && currentPos.z === 0 && distance > 1) {
-        playerRef.current.position.set(savedPosition.x || 0, 0, savedPosition.z || 0);
+    if (playerRef.current && savedPosition && ready && !positionRestoredRef.current) {
+      // Check if savedPosition has meaningful data (not default origin)
+      const hasSavedPosition = savedPosition.x !== 0 || savedPosition.z !== 0;
+      
+      if (hasSavedPosition) {
+        const terrainY = getTerrainHeight(savedPosition.x, savedPosition.z);
+        playerRef.current.position.set(savedPosition.x, terrainY, savedPosition.z);
+        positionRestoredRef.current = true;
+        console.log('[POSITION] Restored player to saved position:', savedPosition.x, savedPosition.z);
       }
     }
   }, [savedPosition, ready]);
