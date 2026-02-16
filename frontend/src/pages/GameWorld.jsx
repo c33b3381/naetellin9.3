@@ -6928,6 +6928,7 @@ const GameWorld = () => {
           setIsAutoAttacking(false);
           targetIndicatorRef.current.visible = false;
           // Also close panels if open
+          if (isWorldMapOpen) setIsWorldMapOpen(false);
           if (isEditorOpen) setIsEditorOpen(false);
           if (isSpellBookOpen) setIsSpellBookOpen(false);
           if (isTerrainEditorOpen) setIsTerrainEditorOpen(false);
