@@ -578,7 +578,6 @@ const GameWorld = () => {
     player,
     character,
     attackMonster,
-    addNotification,
     updatePosition,
     learnSpell,
     saveActionBar,
@@ -608,6 +607,11 @@ const GameWorld = () => {
     getQuestByNPC,
     removeItemFromBag
   } = useGameStore();
+  
+  // Use stable reference for addNotification to avoid re-renders
+  const addNotification = useCallback((message, type = 'info') => {
+    useGameStore.getState().addNotification(message, type);
+  }, []);
   
   // Use store values for spells and copper
   const learnedSpells = learned_spells || ['autoAttack', 'warrior_attack'];
