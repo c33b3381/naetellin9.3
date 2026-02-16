@@ -909,66 +909,51 @@ const GameWorld = () => {
     setIsLootPanelOpen(true);
   }, []);
   
-  // Handle looting an individual item
+  // Handle looting an individual item - OPTIMIZED
   const handleLootItem = useCallback((lootItem) => {
+    let newLootData = { ...currentLootData };
+    
     if (lootItem.type === 'gold') {
       // Add copper to player
       const currentCopper = copper || 0;
-      const copperToAdd = lootItem.amount; // Amount is already in copper
+      const copperToAdd = lootItem.amount;
       useGameStore.setState({ copper: currentCopper + copperToAdd });
-      
-      // Update backend
       updateCopper(copperToAdd).catch(err => console.error('Failed to save copper:', err));
-      
-      // Remove gold from loot
-      setCurrentLootData(prev => ({
-        ...prev,
-        gold: 0
-      }));
+      addNotification(`Looted: ${copperToAdd} copper`, 'success');
+      newLootData.gold = 0;
     } else if (lootItem.type === 'item') {
-      // Add item to bag system
       const item = lootItem.item;
       const added = addItemToBag(item);
-      
       if (added) {
-        // Remove from loot
-        setCurrentLootData(prev => ({
-          ...prev,
-          items: prev.items.filter(i => i.id !== item.id)
-        }));
+        newLootData.items = newLootData.items.filter(i => i.id !== item.id);
       }
     }
     
-    // Check if loot is empty
-    setCurrentLootData(prev => {
-      const isEmpty = (!prev.gold || prev.gold <= 0) && (!prev.items || prev.items.length === 0);
-      if (isEmpty) {
-        // Close panel and remove corpse
-        setTimeout(() => {
-          setIsLootPanelOpen(false);
-          
-          // Remove the corpse since it's been looted
-          const corpseData = lootableCorpsesRef.current.get(currentLootCorpse);
-          if (corpseData && corpseData.mesh && sceneRef.current) {
-            sceneRef.current.remove(corpseData.mesh);
-            selectableObjects.current = selectableObjects.current.filter(obj => obj !== corpseData.mesh);
-            enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== currentLootCorpse);
-          }
-          
-          // Clear timer and tracking
-          const timer = corpseTimersRef.current.get(currentLootCorpse);
-          if (timer) clearTimeout(timer);
-          corpseTimersRef.current.delete(currentLootCorpse);
-          lootableCorpsesRef.current.delete(currentLootCorpse);
-          setPlacedEnemies(p => p.filter(e => e.id !== currentLootCorpse));
-          
-          setCurrentLootCorpse(null);
-          setCurrentLootData(null);
-        }, 100);
+    // Check if loot is empty and handle cleanup
+    const isEmpty = (!newLootData.gold || newLootData.gold <= 0) && (!newLootData.items || newLootData.items.length === 0);
+    
+    if (isEmpty) {
+      // Close panel and remove corpse immediately
+      setIsLootPanelOpen(false);
+      setCurrentLootData(null);
+      
+      const corpseData = lootableCorpsesRef.current.get(currentLootCorpse);
+      if (corpseData && corpseData.mesh && sceneRef.current) {
+        sceneRef.current.remove(corpseData.mesh);
+        selectableObjects.current = selectableObjects.current.filter(obj => obj !== corpseData.mesh);
+        enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== currentLootCorpse);
       }
-      return prev;
-    });
-  }, [addNotification, currentLootCorpse, addItemToBag, copper, updateCopper]);
+      
+      const timer = corpseTimersRef.current.get(currentLootCorpse);
+      if (timer) clearTimeout(timer);
+      corpseTimersRef.current.delete(currentLootCorpse);
+      lootableCorpsesRef.current.delete(currentLootCorpse);
+      setPlacedEnemies(p => p.filter(e => e.id !== currentLootCorpse));
+      setCurrentLootCorpse(null);
+    } else {
+      setCurrentLootData(newLootData);
+    }
+  }, [addNotification, currentLootCorpse, currentLootData, addItemToBag, copper, updateCopper]);
   
   // Handle loot all button - OPTIMIZED to batch operations
   const handleLootAll = useCallback(() => {
