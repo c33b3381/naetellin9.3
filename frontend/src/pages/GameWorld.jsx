@@ -7041,7 +7041,10 @@ const GameWorld = () => {
         isOpen={isQuestMakerOpen}
         onClose={() => setIsQuestMakerOpen(false)}
         onSaveQuest={handleSaveQuest}
+        onAssignQuest={handleAssignQuestToNPC}
+        onRemoveQuest={handleRemoveQuestFromNPC}
         existingQuests={customQuests}
+        selectedNPC={selectedNPCForQuest}
       />
     </div>
   );
