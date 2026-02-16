@@ -552,6 +552,15 @@ const GameWorld = () => {
   
   // ==================== END EXPERIENCE & LEVELING SYSTEM ====================
   
+  // Keep refs in sync with state for stable access in event handlers
+  useEffect(() => {
+    playerLevelRef.current = playerLevel;
+  }, [playerLevel]);
+  
+  useEffect(() => {
+    currentXPRef.current = currentXP;
+  }, [currentXP]);
+  
   // Regeneration rates (per second)
   const [healthRegenRate] = useState(2); // 2 HP per second
   const [manaRegenRate] = useState(3); // 3 MP per second
