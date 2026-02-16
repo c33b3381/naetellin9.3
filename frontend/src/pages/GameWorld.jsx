@@ -5884,10 +5884,10 @@ const GameWorld = () => {
     createFirePit(-220, 40);
     createFirePit(-200, -50);
     
-    // Trolls and fire elementals
-    createMonster(-160, 30, 0x556B2F, 'Desert Troll', 'troll', 20);
-    createMonster(-200, -20, 0x4a6b2f, 'Sand Troll', 'troll', 18);
-    createMonster(-240, 60, 0x667b3f, 'Elder Troll', 'troll', 25);
+    // NOTE: Legacy trolls removed - use F3 Enemy Editor
+    // createMonster(-160, 30, 0x556B2F, 'Desert Troll', 'troll', 20);
+    // createMonster(-200, -20, 0x4a6b2f, 'Sand Troll', 'troll', 18);
+    // createMonster(-240, 60, 0x667b3f, 'Elder Troll', 'troll', 25);
     
     // Frozen Peaks Zone (South) - Snowy mountains
     // Snow mounds and ice
@@ -5927,13 +5927,11 @@ const GameWorld = () => {
       createIceSpike(-50 + Math.random() * 100, -140 - Math.random() * 140);
     }
     
-    // Ice wolves and yetis
-    createMonster(0, -150, 0xffffff, 'Frost Wolf', 'wolf', 12);
-    createMonster(-40, -200, 0xe8e8e8, 'Ice Wolf', 'wolf', 14);
-    createMonster(30, -180, 0xf0f0f0, 'Snow Wolf', 'wolf', 10);
-    
-    // Yeti (use troll model with white color)
-    createMonster(0, -250, 0xffffff, 'Yeti', 'troll', 30);
+    // NOTE: Legacy ice wolves and yetis removed - use F3 Enemy Editor
+    // createMonster(0, -150, 0xffffff, 'Frost Wolf', 'wolf', 12);
+    // createMonster(-40, -200, 0xe8e8e8, 'Ice Wolf', 'wolf', 14);
+    // createMonster(30, -180, 0xf0f0f0, 'Snow Wolf', 'wolf', 10);
+    // createMonster(0, -250, 0xffffff, 'Yeti', 'troll', 30);
     
     // ==================== WOW-STYLE CONTROLS ====================
     
