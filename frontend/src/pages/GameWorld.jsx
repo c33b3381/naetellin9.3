@@ -1121,8 +1121,17 @@ const GameWorld = () => {
   
   // Handle enemy death - create lootable corpse
   const handleEnemyDeath = useCallback((enemy, enemyId) => {
-    const xpGained = enemy.userData.level * 10;
-    addNotification(`Defeated ${enemy.userData.name}! +${xpGained} XP`, 'success');
+    // Calculate XP based on level difference using mob difficulty system
+    const mobLevel = enemy.userData.level || 1;
+    const xpGained = calculateXPGain(mobLevel, playerLevel);
+    
+    // Award XP
+    if (xpGained > 0) {
+      gainXP(xpGained);
+      addNotification(`Defeated ${enemy.userData.name}! +${xpGained} XP`, 'success');
+    } else {
+      addNotification(`Defeated ${enemy.userData.name}! (No XP - trivial)`, 'info');
+    }
     
     // Remove from combat tracking
     if (enemyId) {
