@@ -4109,8 +4109,8 @@ const GameWorld = () => {
         // ========== MONSTERS (simplified) ==========
         default:
           console.log('[createWorldAsset] Default case, fullType:', fullType);
-          if (fullType.startsWith('monster_') || fullType.startsWith('npc_') || fullType.startsWith('animal_')) {
-            console.log('[createWorldAsset] Creating NPC/Monster/Animal');
+          if (fullType.startsWith('monster_') || fullType.startsWith('npc_') || fullType.startsWith('animal_') || fullType.startsWith('vendor_')) {
+            console.log('[createWorldAsset] Creating NPC/Monster/Animal/Vendor');
             // Use existing createMonster/createNPC with appropriate colors
             const monsterColors = {
               monster_goblin: 0x4a7c23, monster_goblin_chief: 0x2d4a15,
