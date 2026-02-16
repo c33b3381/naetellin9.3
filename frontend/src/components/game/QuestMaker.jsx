@@ -400,20 +400,38 @@ const QuestMaker = ({
         </div>
         
         {/* Footer */}
-        <div className="bg-[#0c0a09] px-6 py-4 border-t border-[#44403c] flex justify-between">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-[#44403c] text-white rounded hover:bg-[#57534e] transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-[#8b5cf6] text-white rounded hover:bg-[#7c3aed] transition-all flex items-center gap-2"
-          >
-            <Save className="w-4 h-4" />
-            Save Quest
-          </button>
+        <div className="bg-[#0c0a09] px-6 py-4 border-t border-[#44403c]">
+          {/* Assign Just Created Quest Button */}
+          {justCreatedQuest && selectedNPC && (
+            <div className="mb-4 p-3 bg-[#22c55e]/10 border border-[#22c55e] rounded-lg">
+              <div className="text-[#22c55e] text-sm font-bold mb-2">
+                Quest "{justCreatedQuest.name}" created successfully!
+              </div>
+              <button
+                onClick={handleAssignJustCreated}
+                className="w-full py-2 bg-[#22c55e] text-white rounded hover:bg-[#16a34a] transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Assign to {selectedNPC.name}
+              </button>
+            </div>
+          )}
+          
+          <div className="flex justify-between">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-[#44403c] text-white rounded hover:bg-[#57534e] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-[#8b5cf6] text-white rounded hover:bg-[#7c3aed] transition-all flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Save Quest
+            </button>
+          </div>
         </div>
       </div>
     </div>
