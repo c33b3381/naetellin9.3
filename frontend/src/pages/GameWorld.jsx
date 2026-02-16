@@ -8149,6 +8149,10 @@ const GameWorld = () => {
           onOpenSpellBook={() => setIsSpellBookOpen(true)}
           onOpenCharacter={() => setIsCharacterPanelOpen(true)}
           onLogout={handleLogout}
+          playerLevel={playerLevel}
+          currentXP={currentXP}
+          xpProgress={getLevelProgress()}
+          xpToNextLevel={xpToNextLevel}
         />
         
         {/* Minimap - Top Right */}
