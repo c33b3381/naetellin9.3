@@ -213,6 +213,9 @@ const VendorPanel = ({
                           ? 'border-[#44403c] hover:border-[#22c55e] bg-[#1a1a1a]' 
                           : 'border-[#292524] bg-[#0c0a09]'
                       }`}
+                      onClick={() => {
+                        if (item) handleSellItem(item, index);
+                      }}
                       onContextMenu={(e) => {
                         e.preventDefault();
                         if (item) handleSellItem(item, index);
