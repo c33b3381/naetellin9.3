@@ -1484,9 +1484,18 @@ const GameWorld = () => {
         const newEnemy = {
           id: enemyId,
           ...enemyData,
+          x: enemyData.position.x,
+          z: enemyData.position.z,
           position: { x: enemyData.position.x, y: 0, z: enemyData.position.z },
           zone: currentZone
         };
+        
+        // Store spawn data for respawning
+        enemySpawnDataRef.current.set(enemyId, {
+          ...enemyData,
+          x: enemyData.position.x,
+          z: enemyData.position.z
+        });
         
         setPlacedEnemies(prev => [...prev, newEnemy]);
         addNotification(`Duplicated ${enemyData.name}!`, 'success');
