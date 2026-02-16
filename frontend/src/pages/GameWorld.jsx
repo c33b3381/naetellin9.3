@@ -2983,7 +2983,7 @@ const GameWorld = () => {
         }
       }
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getActualTerrainHeight(x, z);
       fenceGroup.position.set(x, terrainY, z);
       fenceGroup.rotation.y = rotation;
       scene.add(fenceGroup);
