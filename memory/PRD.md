@@ -74,6 +74,19 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Fixed Enemy Duplication Bug**: Respawned enemies now DELETE old DB entry before creating new one
 - **Loot Performance Optimization**: Batched state updates and stable notification refs to eliminate lag
 - **Fixed Enemy Respawn During Gameplay**: Looting a corpse no longer cancels the respawn timer - enemies now properly respawn after being killed and looted
+- **Experience & Leveling System (Levels 1-20)**:
+  - XP thresholds matching WoW: 250, 655, 1265... up to 20,825 at level 20
+  - XP bar displayed in HUD with purple gradient
+  - Level up restores full HP/Mana and increases max stats (+15 HP, +10 Mana per level)
+  - Level up notification and combat log entry
+- **Mob Difficulty Color System** (WoW-style):
+  - Red/Skull: 5+ levels higher (1.2x XP, dangerous)
+  - Orange: 1-2 levels higher (1.1x XP)
+  - Yellow: Same level or up to 2 below (1.0x XP)
+  - Green: 3-5 levels below (0.8x XP)
+  - Grey: 6-8 levels below (0.1x XP)
+  - Trivial: 9+ levels below (0 XP)
+  - Target frame border color reflects difficulty
 - **Player Death & Resurrection System**: 
   - Player dies when health reaches 0
   - "Release Corpse" dialog appears on death
