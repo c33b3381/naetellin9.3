@@ -3623,11 +3623,12 @@ const GameWorld = () => {
       return npcGroup;
     };
     
-    createNPC(4, 2, 0xfbbf24, 'Quest Giver', 'questgiver');
-    createNPC(-8, 6, 0xdc2626, 'Blacksmith NPC', 'vendor');
-    createNPC(8, 6, 0x22c55e, 'Merchant', 'vendor');
-    createNPC(-3, -5, 0x3b82f6, 'Guard', 'npc');
-    createNPC(3, -5, 0x3b82f6, 'Guard', 'npc');
+    // NOTE: Legacy hardcoded NPCs removed - use F1 World Builder to place NPCs
+    // createNPC(4, 2, 0xfbbf24, 'Quest Giver', 'questgiver');
+    // createNPC(-8, 6, 0xdc2626, 'Blacksmith NPC', 'vendor');
+    // createNPC(8, 6, 0x22c55e, 'Merchant', 'vendor');
+    // createNPC(-3, -5, 0x3b82f6, 'Guard', 'npc');
+    // createNPC(3, -5, 0x3b82f6, 'Guard', 'npc');
     
     // Warrior Trainer NPC - special trainer for warriors
     const createTrainer = (x, z, trainerClass) => {
