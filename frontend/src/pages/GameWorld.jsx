@@ -1444,7 +1444,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification, calculateXPGain, gainXP, playerLevel]); // addNotification needed for the immediate "Defeated" notification
+  }, [addNotification, calculateXPGain, gainXP, playerLevel, updateQuestKillProgress]); // addNotification needed for the immediate "Defeated" notification
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
