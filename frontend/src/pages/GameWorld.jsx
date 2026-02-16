@@ -2870,7 +2870,7 @@ const GameWorld = () => {
       trim.position.y = 0.8 * scale;
       tombGroup.add(trim);
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getActualTerrainHeight(x, z);
       tombGroup.position.set(x, terrainY, z);
       scene.add(tombGroup);
       return tombGroup;
