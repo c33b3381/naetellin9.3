@@ -23,6 +23,7 @@ import QuestMaker from '../components/game/QuestMaker';
 import LootPanel, { generateLoot } from '../components/game/LootPanel';
 import BagBar from '../components/game/BagBar';
 import ItemDatabaseEditor from '../components/game/ItemDatabaseEditor';
+import VendorPanel from '../components/game/VendorPanel';
 
 // ==================== TERRAIN NOISE FUNCTIONS ====================
 // Simplex-like noise for terrain generation
