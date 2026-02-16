@@ -4123,6 +4123,10 @@ const GameWorld = () => {
               npc_priest: 0xf5f5f5, npc_king: 0xffd700,
               npc_wizard: 0x4b0082, npc_farmer: 0x8b4513,
               npc_fisherman: 0x4682b4, npc_miner: 0x696969, npc_child: 0xffb6c1,
+              // Vendor NPCs
+              vendor_blacksmith: 0x6b7280, vendor_general: 0x22c55e, vendor_trade: 0xfbbf24,
+              vendor_food: 0xf97316, vendor_weapons: 0xdc2626, vendor_armor: 0x3b82f6,
+              vendor_potions: 0xa855f7, vendor_magic: 0x8b5cf6,
               animal_chicken: 0xf5f5f5, animal_pig: 0xffb6c1, animal_cow: 0x8b4513,
               animal_sheep: 0xf5f5f5, animal_horse: 0x8b4513, animal_deer: 0xd2691e,
               animal_rabbit: 0xd2b48c, animal_fox: 0xff8c00, animal_crow: 0x1a1a1a,
@@ -4132,6 +4136,7 @@ const GameWorld = () => {
             const color = monsterColors[fullType] || 0x808080;
             const isMonster = fullType.startsWith('monster_');
             const isAnimal = fullType.startsWith('animal_');
+            const isVendor = fullType.startsWith('vendor_');
             
             // Create simple creature
             const bodyMat = new THREE.MeshStandardMaterial({ color });
@@ -4161,15 +4166,33 @@ const GameWorld = () => {
             else if (fullType.includes('trainer_ranger')) trainerClass = 'ranger';
             else if (fullType.includes('trainer_paladin')) trainerClass = 'paladin';
             
+            // Determine vendor type
+            let vendorType = null;
+            if (isVendor) {
+              vendorType = fullType; // e.g., 'vendor_blacksmith', 'vendor_general', etc.
+              // Add vendor indicator (coin icon above head)
+              const coinMat = new THREE.MeshStandardMaterial({ 
+                color: 0xfbbf24, 
+                emissive: 0xfbbf24, 
+                emissiveIntensity: 0.6 
+              });
+              const coinIndicator = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * scale, 0.15 * scale, 0.05 * scale, 16), coinMat);
+              coinIndicator.position.y = 1.8 * scale;
+              coinIndicator.rotation.x = Math.PI / 2;
+              coinIndicator.userData.vendorIndicator = true;
+              group.add(coinIndicator);
+            }
+            
             // Note: Quest markers are added separately when quests are assigned via Quest Maker
             
             group.userData = { 
-              type: isMonster ? 'monster' : (isAnimal ? 'animal' : (trainerClass ? 'trainer' : 'npc')),
+              type: isMonster ? 'monster' : (isAnimal ? 'animal' : (isVendor ? 'vendor' : (trainerClass ? 'trainer' : 'npc'))),
               hostile: isMonster,
               level: level,
               interactable: true,
-              monsterType: fullType.replace('monster_', '').replace('npc_', '').replace('animal_', ''),
-              trainerClass: trainerClass
+              monsterType: fullType.replace('monster_', '').replace('npc_', '').replace('animal_', '').replace('vendor_', ''),
+              trainerClass: trainerClass,
+              vendorType: vendorType
             };
             console.log('[createWorldAsset] Created creature, group children:', group.children.length);
           } else {
