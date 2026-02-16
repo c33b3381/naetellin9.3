@@ -117,10 +117,10 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - Mouse wheel zoom may be unreliable in map editor mode (user verification pending)
 
 ## Recent Updates (Dec 2025)
-- **Map System**: Added World Map (M key) and fixed Minimap
-  - World Map shows all 5 zones with level ranges
-  - Minimap shows real-time player position with zone colors
-  - Click minimap to open full map
+- **Map System Rebuilt**: 
+  - Minimap: Real top-down 3D camera view using OrthographicCamera
+  - World Map (M key): Terrain-based map with landmarks, paths, and player tracking
+  - Both show actual terrain, player position, and compass
 
 ## Future Improvements
 - Refactor GameWorld.jsx into smaller components (~8000+ lines)
