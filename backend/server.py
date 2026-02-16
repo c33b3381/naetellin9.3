@@ -251,9 +251,18 @@ async def create_character(character: CharacterCreate, auth: dict = Depends(veri
 
 @api_router.put("/player/position")
 async def update_position(position: Dict[str, Any], auth: dict = Depends(verify_token)):
+    # Build update data
+    update_data = {"position": {k: v for k, v in position.items() if k in ['x', 'y', 'z', 'zone']}}
+    
+    # Also save experience and level if provided
+    if 'combat_level' in position:
+        update_data['combat_level'] = position['combat_level']
+    if 'experience' in position:
+        update_data['experience'] = position['experience']
+    
     await db.players.update_one(
         {"id": auth['player_id']},
-        {"$set": {"position": position}}
+        {"$set": update_data}
     )
     return {"message": "Position updated"}
 
