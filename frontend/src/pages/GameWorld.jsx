@@ -1081,26 +1081,37 @@ const GameWorld = () => {
     }
   }, [createCustomQuest]);
   
-  const handleAssignQuestToNPC = useCallback(async () => {
-    if (!selectedNPCForQuest || customQuests.length === 0) {
-      addNotification('Please select an NPC and create a quest first', 'warning');
-      return;
-    }
-    
-    // Show quest selection UI
-    // For now, assign the most recent quest
-    const latestQuest = customQuests[customQuests.length - 1];
-    
+  const handleAssignQuestToNPC = useCallback(async (questId, npcData) => {
     try {
-      await assignQuestToNPC(latestQuest.quest_id, {
-        npc_id: selectedNPCForQuest.id,
-        npc_name: selectedNPCForQuest.name,
-        npc_position: selectedNPCForQuest.position
+      await assignQuestToNPC(questId, {
+        npc_id: npcData.id,
+        npc_name: npcData.name,
+        npc_position: npcData.position
       });
       
-      // Update NPC visual to show quest marker
-      const npcMesh = editorObjectsRef.current.find(obj => obj.userData.editorId === selectedNPCForQuest.id);
+      // Update local NPC data to show quest assignment
+      setPlacedObjects(prev => prev.map(obj => 
+        obj.id === npcData.id 
+          ? { ...obj, quest_id: questId, quest_giver: true }
+          : obj
+      ));
+      
+      // Update quest in custom quests list
+      setCustomQuests(prev => prev.map(q =>
+        q.quest_id === questId
+          ? { ...q, npc_id: npcData.id, npc_name: npcData.name }
+          : q
+      ));
+      
+      // Add visual quest marker to NPC
+      const npcMesh = editorObjectsRef.current.find(obj => obj.userData.editorId === npcData.id);
       if (npcMesh) {
+        // Remove old marker if exists
+        const oldMarker = npcMesh.children.find(child => child.userData.questMarker);
+        if (oldMarker) {
+          npcMesh.remove(oldMarker);
+        }
+        
         // Add yellow "!" marker above NPC
         const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
         const markerMaterial = new THREE.MeshStandardMaterial({ 
@@ -1114,11 +1125,50 @@ const GameWorld = () => {
         npcMesh.add(marker);
       }
       
-      setSelectedNPCForQuest(null);
+      addNotification(`Quest assigned to ${npcData.name}!`, 'success');
     } catch (err) {
       console.error('Failed to assign quest:', err);
     }
-  }, [selectedNPCForQuest, customQuests, assignQuestToNPC, addNotification]);
+  }, [assignQuestToNPC, addNotification]);
+  
+  const handleRemoveQuestFromNPC = useCallback(async (questId, npcId) => {
+    try {
+      // Call backend to remove quest
+      await assignQuestToNPC(questId, {
+        npc_id: null,
+        npc_name: null,
+        npc_position: null
+      });
+      
+      // Update local NPC data
+      setPlacedObjects(prev => prev.map(obj => 
+        obj.quest_id === questId
+          ? { ...obj, quest_id: null, quest_giver: false }
+          : obj
+      ));
+      
+      // Update quest in custom quests list
+      setCustomQuests(prev => prev.map(q =>
+        q.quest_id === questId
+          ? { ...q, npc_id: null, npc_name: null }
+          : q
+      ));
+      
+      // Remove visual quest marker from NPC
+      const npcMesh = editorObjectsRef.current.find(obj => obj.userData.editorId === npcId);
+      if (npcMesh) {
+        const marker = npcMesh.children.find(child => child.userData.questMarker);
+        if (marker) {
+          npcMesh.remove(marker);
+        }
+      }
+      
+      addNotification('Quest removed from NPC', 'success');
+    } catch (err) {
+      console.error('Failed to remove quest:', err);
+      addNotification('Failed to remove quest', 'error');
+    }
+  }, [assignQuestToNPC, addNotification]);
   
   // Load custom quests on mount
   useEffect(() => {
