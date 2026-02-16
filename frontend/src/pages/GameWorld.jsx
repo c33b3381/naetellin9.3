@@ -5588,6 +5588,10 @@ const GameWorld = () => {
             });
           }
           break;
+        case 'F7':
+          e.preventDefault();
+          setIsQuestMakerOpen(prev => !prev);
+          break;
         case 'Delete':
         case 'Backspace':
           // Delete selected edit object
