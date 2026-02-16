@@ -1066,6 +1066,19 @@ const GameWorld = () => {
   const handleLogout = useCallback(async () => {
     addNotification('Saving all game data...', 'info');
     
+    // Get current player position from ref (most up-to-date)
+    const currentPlayerPosition = playerRef.current ? {
+      x: playerRef.current.position.x,
+      y: playerRef.current.position.y,
+      z: playerRef.current.position.z,
+      zone: currentZoneRef.current || 'starter_village'
+    } : null;
+    
+    // Update position in store immediately before logout
+    if (currentPlayerPosition) {
+      await updatePosition(currentPlayerPosition);
+    }
+    
     // Note: Terrain is NOT auto-saved on logout to prevent corruption.
     // Use F2 -> Save button in Terrain Editor to manually save terrain changes.
     
@@ -1109,7 +1122,7 @@ const GameWorld = () => {
     await logout(worldData);
     
     addNotification('Game saved! Logging out...', 'success');
-  }, [addNotification, logout, placedEnemies, currentZone]);
+  }, [addNotification, logout, placedEnemies, currentZone, updatePosition]);
 
   const handleLoadWorld = useCallback(async (worldData) => {
     if (!sceneRef.current) return;
