@@ -3693,8 +3693,8 @@ const GameWorld = () => {
       return trainerGroup;
     };
     
-    // Place Warrior Trainer near the town hall (moved out of building wall)
-    createTrainer(-8, -12, 'warrior');
+    // NOTE: Legacy hardcoded Warrior Trainer removed - use F1 World Builder to place trainers
+    // createTrainer(-8, -12, 'warrior');
     
     // Monsters with health bars
     const createMonster = (x, z, color, name, type = 'goblin', level = 1, id = null, maxHealth = null, damage = null) => {
