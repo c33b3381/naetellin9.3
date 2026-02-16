@@ -312,23 +312,78 @@ const QuestMaker = ({
             </div>
           </div>
           
-          {/* Existing Quests */}
+          {/* Existing Quests & Assignment */}
           {existingQuests.length > 0 && (
             <div>
-              <label className="text-xs text-[#a8a29e] font-rajdhani block mb-2">Your Created Quests ({existingQuests.length})</label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
+              <label className="text-xs text-[#a8a29e] font-rajdhani block mb-2">
+                Your Created Quests ({existingQuests.length})
+                {selectedNPC && <span className="text-[#22c55e]"> - Click to assign to selected NPC</span>}
+              </label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {existingQuests.map(quest => (
-                  <div key={quest.quest_id} className="bg-[#0c0a09] rounded p-2 border border-[#44403c] flex items-center justify-between">
-                    <div>
-                      <div className="text-white text-sm">{quest.name}</div>
-                      <div className="text-[#78716c] text-xs">{quest.objectives?.length || 0} objectives • {quest.difficulty}</div>
+                  <div 
+                    key={quest.quest_id} 
+                    className={`bg-[#0c0a09] rounded p-3 border transition-all ${
+                      selectedQuestForAssignment === quest.quest_id
+                        ? 'border-[#8b5cf6] bg-[#8b5cf6]/10'
+                        : quest.npc_id
+                        ? 'border-[#22c55e]'
+                        : 'border-[#44403c] hover:border-[#8b5cf6] cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      if (!quest.npc_id && selectedNPC) {
+                        setSelectedQuestForAssignment(quest.quest_id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="text-white text-sm font-bold">{quest.name}</div>
+                        <div className="text-[#78716c] text-xs mt-1">
+                          {quest.objectives?.length || 0} objectives • {quest.difficulty}
+                        </div>
+                        {quest.npc_id && (
+                          <div className="text-[#22c55e] text-xs mt-1 flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            Assigned to: {quest.npc_name || 'NPC'}
+                          </div>
+                        )}
+                      </div>
+                      {quest.npc_id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onRemoveQuest) {
+                              onRemoveQuest(quest.quest_id, quest.npc_id);
+                            }
+                          }}
+                          className="ml-2 p-1 text-[#dc2626] hover:text-[#ef4444] transition-colors"
+                          title="Remove quest from NPC"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    {quest.npc_id && (
-                      <span className="text-[#22c55e] text-xs">✓ Assigned to NPC</span>
-                    )}
                   </div>
                 ))}
               </div>
+              
+              {/* Assign Button */}
+              {selectedNPC && selectedQuestForAssignment && (
+                <button
+                  onClick={() => {
+                    const quest = existingQuests.find(q => q.quest_id === selectedQuestForAssignment);
+                    if (quest && onAssignQuest) {
+                      onAssignQuest(selectedQuestForAssignment, selectedNPC);
+                      setSelectedQuestForAssignment(null);
+                    }
+                  }}
+                  className="w-full mt-3 py-2 bg-[#22c55e] text-white rounded hover:bg-[#16a34a] transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Assign Selected Quest to {selectedNPC.name}
+                </button>
+              )}
             </div>
           )}
         </div>
