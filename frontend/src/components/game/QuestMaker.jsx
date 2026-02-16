@@ -20,6 +20,7 @@ const QuestMaker = ({
     items: []
   });
   const [selectedQuestForAssignment, setSelectedQuestForAssignment] = useState(null);
+  const [justCreatedQuest, setJustCreatedQuest] = useState(null);
   
   // Reset selection when NPC changes
   useEffect(() => {
@@ -89,12 +90,22 @@ const QuestMaker = ({
     
     onSaveQuest(quest);
     
+    // Store the just-created quest for assignment
+    setJustCreatedQuest(quest);
+    
     // Reset form
     setQuestName('');
     setQuestDescription('');
     setDifficulty('easy');
     setObjectives([]);
     setRewards({ gold: 0, xp: 0, items: [] });
+  };
+  
+  const handleAssignJustCreated = () => {
+    if (justCreatedQuest && selectedNPC && onAssignQuest) {
+      onAssignQuest(justCreatedQuest.quest_id, selectedNPC);
+      setJustCreatedQuest(null);
+    }
   };
   
   if (!isOpen) return null;
