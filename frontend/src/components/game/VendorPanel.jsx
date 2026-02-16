@@ -194,7 +194,7 @@ const VendorPanel = ({
           <div>
             <h3 className="text-xs text-[#a8a29e] uppercase tracking-wider mb-2 flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Sell Items (Right-click to sell)
+              Sell Items (Click to sell)
             </h3>
             
             {playerInventory.length === 0 ? (
