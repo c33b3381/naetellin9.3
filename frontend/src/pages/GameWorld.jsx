@@ -864,7 +864,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification, currentLootCorpse, createEnemyMesh]);
+  }, [addNotification, currentLootCorpse]);
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
