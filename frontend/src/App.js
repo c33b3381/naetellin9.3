@@ -72,12 +72,23 @@ function App() {
     fetchOnLogin();
   }, [token, isAuthenticated]);
 
-  // Show notifications
+  // Show notifications - track shown IDs to prevent duplicates
+  const shownNotificationsRef = useRef(new Set());
   useEffect(() => {
     notifications.forEach(n => {
-      if (n.type === 'success') toast.success(n.message);
-      else if (n.type === 'error') toast.error(n.message);
-      else toast.info(n.message);
+      if (!shownNotificationsRef.current.has(n.id)) {
+        shownNotificationsRef.current.add(n.id);
+        if (n.type === 'success') toast.success(n.message);
+        else if (n.type === 'error') toast.error(n.message);
+        else toast.info(n.message);
+      }
+    });
+    // Clean up old IDs after notifications are removed
+    const currentIds = new Set(notifications.map(n => n.id));
+    shownNotificationsRef.current.forEach(id => {
+      if (!currentIds.has(id)) {
+        shownNotificationsRef.current.delete(id);
+      }
     });
   }, [notifications]);
 
