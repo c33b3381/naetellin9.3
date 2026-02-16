@@ -5686,6 +5686,8 @@ const GameWorld = () => {
                enemy.enemyType === 'skeleton' ? 0xd4d4d4 :
                enemy.enemyType === 'troll' ? 0x3d5c3d : 0x6b7280);
             
+            console.log('[Enemy Load] Loading enemy with patrolRadius:', enemy.patrolRadius, enemy);
+            
             // Use createEnemyMesh for proper tracking and respawn support
             const enemyMesh = createEnemyMeshRef.current(
               enemy.x,
@@ -5693,7 +5695,8 @@ const GameWorld = () => {
               {
                 ...enemy,
                 color: color,
-                currentHealth: enemy.currentHealth || enemy.maxHealth
+                currentHealth: enemy.currentHealth || enemy.maxHealth,
+                patrolRadius: enemy.patrolRadius || 5 // Ensure patrolRadius is set
               },
               enemy.id
             );
