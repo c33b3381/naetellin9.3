@@ -1302,6 +1302,80 @@ const GameWorld = () => {
     setCurrentLootData(null);
   }, [currentLootData, currentLootCorpse, addNotification]);
   
+  // ==================== ATTACK ANIMATION SYSTEM ====================
+  
+  // Play attack animation - swing the appropriate arm
+  const playAttackAnimation = useCallback((hand = 'right') => {
+    if (!playerRef.current || isAttackingRef.current) return;
+    
+    isAttackingRef.current = true;
+    
+    // Get the arm pivot
+    const armPivotName = hand === 'right' ? 'rightArmPivot' : 'leftArmPivot';
+    const armPivot = playerRef.current.getObjectByName(armPivotName);
+    
+    if (!armPivot) {
+      isAttackingRef.current = false;
+      return;
+    }
+    
+    // Store original rotation
+    const originalRotX = armPivot.rotation.x;
+    const originalRotZ = armPivot.rotation.z;
+    
+    // Animation phases
+    const windUpDuration = 150; // ms - pull back
+    const swingDuration = 100; // ms - swing forward
+    const returnDuration = 200; // ms - return to rest
+    
+    // Direction multiplier for left vs right arm
+    const sideMultiplier = hand === 'right' ? 1 : -1;
+    
+    // Phase 1: Wind up (pull arm back)
+    const startTime = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      
+      if (elapsed < windUpDuration) {
+        // Wind up phase - pull arm back and up
+        const progress = elapsed / windUpDuration;
+        const easeProgress = Math.sin(progress * Math.PI / 2); // Ease out
+        armPivot.rotation.x = originalRotX - easeProgress * 1.2; // Pull back
+        armPivot.rotation.z = originalRotZ + sideMultiplier * easeProgress * 0.3; // Slight outward
+        attackAnimationRef.current = requestAnimationFrame(animate);
+      } else if (elapsed < windUpDuration + swingDuration) {
+        // Swing phase - fast forward swing
+        const swingElapsed = elapsed - windUpDuration;
+        const progress = swingElapsed / swingDuration;
+        const easeProgress = Math.sin(progress * Math.PI / 2); // Ease out
+        armPivot.rotation.x = (originalRotX - 1.2) + easeProgress * 2.5; // Swing forward
+        armPivot.rotation.z = (originalRotZ + sideMultiplier * 0.3) - sideMultiplier * easeProgress * 0.5; // Swing inward
+        attackAnimationRef.current = requestAnimationFrame(animate);
+      } else if (elapsed < windUpDuration + swingDuration + returnDuration) {
+        // Return phase - ease back to rest
+        const returnElapsed = elapsed - windUpDuration - swingDuration;
+        const progress = returnElapsed / returnDuration;
+        const easeProgress = 1 - Math.cos(progress * Math.PI / 2); // Ease in-out
+        const swingEndX = originalRotX + 1.3;
+        const swingEndZ = originalRotZ - sideMultiplier * 0.2;
+        armPivot.rotation.x = swingEndX + (originalRotX - swingEndX) * easeProgress;
+        armPivot.rotation.z = swingEndZ + (originalRotZ - swingEndZ) * easeProgress;
+        attackAnimationRef.current = requestAnimationFrame(animate);
+      } else {
+        // Animation complete - reset to original
+        armPivot.rotation.x = originalRotX;
+        armPivot.rotation.z = originalRotZ;
+        isAttackingRef.current = false;
+        attackAnimationRef.current = null;
+      }
+    };
+    
+    attackAnimationRef.current = requestAnimationFrame(animate);
+  }, []);
+  
+  // ==================== END ATTACK ANIMATION SYSTEM ====================
+  
   // WoW-Style Auto-Attack System
   const performAutoAttack = useCallback(() => {
     const target = selectedTargetRef.current;
