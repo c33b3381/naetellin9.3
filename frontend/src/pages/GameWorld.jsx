@@ -590,7 +590,11 @@ const GameWorld = () => {
     updateCopper,
     logout,
     equipment,
-    skills
+    skills,
+    createCustomQuest,
+    fetchCustomQuests,
+    assignQuestToNPC,
+    getQuestByNPC
   } = useGameStore();
   
   // Use store values for spells and copper
