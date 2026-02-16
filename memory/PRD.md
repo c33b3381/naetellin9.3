@@ -106,11 +106,21 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
   - Blue glow effect at statue base
 
 ## Known Issues
-- None currently active
+- Mouse wheel zoom may be unreliable in map editor mode (user verification pending)
 
 ## Future Improvements
-- Refactor GameWorld.jsx into smaller components
+- Refactor GameWorld.jsx into smaller components (~8000+ lines)
 - Quest completion tracking and rewards
 - More quest objective types
 - Vendor buy system (players can buy items from vendors)
+- Spirit Healer NPC at graveyard for instant revives
+- Weapon swing visual effects
+
+## Deployment Status
+- **Deployment Ready**: YES (as of Dec 2025)
+- **Fixes Applied**:
+  - Replaced deprecated synchronous XMLHttpRequest with navigator.sendBeacon() for reliable page unload saves
+  - Added `/api/player/position-beacon` endpoint for beacon API compatibility
+  - Added JWT_SECRET to backend .env for production security
+  - All environment variables properly configured (MONGO_URL, DB_NAME, CORS_ORIGINS, REACT_APP_BACKEND_URL)
 
