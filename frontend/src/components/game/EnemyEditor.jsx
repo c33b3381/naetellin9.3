@@ -541,6 +541,7 @@ const EnemyEditor = ({
                     onClick={() => {
                       setSelectedEnemyType(key);
                       setEnemyLevel(enemy.baseLevel);
+                      setCustomName(''); // Clear custom name when switching enemy types
                     }}
                     className={`p-2 rounded border text-left transition-all flex items-center gap-2 ${
                       selectedEnemyType === key 
