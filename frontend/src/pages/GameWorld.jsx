@@ -6642,8 +6642,8 @@ const GameWorld = () => {
             const numSlots = 8; // 8 positions around the player
             const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
             
-            // Target position is melee range distance from player, at assigned angle
-            const spreadDistance = meleeRange * 0.8; // Position just inside melee range
+            // Target position is close to player - spread distance of 2 units (very close combat)
+            const spreadDistance = 2; // Close combat distance - enemies surround player tightly
             const targetPosX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
             const targetPosZ = playerRef.current.position.z + Math.sin(slotAngle) * spreadDistance;
             
