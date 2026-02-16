@@ -6781,10 +6781,15 @@ const GameWorld = () => {
       {/* Quest Dialog */}
       <QuestDialog
         isOpen={isQuestDialogOpen}
-        onClose={() => setIsQuestDialogOpen(false)}
+        onClose={() => {
+          setIsQuestDialogOpen(false);
+          setCurrentNPCQuest(null);
+        }}
         npcName={questGiverName}
+        npcType={questGiverType}
         playerQuests={activeQuests}
         onAcceptQuest={handleAcceptQuest}
+        customQuest={currentNPCQuest}
       />
       
       {/* Quest Log */}
