@@ -670,6 +670,50 @@ export const useGameStore = create(
           throw err;
         }
       },
+      
+      // Custom Quest Actions
+      createCustomQuest: async (quest) => {
+        try {
+          const res = await axios.post(`${API}/quests/custom/create`, quest, get().getHeaders());
+          get().addNotification(`Quest "${quest.name}" created!`, 'success');
+          return res.data.quest;
+        } catch (err) {
+          console.error('Failed to create quest:', err);
+          get().addNotification('Failed to create quest', 'error');
+          throw err;
+        }
+      },
+      
+      fetchCustomQuests: async () => {
+        try {
+          const res = await axios.get(`${API}/quests/custom/list`, get().getHeaders());
+          return res.data.quests;
+        } catch (err) {
+          console.error('Failed to fetch custom quests:', err);
+          return [];
+        }
+      },
+      
+      assignQuestToNPC: async (questId, npcData) => {
+        try {
+          await axios.put(`${API}/quests/custom/assign/${questId}`, npcData, get().getHeaders());
+          get().addNotification('Quest assigned to NPC!', 'success');
+        } catch (err) {
+          console.error('Failed to assign quest:', err);
+          get().addNotification('Failed to assign quest', 'error');
+          throw err;
+        }
+      },
+      
+      getQuestByNPC: async (npcId) => {
+        try {
+          const res = await axios.get(`${API}/quests/custom/by-npc/${npcId}`, get().getHeaders());
+          return res.data.quest;
+        } catch (err) {
+          console.error('Failed to get NPC quest:', err);
+          return null;
+        }
+      },
     }),
     {
       name: 'quest-of-honor-storage',
