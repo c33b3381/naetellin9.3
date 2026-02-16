@@ -5821,10 +5821,10 @@ const GameWorld = () => {
       createCrystal(x, z, color, 0.8 + Math.random() * 0.5);
     }
     
-    // Cave skeletons
-    createMonster(20, 150, 0xd4d4d4, 'Cave Skeleton', 'skeleton', 12);
-    createMonster(-30, 180, 0xc4c4c4, 'Ancient Skeleton', 'skeleton', 15);
-    createMonster(50, 200, 0xe4e4e4, 'Skeleton Warrior', 'skeleton', 18);
+    // NOTE: Legacy cave skeletons removed - use F3 Enemy Editor
+    // createMonster(20, 150, 0xd4d4d4, 'Cave Skeleton', 'skeleton', 12);
+    // createMonster(-30, 180, 0xc4c4c4, 'Ancient Skeleton', 'skeleton', 15);
+    // createMonster(50, 200, 0xe4e4e4, 'Skeleton Warrior', 'skeleton', 18);
     
     // Scorched Plains Zone (West) - Desert with trolls
     // Cacti/dead trees
