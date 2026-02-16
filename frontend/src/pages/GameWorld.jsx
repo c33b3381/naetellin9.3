@@ -1635,7 +1635,7 @@ const GameWorld = () => {
           x: pos.x,
           y: pos.y,
           z: pos.z,
-          zone: 'starter_village'
+          zone: currentZoneRef.current || 'starter_village'
         });
       }
     }, 500); // Sync every 500ms
