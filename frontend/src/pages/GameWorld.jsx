@@ -3812,19 +3812,20 @@ const GameWorld = () => {
       return monsterGroup;
     };
     
+    // NOTE: Legacy hardcoded monsters removed - use F3 Enemy Editor to place enemies
     // Goblin camp
-    createMonster(-30, 25, 0x4a7c23, 'Goblin Scout', 'goblin', 2);
-    createMonster(-35, 28, 0x4a7c23, 'Goblin', 'goblin', 1);
-    createMonster(-28, 30, 0x4a7c23, 'Goblin Warrior', 'goblin', 3);
-    createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
+    // createMonster(-30, 25, 0x4a7c23, 'Goblin Scout', 'goblin', 2);
+    // createMonster(-35, 28, 0x4a7c23, 'Goblin', 'goblin', 1);
+    // createMonster(-28, 30, 0x4a7c23, 'Goblin Warrior', 'goblin', 3);
+    // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
     
     // Wolf pack
-    createMonster(30, 25, 0x808080, 'Gray Wolf', 'wolf', 4);
-    createMonster(35, 22, 0x696969, 'Timber Wolf', 'wolf', 5);
-    createMonster(28, 28, 0x808080, 'Young Wolf', 'wolf', 2);
+    // createMonster(30, 25, 0x808080, 'Gray Wolf', 'wolf', 4);
+    // createMonster(35, 22, 0x696969, 'Timber Wolf', 'wolf', 5);
+    // createMonster(28, 28, 0x808080, 'Young Wolf', 'wolf', 2);
     
     // Troll near ruins
-    createMonster(40, -35, 0x556B2F, 'Forest Troll', 'troll', 10);
+    // createMonster(40, -35, 0x556B2F, 'Forest Troll', 'troll', 10);
     
     // Mining rocks
     const createRock = (x, z, color, ore = 'copper') => {
