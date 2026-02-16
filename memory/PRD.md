@@ -10,7 +10,7 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Character System**: Player stats, inventory, equipment, skills
 - **Combat System**: Auto-attack, abilities, monster battles
 - **Editor Tools**:
-  - F1: World Builder - Place NPCs, objects, furniture
+  - F1: World Builder - Place NPCs, objects, furniture, **Vendor NPCs**
   - F2: Terrain Editor - Modify terrain height/color
   - F3: Enemy Editor - Spawn and customize enemies
   - F5: Map Editor Mode - Top-down world editing
@@ -22,6 +22,12 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
   - Quest assignment to NPCs with visual "!" markers
   - Quest dialog integration for custom quests
   - Quest removal from NPCs
+- **Vendor System** (NEW):
+  - 8 vendor types: Blacksmith, General Goods, Trade Goods, Food/Water, Weapons, Armor, Potions, Magic
+  - Visual gold coin indicator above vendor heads
+  - VendorPanel UI for selling items from inventory
+  - Different buy rates per vendor type (30-60%)
+  - Right-click or double-click to interact
 - **Player Persistence**: Position, inventory, and world state saved to database
 
 ### Quest Maker Workflow
