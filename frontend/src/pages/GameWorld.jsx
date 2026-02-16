@@ -5163,7 +5163,7 @@ const GameWorld = () => {
               // Set color and show notification based on target type
               if (targetObject.userData.hostile) {
                 targetIndicatorRef.current.material.color.setHex(0xff0000); // Red for hostile
-                addNotification(`Target: ${targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
+                addNotification(`Target: ${targetObject.userData?.name || targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
               } else if (targetObject.userData.type === 'trainer') {
                 targetIndicatorRef.current.material.color.setHex(0xf59e0b); // Orange for trainers
                 addNotification(`${targetObject.name || 'Trainer'} - Double-click to train`, 'info');
@@ -5400,7 +5400,7 @@ const GameWorld = () => {
               // Set color and notification based on target type
               if (targetObject.userData.hostile) {
                 targetIndicatorRef.current.material.color.setHex(0xff0000);
-                addNotification(`Target: ${targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
+                addNotification(`Target: ${targetObject.userData?.name || targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
                 // Start auto-attacking hostile targets
                 setIsAutoAttacking(true);
                 enterCombat();
