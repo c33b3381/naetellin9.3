@@ -797,13 +797,16 @@ const GameWorld = () => {
       }
     }
     
-    // Set 30-second corpse despawn timer, then RESPAWN the enemy
+    // Set 15-second corpse despawn timer, then RESPAWN the enemy
     const RESPAWN_TIME = 15000; // 15 seconds
     const despawnTimer = setTimeout(() => {
+      console.log('[RESPAWN] Timer fired for enemy:', enemyId);
+      
       // Remove corpse from scene
       if (sceneRef.current && enemy.parent) {
         sceneRef.current.remove(enemy);
         selectableObjects.current = selectableObjects.current.filter(obj => obj !== enemy);
+        console.log('[RESPAWN] Corpse removed from scene');
       }
       
       // Clean up tracking
@@ -815,24 +818,25 @@ const GameWorld = () => {
       }
       
       // Close loot panel if this corpse was being looted
-      if (currentLootCorpse === enemyId) {
-        setIsLootPanelOpen(false);
-        setCurrentLootData(null);
-        setCurrentLootCorpse(null);
-      }
+      setIsLootPanelOpen(prev => {
+        // Check via closure if this was the looted corpse
+        return prev;
+      });
+      setCurrentLootData(null);
+      setCurrentLootCorpse(null);
       
       // RESPAWN: Check if this enemy has spawn data saved (placed enemies respawn)
       const spawnData = enemySpawnDataRef.current.get(enemyId);
       console.log('[RESPAWN] Checking respawn for enemy:', enemyId);
       console.log('[RESPAWN] Spawn data found:', spawnData);
       console.log('[RESPAWN] createEnemyMeshRef.current exists:', !!createEnemyMeshRef.current);
-      console.log('[RESPAWN] All spawn data keys:', Array.from(enemySpawnDataRef.current.keys()));
+      console.log('[RESPAWN] sceneRef.current exists:', !!sceneRef.current);
       
       if (spawnData && sceneRef.current && createEnemyMeshRef.current) {
         // Generate new ID for respawned enemy
         const newEnemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        console.log('[RESPAWN] Creating new enemy with ID:', newEnemyId);
+        console.log('[RESPAWN] Creating new enemy with ID:', newEnemyId, 'at position:', spawnData.x, spawnData.z);
         
         // Create new enemy mesh at original spawn position using the ref
         const newEnemy = createEnemyMeshRef.current(
@@ -863,8 +867,19 @@ const GameWorld = () => {
           enemySpawnDataRef.current.delete(enemyId);
           enemySpawnDataRef.current.set(newEnemyId, spawnData);
           
+          // Update database with new enemy ID
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...spawnData,
+              id: newEnemyId,
+              currentHealth: spawnData.maxHealth
+            })
+          }).catch(err => console.error('[RESPAWN] Failed to update database:', err));
+          
           addNotification(`${spawnData.name} has respawned!`, 'info');
-          console.log(`[RESPAWN] Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
+          console.log(`[RESPAWN] SUCCESS: Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
         } else {
           console.error('[RESPAWN] Failed to create enemy mesh');
         }
@@ -876,7 +891,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification, currentLootCorpse]);
+  }, [addNotification]);
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
