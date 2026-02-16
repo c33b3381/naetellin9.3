@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 
 const Minimap = ({ 
   scene,
@@ -19,10 +20,7 @@ const Minimap = ({
   useEffect(() => {
     if (!canvasRef.current || !scene) return;
     
-    const THREE = window.THREE || require('three');
-    
     // Create orthographic camera for top-down view
-    const aspect = 1;
     minimapCameraRef.current = new THREE.OrthographicCamera(
       -viewRange, viewRange,
       viewRange, -viewRange,
