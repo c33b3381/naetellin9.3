@@ -3053,10 +3053,49 @@ const GameWorld = () => {
     };
     
     // Dead trees around graveyard
-    createGraveyardTree(GRAVEYARD_CENTER.x - 12, GRAVEYARD_CENTER.z - 8, 1.2);
-    createGraveyardTree(GRAVEYARD_CENTER.x + 12, GRAVEYARD_CENTER.z - 8, 1);
-    createGraveyardTree(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 12, 0.9);
-    createGraveyardTree(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 12, 1.1);
+    const graveyardTrees = [
+      createGraveyardTree(GRAVEYARD_CENTER.x - 12, GRAVEYARD_CENTER.z - 8, 1.2),
+      createGraveyardTree(GRAVEYARD_CENTER.x + 12, GRAVEYARD_CENTER.z - 8, 1),
+      createGraveyardTree(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 12, 0.9),
+      createGraveyardTree(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 12, 1.1)
+    ];
+    
+    // Reposition all graveyard objects after terrain loads (async terrain fetch)
+    setTimeout(() => {
+      const repositionToTerrain = (obj) => {
+        if (!obj) return;
+        const y = getActualTerrainHeight(obj.position.x, obj.position.z);
+        obj.position.y = y;
+      };
+      
+      // Find and reposition all graveyard objects
+      scene.traverse((child) => {
+        if (child.userData && (
+          child.userData.type === 'gravestone' || 
+          child.userData.type === 'tomb' || 
+          child.userData.type === 'statue'
+        )) {
+          repositionToTerrain(child);
+        }
+      });
+      
+      // Reposition fences and trees (they don't have userData.type)
+      graveyardTrees.forEach(tree => repositionToTerrain(tree));
+      
+      // Find fences by checking if they're in graveyard area
+      scene.children.forEach(child => {
+        if (child.isGroup && 
+            child.position.x >= GRAVEYARD_CENTER.x - 15 && 
+            child.position.x <= GRAVEYARD_CENTER.x + 15 &&
+            child.position.z >= GRAVEYARD_CENTER.z - 20 && 
+            child.position.z <= GRAVEYARD_CENTER.z + 20) {
+          // Check if it looks like a fence (has many children but no userData.type)
+          if (child.children.length > 5 && !child.userData.type) {
+            repositionToTerrain(child);
+          }
+        }
+      });
+    }, 1000); // Wait for terrain to load
     
     // ==================== END GRAVEYARD AREA ====================
     
