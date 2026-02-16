@@ -888,7 +888,10 @@ const GameWorld = () => {
             });
           }).catch(err => console.error('[RESPAWN] Failed to update database:', err));
           
-          addNotification(`${spawnData.name} has respawned!`, 'info');
+          // Use ref for notification to avoid stale closure
+          if (addNotificationRef.current) {
+            addNotificationRef.current(`${spawnData.name} has respawned!`, 'info');
+          }
           console.log(`[RESPAWN] SUCCESS: Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
         } else {
           console.error('[RESPAWN] Failed to create enemy mesh');
