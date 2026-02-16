@@ -124,26 +124,10 @@ const WorldMap = ({
             className="rounded border border-[#44403c]"
             data-testid="world-map-svg"
           >
-            {/* Background */}
-            <rect x="0" y="0" width={mapWidth} height={mapHeight} fill="#0d1117" />
+            {/* Background - ocean/unexplored */}
+            <rect x="0" y="0" width={mapWidth} height={mapHeight} fill="#0a0a1a" />
             
-            {/* Grid lines */}
-            {[...Array(7)].map((_, i) => (
-              <g key={`grid-${i}`}>
-                <line 
-                  x1={i * 100} y1="0" 
-                  x2={i * 100} y2={mapHeight} 
-                  stroke="#1e293b" strokeWidth="1" 
-                />
-                <line 
-                  x1="0" y1={i * 100} 
-                  x2={mapWidth} y2={i * 100} 
-                  stroke="#1e293b" strokeWidth="1" 
-                />
-              </g>
-            ))}
-            
-            {/* Zones */}
+            {/* Zones - rendered first as base layer */}
             {Object.entries(WORLD_ZONES).map(([zoneKey, zone]) => {
               const topLeft = worldToMap(zone.bounds.minX, zone.bounds.minZ);
               const bottomRight = worldToMap(zone.bounds.maxX, zone.bounds.maxZ);
@@ -160,9 +144,9 @@ const WorldMap = ({
                     width={width}
                     height={height}
                     fill={zone.color}
-                    opacity={isCurrentZone ? 0.8 : 0.5}
-                    stroke={isCurrentZone ? '#fbbf24' : '#555555'}
-                    strokeWidth={isCurrentZone ? 3 : 1}
+                    opacity={isCurrentZone ? 0.9 : 0.6}
+                    stroke={isCurrentZone ? '#fbbf24' : '#666666'}
+                    strokeWidth={isCurrentZone ? 3 : 2}
                     rx="4"
                   />
                   {/* Zone label */}
@@ -170,19 +154,19 @@ const WorldMap = ({
                     x={topLeft.x + width / 2}
                     y={topLeft.y + height / 2 - 10}
                     textAnchor="middle"
-                    fill={isCurrentZone ? '#fbbf24' : '#a8a29e'}
-                    fontSize="14"
+                    fill={isCurrentZone ? '#fbbf24' : '#e0e0e0'}
+                    fontSize="13"
                     fontFamily="Cinzel, serif"
                     fontWeight={isCurrentZone ? 'bold' : 'normal'}
                   >
                     {zone.icon} {zone.name}
                   </text>
-                  {/* Level range (placeholder) */}
+                  {/* Level range */}
                   <text
                     x={topLeft.x + width / 2}
                     y={topLeft.y + height / 2 + 10}
                     textAnchor="middle"
-                    fill="#78716c"
+                    fill="#a0a0a0"
                     fontSize="11"
                   >
                     {zoneKey === 'starter_village' ? 'Lv. 1-5' : 
@@ -194,6 +178,24 @@ const WorldMap = ({
                 </g>
               );
             })}
+            
+            {/* Grid lines - on top of zones */}
+            {[...Array(7)].map((_, i) => (
+              <g key={`grid-${i}`}>
+                <line 
+                  x1={i * 100} y1="0" 
+                  x2={i * 100} y2={mapHeight} 
+                  stroke="#2a2a3a" strokeWidth="1" 
+                  opacity="0.5"
+                />
+                <line 
+                  x1="0" y1={i * 100} 
+                  x2={mapWidth} y2={i * 100} 
+                  stroke="#2a2a3a" strokeWidth="1" 
+                  opacity="0.5"
+                />
+              </g>
+            ))}
             
             {/* Graveyard marker */}
             <g transform={`translate(${worldToMap(-40, -40).x}, ${worldToMap(-40, -40).y})`}>
