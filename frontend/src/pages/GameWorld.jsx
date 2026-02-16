@@ -5381,6 +5381,12 @@ const GameWorld = () => {
             }
             
             setPendingPlacement(null);
+            // Reset placement guard after a short delay
+            setTimeout(() => {
+              placementInProgressRef.current = false;
+            }, 100);
+          } else {
+            placementInProgressRef.current = false;
           }
           return;
         }
