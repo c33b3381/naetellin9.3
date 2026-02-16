@@ -4173,17 +4173,7 @@ const GameWorld = () => {
             else if (fullType.includes('trainer_ranger')) trainerClass = 'ranger';
             else if (fullType.includes('trainer_paladin')) trainerClass = 'paladin';
             
-            // Add trainer indicator (yellow book) if this is a trainer
-            if (trainerClass) {
-              const indicatorMat = new THREE.MeshStandardMaterial({ 
-                color: 0xf59e0b, 
-                emissive: 0xf59e0b, 
-                emissiveIntensity: 0.8 
-              });
-              const indicator = new THREE.Mesh(new THREE.BoxGeometry(0.3 * scale, 0.4 * scale, 0.1 * scale), indicatorMat);
-              indicator.position.y = 1.6 * scale;
-              group.add(indicator);
-            }
+            // Note: Quest markers are added separately when quests are assigned via Quest Maker
             
             group.userData = { 
               type: isMonster ? 'monster' : (isAnimal ? 'animal' : (trainerClass ? 'trainer' : 'npc')),
