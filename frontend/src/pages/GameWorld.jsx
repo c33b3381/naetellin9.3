@@ -7687,7 +7687,14 @@ const GameWorld = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative select-none" data-testid="game-world">
+    <div 
+      className="h-screen w-screen overflow-hidden relative select-none" 
+      data-testid="game-world"
+      style={{
+        filter: isGhost ? 'grayscale(0.85) brightness(0.7)' : 'none',
+        transition: 'filter 0.5s ease-in-out'
+      }}
+    >
       {/* 3D Canvas Container */}
       <div ref={containerRef} className="absolute inset-0 z-0" />
 
