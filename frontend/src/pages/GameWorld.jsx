@@ -480,7 +480,7 @@ const GameWorld = () => {
     return finalXP;
   }, [getMobDifficultyColor]);
   
-  // Handle gaining XP
+  // Handle gaining XP (uses addNotificationRef to avoid initialization order issues)
   const gainXP = useCallback((amount) => {
     if (playerLevel >= MAX_LEVEL) return; // Already max level
     
@@ -517,8 +517,10 @@ const GameWorld = () => {
             setXpToNextLevel(0);
           }
           
-          // Show level up notification
-          addNotification(`LEVEL UP! You are now level ${newLevel}!`, 'success');
+          // Show level up notification using ref
+          if (addNotificationRef.current) {
+            addNotificationRef.current(`LEVEL UP! You are now level ${newLevel}!`, 'success');
+          }
           
           // Combat log
           setCombatLog(prev => [...prev.slice(-9), {
@@ -530,7 +532,7 @@ const GameWorld = () => {
       
       return newXP;
     });
-  }, [playerLevel, addNotification]);
+  }, [playerLevel]);
   
   // Get current level progress (0-1)
   const getLevelProgress = useCallback(() => {
