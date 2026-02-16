@@ -2617,17 +2617,28 @@ const GameWorld = () => {
       torso.castShadow = true;
       playerGroup.add(torso);
       
-      // Arms
+      // Arms - with pivot points for animation
       const armMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
-      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), armMaterial);
-      leftArm.position.set(-0.35, 1, 0);
-      leftArm.castShadow = true;
-      playerGroup.add(leftArm);
       
+      // Left arm pivot (for rotation from shoulder)
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.name = 'leftArmPivot';
+      leftArmPivot.position.set(-0.35, 1.2, 0); // Shoulder position
+      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), armMaterial);
+      leftArm.position.y = -0.2; // Offset from pivot
+      leftArm.castShadow = true;
+      leftArmPivot.add(leftArm);
+      playerGroup.add(leftArmPivot);
+      
+      // Right arm pivot (for rotation from shoulder)
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.name = 'rightArmPivot';
+      rightArmPivot.position.set(0.35, 1.2, 0); // Shoulder position
       const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), armMaterial);
-      rightArm.position.set(0.35, 1, 0);
+      rightArm.position.y = -0.2; // Offset from pivot
       rightArm.castShadow = true;
-      playerGroup.add(rightArm);
+      rightArmPivot.add(rightArm);
+      playerGroup.add(rightArmPivot);
       
       // Head
       const headMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
