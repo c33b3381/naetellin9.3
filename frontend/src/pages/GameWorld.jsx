@@ -822,16 +822,12 @@ const GameWorld = () => {
       
       // RESPAWN: Check if this enemy has spawn data saved (placed enemies respawn)
       const spawnData = enemySpawnDataRef.current.get(enemyId);
-      if (spawnData && sceneRef.current) {
+      if (spawnData && sceneRef.current && createEnemyMeshRef.current) {
         // Generate new ID for respawned enemy
         const newEnemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        // Create new enemy mesh at original spawn position
-        const color = spawnData.color ? 
-          (typeof spawnData.color === 'string' ? parseInt(spawnData.color.replace('#', ''), 16) : spawnData.color) :
-          0x6b7280;
-        
-        const newEnemy = createEnemyMesh(
+        // Create new enemy mesh at original spawn position using the ref
+        const newEnemy = createEnemyMeshRef.current(
           spawnData.x,
           spawnData.z,
           {
