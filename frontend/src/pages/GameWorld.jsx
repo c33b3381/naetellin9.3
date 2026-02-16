@@ -7484,7 +7484,7 @@ const GameWorld = () => {
           
           const enemyId = enemyMesh.userData.enemyId;
           const isInCombat = combatEngagedEnemiesRef.current.has(enemyId);
-          const patrolRadius = enemyMesh.userData.patrolRadius || 0;
+          const patrolRadius = enemyMesh.userData.patrolRadius || 5; // Default to 5 if not set
           const spawnX = enemyMesh.userData.spawnX;
           const spawnZ = enemyMesh.userData.spawnZ;
           
