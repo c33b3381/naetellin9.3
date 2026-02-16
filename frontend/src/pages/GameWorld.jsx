@@ -4588,6 +4588,22 @@ const GameWorld = () => {
         if (data.enemies && data.enemies.length > 0) {
           console.log(`Loading ${data.enemies.length} saved enemies...`);
           
+          // Wait for createEnemyMeshRef to be available
+          const waitForCreateEnemyMesh = () => {
+            return new Promise((resolve) => {
+              const check = () => {
+                if (createEnemyMeshRef.current) {
+                  resolve();
+                } else {
+                  setTimeout(check, 100);
+                }
+              };
+              check();
+            });
+          };
+          
+          await waitForCreateEnemyMesh();
+          
           data.enemies.forEach(enemy => {
             // Use saved color or derive from enemy type
             const color = enemy.color ? 
@@ -4597,22 +4613,29 @@ const GameWorld = () => {
                enemy.enemyType === 'skeleton' ? 0xd4d4d4 :
                enemy.enemyType === 'troll' ? 0x3d5c3d : 0x6b7280);
             
-            createMonster(
+            // Use createEnemyMesh for proper tracking and respawn support
+            const enemyMesh = createEnemyMeshRef.current(
               enemy.x,
               enemy.z,
-              color,
-              enemy.name,
-              enemy.enemyType,
-              enemy.level,
-              enemy.id,
-              enemy.maxHealth,
-              enemy.damage
+              {
+                ...enemy,
+                color: color,
+                currentHealth: enemy.currentHealth || enemy.maxHealth
+              },
+              enemy.id
             );
+            
+            if (enemyMesh && sceneRef.current) {
+              sceneRef.current.add(enemyMesh);
+              enemyMeshesRef.current.push(enemyMesh);
+              selectableObjects.current.push(enemyMesh);
+            }
             
             // Store spawn data for respawning
             enemySpawnDataRef.current.set(enemy.id, {
               ...enemy,
               color: color
+            });
             });
           });
           
