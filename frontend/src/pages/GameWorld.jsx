@@ -6551,6 +6551,8 @@ const GameWorld = () => {
               inCombat: false,
               aggroTarget: null,
               lastAttack: 0,
+              notifiedAggro: false,
+              notifiedReset: false,
               spawnPos: {
                 x: enemyMesh.userData.spawnX || enemyMesh.position.x,
                 z: enemyMesh.userData.spawnZ || enemyMesh.position.z
@@ -6564,11 +6566,11 @@ const GameWorld = () => {
             combatState.inCombat = true;
             combatState.aggroTarget = playerRef.current;
             combatState.lastAttack = combatNow - 2; // Allow attack after 0.5s
-            combatState.notifiedAggro = true; // Track that we showed notification
             combatEngagedEnemiesRef.current.add(enemyId);
             
-            // Notification ONCE when enemy first aggros
-            if (addNotificationRef.current) {
+            // Notification ONCE when enemy first aggros - check flag BEFORE showing
+            if (!combatState.notifiedAggro && addNotificationRef.current) {
+              combatState.notifiedAggro = true;
               addNotificationRef.current(`${enemyMesh.userData.name} attacks you!`, 'warning');
             }
             if (enterCombatRef.current) {
