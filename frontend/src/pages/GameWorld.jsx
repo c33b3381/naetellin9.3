@@ -428,6 +428,16 @@ const GameWorld = () => {
   const addNotificationRef = useRef(null);
   const enterCombatRef = useRef(null);
   
+  // Death and Resurrection System
+  const [isDead, setIsDead] = useState(false);
+  const [isGhost, setIsGhost] = useState(false);
+  const [showReleaseDialog, setShowReleaseDialog] = useState(false);
+  const [showReviveDialog, setShowReviveDialog] = useState(false);
+  const [corpsePosition, setCorpsePosition] = useState(null);
+  const corpseMarkerRef = useRef(null);
+  const CORPSE_REVIVE_RADIUS = 5; // Must be within 5 units of corpse to revive
+  const SPAWN_POSITION = { x: 0, z: 0 }; // Spawn/graveyard location
+  
   // Trainer state
   const [isTrainerOpen, setIsTrainerOpen] = useState(false);
   
