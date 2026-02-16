@@ -904,7 +904,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, []); // No dependencies needed - using refs for everything inside setTimeout
+  }, [addNotification]); // addNotification needed for the immediate "Defeated" notification
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
