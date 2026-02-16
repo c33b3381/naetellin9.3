@@ -19,6 +19,7 @@ import QuestDialog, { AVAILABLE_QUESTS } from '../components/game/QuestDialog';
 import QuestLog from '../components/game/QuestLog';
 import TerrainEditor from '../components/game/TerrainEditor';
 import EnemyEditor from '../components/game/EnemyEditor';
+import QuestMaker from '../components/game/QuestMaker';
 import LootPanel, { generateLoot } from '../components/game/LootPanel';
 import BagBar from '../components/game/BagBar';
 import ItemDatabaseEditor from '../components/game/ItemDatabaseEditor';
