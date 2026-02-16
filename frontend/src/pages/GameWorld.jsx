@@ -6908,6 +6908,11 @@ const GameWorld = () => {
           e.preventDefault();
           setIsSpellBookOpen(prev => !prev);
           break;
+        case 'KeyM':
+          e.preventDefault();
+          // Toggle World Map
+          setIsWorldMapOpen(prev => !prev);
+          break;
         case 'KeyB':
           e.preventDefault();
           // Toggle backpack (bag 0)
