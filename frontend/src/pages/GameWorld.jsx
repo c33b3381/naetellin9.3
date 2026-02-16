@@ -4558,9 +4558,10 @@ const GameWorld = () => {
             if (mesh) {
               mesh.userData.editorId = obj.id;
               
-              // Apply rotation if saved
-              if (obj.rotation && obj.rotation.y !== undefined) {
-                mesh.rotation.y = (obj.rotation.y * Math.PI) / 180; // Convert degrees to radians
+              // Apply rotation if saved (rotation is stored in degrees)
+              if (obj.rotation !== undefined && obj.rotation !== 0) {
+                mesh.rotation.y = (obj.rotation * Math.PI) / 180; // Convert degrees to radians
+                console.log('Applied rotation to', obj.name, ':', obj.rotation, 'degrees');
               }
               
               // Add quest marker if NPC has a quest assigned
