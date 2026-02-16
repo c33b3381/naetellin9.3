@@ -1,7 +1,7 @@
 import { useGameStore } from '../../store/gameStore';
 import { 
   Backpack, BookOpen, Scroll, Settings, 
-  Sword, LogOut, Swords, Shield, Sparkles, User
+  Sword, LogOut, Swords, Shield, Sparkles, User, Star
 } from 'lucide-react';
 
 const HUD = ({ 
@@ -12,7 +12,11 @@ const HUD = ({
   isInCombat = false,
   onOpenSpellBook,
   onOpenCharacter,
-  onLogout
+  onLogout,
+  playerLevel = 1,
+  currentXP = 0,
+  xpProgress = 0,
+  xpToNextLevel = 250
 }) => {
   const { 
     character, 
@@ -38,10 +42,6 @@ const HUD = ({
   const mana = currentMana ?? stats?.mana ?? 50;
   const maxMp = maxMana ?? stats?.max_mana ?? 50;
 
-  const combatLevel = Math.floor(
-    ((skills?.attack?.level || 1) + (skills?.defense?.level || 1) + (skills?.strength?.level || 1)) / 3
-  );
-
   return (
     <>
       {/* Top Left - Character Info */}
@@ -50,15 +50,19 @@ const HUD = ({
           {/* Character header */}
           <div className="flex items-center gap-3 mb-3">
             <div 
-              className="w-12 h-12 rounded border-2 border-[#44403c] flex items-center justify-center"
+              className="w-12 h-12 rounded border-2 border-[#44403c] flex items-center justify-center relative"
               style={{ backgroundColor: character?.skin_tone || '#D2B48C' }}
             >
               <Sword className="w-6 h-6 text-[#dc2626]" />
+              {/* Level badge */}
+              <div className="absolute -bottom-1 -right-1 bg-[#1a1513] border border-[#fbbf24] rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-[#fbbf24]">{playerLevel}</span>
+              </div>
             </div>
             <div className="flex-1">
               <p className="font-cinzel text-[#f5f5f4] font-bold">{character?.name || 'Hero'}</p>
               <p className="font-rajdhani text-xs text-[#a8a29e]">
-                Combat Lvl {combatLevel} • {character?.class_type || 'Warrior'}
+                Level {playerLevel} • {character?.class_type || 'Warrior'}
               </p>
             </div>
             {/* Combat indicator */}
@@ -90,6 +94,17 @@ const HUD = ({
               />
               <span className="stat-bar-text text-[#f5f5f4]">
                 MP: {Math.floor(mana)}/{maxMp}
+              </span>
+            </div>
+            
+            {/* XP Bar */}
+            <div className="stat-bar h-3">
+              <div 
+                className="stat-bar-fill bg-gradient-to-r from-[#7c3aed] to-[#a855f7] transition-all duration-500"
+                style={{ width: `${xpProgress * 100}%` }}
+              />
+              <span className="stat-bar-text text-[#f5f5f4] text-[9px]">
+                {playerLevel >= 20 ? 'MAX LEVEL' : `XP: ${Math.floor(xpProgress * 100)}%`}
               </span>
             </div>
             
