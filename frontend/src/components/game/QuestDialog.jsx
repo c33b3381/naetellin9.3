@@ -47,10 +47,46 @@ const QuestDialog = ({
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail
   
-  // Filter out quests the player already has
-  const availableQuests = Object.values(AVAILABLE_QUESTS).filter(
-    quest => !playerQuests.some(pq => pq.id === quest.id)
+  // Reset state when dialog opens/closes or NPC changes
+  useEffect(() => {
+    if (isOpen) {
+      setDialogState('greeting');
+      setSelectedQuest(null);
+    }
+  }, [isOpen, npcName]);
+  
+  // Build the list of available quests - combine standard quests with custom quest
+  const standardQuests = Object.values(AVAILABLE_QUESTS).filter(
+    quest => !playerQuests.some(pq => pq.id === quest.id || pq.quest_id === quest.id)
   );
+  
+  // Convert custom quest to standard format if present and not already accepted
+  const formattedCustomQuest = customQuest && !playerQuests.some(pq => 
+    pq.id === customQuest.quest_id || pq.quest_id === customQuest.quest_id
+  ) ? {
+    id: customQuest.quest_id,
+    quest_id: customQuest.quest_id,
+    name: customQuest.name,
+    giver: npcName,
+    description: customQuest.description || 'A custom quest from this NPC.',
+    objectives: (customQuest.objectives || []).map(obj => ({
+      id: obj.id,
+      description: obj.description || `${obj.type}: ${obj.target}`,
+      current: 0,
+      required: obj.required || 1
+    })),
+    rewards: customQuest.rewards || { xp: 50, gold: 10 },
+    difficulty: customQuest.difficulty || 'medium',
+    level: 1,
+    custom: true
+  } : null;
+  
+  // Determine what quests are available for this NPC
+  // If it's a standard questgiver, show standard quests
+  // If NPC has a custom quest, show that quest
+  const availableQuests = customQuest 
+    ? (formattedCustomQuest ? [formattedCustomQuest] : [])
+    : standardQuests;
   
   const handleAccept = () => {
     if (selectedQuest && onAcceptQuest) {
@@ -69,11 +105,15 @@ const QuestDialog = ({
       case 'easy': return '#22c55e';
       case 'medium': return '#f59e0b';
       case 'hard': return '#dc2626';
+      case 'epic': return '#a855f7';
       default: return '#78716c';
     }
   };
   
   if (!isOpen) return null;
+  
+  // Determine NPC role text
+  const npcRoleText = customQuest ? 'Quest Giver' : (npcType === 'questgiver' ? 'Quest Giver' : 'NPC');
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto" data-testid="quest-dialog">
