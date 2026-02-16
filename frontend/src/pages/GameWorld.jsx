@@ -796,7 +796,8 @@ const GameWorld = () => {
       }
     }
     
-    // Set 30-second corpse despawn timer
+    // Set 30-second corpse despawn timer, then RESPAWN the enemy
+    const RESPAWN_TIME = 30000; // 30 seconds
     const despawnTimer = setTimeout(() => {
       // Remove corpse from scene
       if (sceneRef.current && enemy.parent) {
@@ -810,7 +811,6 @@ const GameWorld = () => {
         delete enemyPatrolDataRef.current[enemyId];
         lootableCorpsesRef.current.delete(enemyId);
         corpseTimersRef.current.delete(enemyId);
-        setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
       }
       
       // Close loot panel if this corpse was being looted
@@ -819,10 +819,55 @@ const GameWorld = () => {
         setCurrentLootData(null);
         setCurrentLootCorpse(null);
       }
-    }, 30000); // 30 seconds
+      
+      // RESPAWN: Check if this enemy has spawn data saved (placed enemies respawn)
+      const spawnData = enemySpawnDataRef.current.get(enemyId);
+      if (spawnData && sceneRef.current) {
+        // Generate new ID for respawned enemy
+        const newEnemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Create new enemy mesh at original spawn position
+        const color = spawnData.color ? 
+          (typeof spawnData.color === 'string' ? parseInt(spawnData.color.replace('#', ''), 16) : spawnData.color) :
+          0x6b7280;
+        
+        const newEnemy = createEnemyMesh(
+          spawnData.x,
+          spawnData.z,
+          {
+            ...spawnData,
+            currentHealth: spawnData.maxHealth // Full health on respawn
+          },
+          newEnemyId
+        );
+        
+        if (newEnemy) {
+          sceneRef.current.add(newEnemy);
+          enemyMeshesRef.current.push(newEnemy);
+          selectableObjects.current.push(newEnemy);
+          
+          // Update placedEnemies with new enemy ID
+          setPlacedEnemies(prev => prev.map(e => 
+            e.id === enemyId 
+              ? { ...e, id: newEnemyId, currentHealth: e.maxHealth }
+              : e
+          ));
+          
+          // Update spawn data reference with new ID
+          enemySpawnDataRef.current.delete(enemyId);
+          enemySpawnDataRef.current.set(newEnemyId, spawnData);
+          
+          addNotification(`${spawnData.name} has respawned!`, 'info');
+          console.log(`Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
+        }
+      } else {
+        // No spawn data = temporary enemy, just remove from placedEnemies
+        setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
+      }
+    }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification, currentLootCorpse]);
+  }, [addNotification, currentLootCorpse, createEnemyMesh]);
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
