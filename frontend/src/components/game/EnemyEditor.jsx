@@ -513,6 +513,7 @@ const EnemyEditor = ({
                   onClick={() => {
                     setSelectedTier(key);
                     setSelectedEnemyType(Object.keys(ENEMY_DATABASE[key].enemies)[0]);
+                    setCustomName(''); // Clear custom name when switching tiers
                   }}
                   className={`p-2 rounded border transition-all text-xs ${
                     selectedTier === key 
