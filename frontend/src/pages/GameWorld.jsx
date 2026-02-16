@@ -5001,6 +5001,37 @@ const GameWorld = () => {
                 return;
               }
               
+              // VENDOR INTERACTION - Right-click to open vendor panel
+              if (targetObject.userData.type === 'vendor') {
+                // Check distance to vendor (must be within 5 units)
+                const dx = playerRef.current.position.x - targetObject.position.x;
+                const dz = playerRef.current.position.z - targetObject.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                
+                if (distance <= 5) {
+                  // Get vendor type from userData or placedObjects
+                  const editorId = targetObject.userData.editorId;
+                  let vendorType = targetObject.userData.vendorType || 'vendor_general';
+                  let vendorName = targetObject.name || 'Merchant';
+                  
+                  // Try to get more info from placedObjects
+                  if (editorId) {
+                    const vendorData = placedObjectsRef.current.find(obj => obj.id === editorId);
+                    if (vendorData) {
+                      vendorType = vendorData.fullType || vendorData.type || vendorType;
+                      vendorName = vendorData.name || vendorName;
+                    }
+                  }
+                  
+                  setCurrentVendor({ type: vendorType, name: vendorName });
+                  setIsVendorPanelOpen(true);
+                  addNotification(`Trading with ${vendorName}`, 'info');
+                } else {
+                  addNotification('You are too far away to trade', 'error');
+                }
+                return;
+              }
+              
               // Select target and show indicator
               setSelectedTarget(targetObject);
               targetIndicatorRef.current.visible = true;
