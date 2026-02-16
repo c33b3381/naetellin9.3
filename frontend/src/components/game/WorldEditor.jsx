@@ -348,7 +348,8 @@ const WorldEditor = ({
   placedObjects = [],
   selectedEditObject,
   onSelectEditObject,
-  currentZone
+  currentZone,
+  onUpdatePreview // Callback to update preview in real-time
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('nature');
   const [selectedType, setSelectedType] = useState('tree_pine');
@@ -368,6 +369,13 @@ const WorldEditor = ({
       setSelectedType(firstType);
     }
   }, [selectedCategory]);
+  
+  // Notify parent of scale/rotation changes for real-time preview
+  useEffect(() => {
+    if (onUpdatePreview && isPlacingMode) {
+      onUpdatePreview({ scale: objectScale, rotation: objectRotation });
+    }
+  }, [objectScale, objectRotation, isPlacingMode, onUpdatePreview]);
 
   const handlePlace = () => {
     setIsPlacingMode(true);
