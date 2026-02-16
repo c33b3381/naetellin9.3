@@ -8277,7 +8277,14 @@ const GameWorld = () => {
       <QuestLog
         isOpen={isQuestLogOpen}
         onClose={() => setIsQuestLogOpen(false)}
-        activeQuests={activeQuests}
+        activeQuests={[
+          ...activeQuests,
+          ...customQuests.filter(q => q.npc_id).map(q => ({
+            ...q,
+            id: q.quest_id,
+            giver: q.npc_name || 'Quest Giver'
+          }))
+        ]}
         completedQuests={completedQuests}
         onAbandonQuest={handleAbandonQuest}
         onTrackQuest={handleTrackQuest}
