@@ -867,8 +867,14 @@ const GameWorld = () => {
     
     // Teleport player to graveyard
     if (playerRef.current) {
-      const graveyardY = getTerrainHeight(GRAVEYARD_POSITION.x, GRAVEYARD_POSITION.z);
-      playerRef.current.position.set(GRAVEYARD_POSITION.x, graveyardY, GRAVEYARD_POSITION.z);
+      justTeleportedRef.current = true; // Prevent position override
+      const graveyardY = getTerrainHeight(GRAVEYARD_X, GRAVEYARD_Z);
+      playerRef.current.position.set(GRAVEYARD_X, graveyardY, GRAVEYARD_Z);
+      
+      // Clear teleport flag after a delay
+      setTimeout(() => {
+        justTeleportedRef.current = false;
+      }, 1000);
       
       // Make player transparent (ghost effect)
       playerRef.current.traverse((child) => {
