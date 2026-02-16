@@ -11,6 +11,7 @@ import SkillsPanel from '../components/panels/SkillsPanel';
 import QuestPanel from '../components/panels/QuestPanel';
 import CharacterPanel from '../components/panels/CharacterPanel';
 import Minimap from '../components/hud/Minimap';
+import WorldMap from '../components/hud/WorldMap';
 import WorldEditor from '../components/game/WorldEditor';
 import SpellBook, { SPELLS } from '../components/game/SpellBook';
 import ActionBar from '../components/game/ActionBar';
