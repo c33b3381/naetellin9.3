@@ -421,7 +421,7 @@ const GameWorld = () => {
   const globalCooldownRef = useRef(0); // GCD in seconds
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC: {enemyId: {inCombat, aggroTarget, lastAttack, spawnPos}}
   const meleeRange = 5; // 5 yards for melee
-  const aggroRange = 15; // 15 yards aggro range (WoW-style)
+  const aggroRange = 8; // 8 yards aggro range (reduced for better gameplay)
   const leashRange = 40; // 40 yards leash range
   
   // Refs for functions used in animation loop (to avoid stale closures)
