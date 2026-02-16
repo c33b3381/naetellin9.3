@@ -641,6 +641,70 @@ async def update_quest_progress(progress: QuestProgress, auth: dict = Depends(ve
     
     return {"message": "Progress updated", "complete": False, "quest": quest}
 
+@api_router.post("/quests/abandon/{quest_id}")
+async def abandon_quest(quest_id: str, auth: dict = Depends(verify_token)):
+    player = await db.players.find_one({"id": auth['player_id']})
+    active_quests = player.get('quests', {}).get('active', [])
+    
+    active_quests = [q for q in active_quests if q['quest_id'] != quest_id]
+    
+    await db.players.update_one(
+        {"id": auth['player_id']},
+        {"$set": {"quests.active": active_quests}}
+    )
+    
+    return {"message": "Quest abandoned"}
+
+# Custom quest creation
+@api_router.post("/quests/custom/create")
+async def create_custom_quest(quest: Dict[str, Any], auth: dict = Depends(verify_token)):
+    """Create a custom quest"""
+    # Add creator info
+    quest['creator_id'] = auth['player_id']
+    quest['created_at'] = datetime.now(timezone.utc).isoformat()
+    
+    # Save to custom_quests collection
+    result = await db.custom_quests.insert_one(quest)
+    quest['_id'] = str(result.inserted_id)
+    
+    return {"message": "Custom quest created", "quest": quest}
+
+@api_router.get("/quests/custom/list")
+async def list_custom_quests(auth: dict = Depends(verify_token)):
+    """Get all custom quests created by player"""
+    quests = await db.custom_quests.find({"creator_id": auth['player_id']}, {"_id": 0}).to_list(None)
+    return {"quests": quests}
+
+@api_router.put("/quests/custom/assign/{quest_id}")
+async def assign_quest_to_npc(quest_id: str, npc_data: Dict[str, Any], auth: dict = Depends(verify_token)):
+    """Assign a custom quest to an NPC"""
+    # Update the quest with NPC ID
+    await db.custom_quests.update_one(
+        {"quest_id": quest_id, "creator_id": auth['player_id']},
+        {"$set": {
+            "npc_id": npc_data.get("npc_id"),
+            "npc_name": npc_data.get("npc_name"),
+            "npc_position": npc_data.get("npc_position")
+        }}
+    )
+    
+    # Update the NPC world object to mark it as quest giver
+    await db.world_objects.update_one(
+        {"id": npc_data.get("npc_id")},
+        {"$set": {
+            "quest_giver": True,
+            "quest_id": quest_id
+        }}
+    )
+    
+    return {"message": "Quest assigned to NPC"}
+
+@api_router.get("/quests/custom/by-npc/{npc_id}")
+async def get_quest_by_npc(npc_id: str):
+    """Get quest assigned to an NPC"""
+    quest = await db.custom_quests.find_one({"npc_id": npc_id}, {"_id": 0})
+    return {"quest": quest}
+
 # ==================== COMBAT ROUTES ====================
 
 @api_router.post("/combat/attack/{monster_type}")
