@@ -561,6 +561,7 @@ const GameWorld = () => {
   const corpseTimersRef = useRef(new Map()); // Track corpse despawn timers
   const lootableCorpsesRef = useRef(new Map()); // Track lootable corpses: enemyId -> { mesh, loot }
   const enemySpawnDataRef = useRef(new Map()); // Track original spawn data for respawning
+  const createEnemyMeshRef = useRef(null); // Ref to createEnemyMesh for respawn callback
   
   // Vendor system state
   const [isVendorPanelOpen, setIsVendorPanelOpen] = useState(false);
