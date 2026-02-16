@@ -5442,33 +5442,34 @@ const GameWorld = () => {
               }
               
               // Select target and show indicator
+              const isNewTarget = selectedTargetRef.current !== targetObject;
               setSelectedTarget(targetObject);
               targetIndicatorRef.current.visible = true;
               targetIndicatorRef.current.position.copy(targetObject.position);
               targetIndicatorRef.current.position.y = 0.05;
               
-              // Set color and notification based on target type
+              // Set color and notification based on target type (only for NEW targets)
               if (targetObject.userData.hostile) {
                 targetIndicatorRef.current.material.color.setHex(0xff0000);
-                addNotification(`Target: ${targetObject.userData?.name || targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
+                if (isNewTarget) addNotification(`Target: ${targetObject.userData?.name || targetObject.name || 'Enemy'} (Level ${targetObject.userData.level || '?'})`, 'info');
                 // Start auto-attacking hostile targets
                 setIsAutoAttacking(true);
                 enterCombat();
               } else if (targetObject.userData.type === 'trainer') {
                 targetIndicatorRef.current.material.color.setHex(0xf59e0b); // Orange for trainers
-                addNotification(`${targetObject.name || 'Trainer'} - Double-click to train`, 'info');
+                if (isNewTarget) addNotification(`${targetObject.name || 'Trainer'} - Double-click to train`, 'info');
               } else if (targetObject.userData.type === 'questgiver') {
                 targetIndicatorRef.current.material.color.setHex(0xfbbf24);
-                addNotification(`${targetObject.name || 'Quest Giver'} selected`, 'info');
+                if (isNewTarget) addNotification(`${targetObject.name || 'Quest Giver'} selected`, 'info');
               } else if (targetObject.userData.type === 'vendor') {
                 targetIndicatorRef.current.material.color.setHex(0x22c55e);
-                addNotification(`${targetObject.name || 'Vendor'} selected`, 'info');
+                if (isNewTarget) addNotification(`${targetObject.name || 'Vendor'} selected`, 'info');
               } else if (targetObject.userData.type === 'npc' || targetObject.userData.type === 'guard') {
                 targetIndicatorRef.current.material.color.setHex(0x3b82f6);
-                addNotification(`${targetObject.name || 'NPC'} selected`, 'info');
+                if (isNewTarget) addNotification(`${targetObject.name || 'NPC'} selected`, 'info');
               } else {
                 targetIndicatorRef.current.material.color.setHex(0xffff00);
-                addNotification(`Selected: ${targetObject.name || targetObject.userData.type || 'Object'}`, 'info');
+                if (isNewTarget) addNotification(`Selected: ${targetObject.name || targetObject.userData.type || 'Object'}`, 'info');
               }
               return;
             }
