@@ -1477,7 +1477,7 @@ const GameWorld = () => {
     if (newHp <= 0) {
       handleEnemyDeath(target, enemyId);
     }
-  }, [handleEnemyDeath]);
+  }, [handleEnemyDeath, playAttackAnimation]);
   
   // Handle enemy death
   // World Editor handlers
