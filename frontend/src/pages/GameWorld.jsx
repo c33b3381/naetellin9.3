@@ -411,6 +411,10 @@ const GameWorld = () => {
   const [currentXP, setCurrentXP] = useState(0);
   const [xpToNextLevel, setXpToNextLevel] = useState(250);
   
+  // Refs for stable access in event handlers (avoids stale closure issues)
+  const playerLevelRef = useRef(1);
+  const currentXPRef = useRef(0);
+  
   // XP thresholds for each level (cumulative XP needed to reach that level)
   const XP_THRESHOLDS = [
     0,      // Level 1 (starting)
