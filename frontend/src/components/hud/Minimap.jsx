@@ -1,246 +1,125 @@
-import { useMemo, useCallback } from 'react';
-
-// Zone definitions matching GameWorld.jsx
-const WORLD_ZONES = {
-  starter_village: {
-    name: 'Oakvale Village',
-    color: '#228B22',
-    bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }
-  },
-  darkwood_forest: {
-    name: 'Darkwood Forest',
-    color: '#1a4d1a',
-    bounds: { minX: 100, maxX: 300, minZ: -100, maxZ: 100 }
-  },
-  crystal_caves: {
-    name: 'Crystal Caves',
-    color: '#4a4a6a',
-    bounds: { minX: -100, maxX: 100, minZ: 100, maxZ: 300 }
-  },
-  scorched_plains: {
-    name: 'Scorched Plains',
-    color: '#8b6914',
-    bounds: { minX: -300, maxX: -100, minZ: -100, maxZ: 100 }
-  },
-  frozen_peaks: {
-    name: 'Frozen Peaks',
-    color: '#a8c8e8',
-    bounds: { minX: -100, maxX: 100, minZ: -300, maxZ: -100 }
-  }
-};
-
-// Minimap shows a 100x100 unit area around the player
-const MINIMAP_RANGE = 50; // 50 units in each direction from player
+import { useEffect, useRef, useCallback } from 'react';
 
 const Minimap = ({ 
-  playerPosition = { x: 0, z: 0 },
-  playerRotation = 0,
-  currentZone = 'starter_village',
-  enemies = [],
-  npcs = [],
+  scene,
+  playerRef,
+  cameraRef,
+  rendererRef,
   onClick
 }) => {
+  const canvasRef = useRef(null);
+  const minimapCameraRef = useRef(null);
+  const minimapRendererRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  
   const size = 150;
-  const center = size / 2;
+  const viewHeight = 80; // Height of minimap camera above player
+  const viewRange = 60; // How much terrain to show (units from center)
   
-  // Convert world coordinates to minimap coordinates (relative to player)
-  const worldToMinimap = useCallback((worldX, worldZ) => {
-    const playerX = playerPosition.x || 0;
-    const playerZ = playerPosition.z || 0;
+  useEffect(() => {
+    if (!canvasRef.current || !scene) return;
     
-    // Calculate relative position
-    const relX = worldX - playerX;
-    const relZ = worldZ - playerZ;
+    const THREE = window.THREE || require('three');
     
-    // Scale to minimap
-    const scale = center / MINIMAP_RANGE;
-    const mapX = center + (relX * scale);
-    const mapY = center + (relZ * scale);
+    // Create orthographic camera for top-down view
+    const aspect = 1;
+    minimapCameraRef.current = new THREE.OrthographicCamera(
+      -viewRange, viewRange,
+      viewRange, -viewRange,
+      1, 200
+    );
+    minimapCameraRef.current.rotation.x = -Math.PI / 2; // Look straight down
     
-    return { 
-      x: Math.max(5, Math.min(size - 5, mapX)), 
-      y: Math.max(5, Math.min(size - 5, mapY)),
-      inRange: Math.abs(relX) <= MINIMAP_RANGE && Math.abs(relZ) <= MINIMAP_RANGE
+    // Create dedicated renderer for minimap
+    minimapRendererRef.current = new THREE.WebGLRenderer({
+      canvas: canvasRef.current,
+      antialias: false,
+      alpha: true
+    });
+    minimapRendererRef.current.setSize(size, size);
+    minimapRendererRef.current.setPixelRatio(1);
+    
+    // Render loop
+    const renderMinimap = () => {
+      if (!scene || !minimapCameraRef.current || !minimapRendererRef.current) return;
+      
+      // Position camera above player
+      if (playerRef?.current) {
+        const playerPos = playerRef.current.position;
+        minimapCameraRef.current.position.set(playerPos.x, playerPos.y + viewHeight, playerPos.z);
+        minimapCameraRef.current.lookAt(playerPos.x, playerPos.y, playerPos.z);
+      }
+      
+      // Store original fog and background
+      const originalFog = scene.fog;
+      const originalBackground = scene.background;
+      
+      // Temporarily modify scene for minimap (no fog, clear background)
+      scene.fog = null;
+      
+      // Render
+      minimapRendererRef.current.render(scene, minimapCameraRef.current);
+      
+      // Restore scene
+      scene.fog = originalFog;
+      scene.background = originalBackground;
+      
+      animationFrameRef.current = requestAnimationFrame(renderMinimap);
     };
-  }, [playerPosition, center]);
-  
-  // Get zone color at a position
-  const getZoneAtPosition = useCallback((worldX, worldZ) => {
-    for (const [, zone] of Object.entries(WORLD_ZONES)) {
-      const b = zone.bounds;
-      if (worldX >= b.minX && worldX <= b.maxX && worldZ >= b.minZ && worldZ <= b.maxZ) {
-        return zone.color;
-      }
-    }
-    return '#1a3d0d'; // Default grass
-  }, []);
-  
-  // Generate zone background tiles
-  const zoneTiles = useMemo(() => {
-    const tiles = [];
-    const playerX = playerPosition.x || 0;
-    const playerZ = playerPosition.z || 0;
-    const tileSize = 15;
-    const tilesPerSide = Math.ceil(size / tileSize);
     
-    for (let i = 0; i < tilesPerSide; i++) {
-      for (let j = 0; j < tilesPerSide; j++) {
-        // World position of this tile center
-        const tileWorldX = playerX + ((i - tilesPerSide/2) * (MINIMAP_RANGE * 2 / tilesPerSide));
-        const tileWorldZ = playerZ + ((j - tilesPerSide/2) * (MINIMAP_RANGE * 2 / tilesPerSide));
-        const color = getZoneAtPosition(tileWorldX, tileWorldZ);
-        
-        tiles.push(
-          <rect
-            key={`tile-${i}-${j}`}
-            x={i * tileSize}
-            y={j * tileSize}
-            width={tileSize + 1}
-            height={tileSize + 1}
-            fill={color}
-            opacity="0.8"
-          />
-        );
+    renderMinimap();
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
-    }
-    return tiles;
-  }, [playerPosition, getZoneAtPosition]);
-  
-  // Filter enemies in range
-  const visibleEnemies = useMemo(() => {
-    return enemies
-      .filter(e => e.isAlive !== false)
-      .map(enemy => {
-        const pos = worldToMinimap(
-          enemy.position?.x || enemy.spawnPosition?.x || 0,
-          enemy.position?.z || enemy.spawnPosition?.z || 0
-        );
-        return { ...enemy, mapPos: pos };
-      })
-      .filter(e => e.mapPos.inRange);
-  }, [enemies, worldToMinimap]);
-  
-  // Filter NPCs in range
-  const visibleNPCs = useMemo(() => {
-    return npcs
-      .map(npc => {
-        const pos = worldToMinimap(npc.position?.x || 0, npc.position?.z || 0);
-        return { ...npc, mapPos: pos };
-      })
-      .filter(n => n.mapPos.inRange);
-  }, [npcs, worldToMinimap]);
+      if (minimapRendererRef.current) {
+        minimapRendererRef.current.dispose();
+      }
+    };
+  }, [scene, playerRef, viewHeight, viewRange]);
   
   return (
     <div 
-      className="minimap cursor-pointer relative group" 
+      className="minimap-container relative cursor-pointer group"
       data-testid="minimap"
       onClick={onClick}
       title="Click to open World Map (M)"
     >
-      <svg width={size} height={size} style={{ borderRadius: '8px' }} className="border-2 border-[#44403c] shadow-lg">
-        {/* Clip path for rounded corners */}
-        <defs>
-          <clipPath id="minimapClip">
-            <rect x="0" y="0" width={size} height={size} rx="6" />
-          </clipPath>
-          {/* Player direction glow */}
-          <radialGradient id="playerGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        
-        <g clipPath="url(#minimapClip)">
-          {/* Zone tiles background */}
-          {zoneTiles}
-          
-          {/* Grid overlay */}
-          <g opacity="0.2">
-            {[...Array(6)].map((_, i) => (
-              <g key={`grid-${i}`}>
-                <line x1={i * 30} y1="0" x2={i * 30} y2={size} stroke="#000" strokeWidth="0.5" />
-                <line x1="0" y1={i * 30} x2={size} y2={i * 30} stroke="#000" strokeWidth="0.5" />
-              </g>
-            ))}
-          </g>
-          
-          {/* Enemies (red dots) */}
-          {visibleEnemies.map((enemy, idx) => (
-            <circle
-              key={`enemy-${idx}`}
-              cx={enemy.mapPos.x}
-              cy={enemy.mapPos.y}
-              r="3"
-              fill="#ef4444"
-              opacity="0.8"
-            />
-          ))}
-          
-          {/* NPCs */}
-          {visibleNPCs.map((npc, idx) => (
-            <circle
-              key={`npc-${idx}`}
-              cx={npc.mapPos.x}
-              cy={npc.mapPos.y}
-              r={npc.isVendor || npc.hasQuest ? 4 : 3}
-              fill={npc.isVendor ? '#fbbf24' : npc.hasQuest ? '#fbbf24' : '#22c55e'}
-              stroke={npc.isVendor || npc.hasQuest ? '#78350f' : '#166534'}
-              strokeWidth="1"
-            />
-          ))}
-          
-          {/* Player glow */}
-          <circle cx={center} cy={center} r="12" fill="url(#playerGlow)" />
-          
-          {/* Player dot (always centered) */}
-          <circle
-            cx={center}
-            cy={center}
-            r="5"
-            fill="#fbbf24"
-            stroke="#78350f"
-            strokeWidth="2"
-          />
-          
-          {/* Player direction indicator */}
-          <polygon
-            points={`${center},${center - 10} ${center + 4},${center - 4} ${center - 4},${center - 4}`}
-            fill="#fbbf24"
-            stroke="#78350f"
-            strokeWidth="1"
-            transform={`rotate(${playerRotation * (180/Math.PI)}, ${center}, ${center})`}
-          />
-        </g>
-        
-        {/* Border glow on hover */}
-        <rect 
-          x="1" y="1" 
-          width={size - 2} height={size - 2} 
-          rx="6" 
-          fill="none" 
-          stroke="#fbbf24" 
-          strokeWidth="2"
-          opacity="0"
-          className="group-hover:opacity-50 transition-opacity"
+      {/* Minimap canvas with border styling */}
+      <div className="relative rounded-lg overflow-hidden border-2 border-[#44403c] shadow-lg">
+        <canvas 
+          ref={canvasRef}
+          width={size}
+          height={size}
+          className="block"
+          style={{ width: size, height: size }}
         />
         
-        {/* Cardinal directions */}
-        <text x={center} y="12" textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">N</text>
-        <text x={center} y={size - 4} textAnchor="middle" fill="#78716c" fontSize="8">S</text>
-        <text x="8" y={center + 3} textAnchor="middle" fill="#78716c" fontSize="8">W</text>
-        <text x={size - 8} y={center + 3} textAnchor="middle" fill="#78716c" fontSize="8">E</text>
-      </svg>
-      
-      {/* Coordinates display */}
-      <div className="absolute -bottom-5 left-0 right-0 text-center">
-        <span className="text-[10px] text-[#78716c] bg-[#0c0a09]/80 px-1 rounded">
-          {Math.round(playerPosition.x || 0)}, {Math.round(playerPosition.z || 0)}
-        </span>
+        {/* Player indicator overlay (center dot) */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+        >
+          {/* Glow */}
+          <div className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-yellow-400/30 rounded-full animate-pulse" />
+          {/* Arrow pointing north (player facing direction) */}
+          <div className="absolute w-0 h-0 -translate-x-1/2 -translate-y-[150%] border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[10px] border-b-yellow-400" />
+          {/* Center dot */}
+          <div className="absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 bg-yellow-400 rounded-full border-2 border-yellow-600 shadow-lg" />
+        </div>
+        
+        {/* Cardinal direction */}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 text-yellow-400 font-bold text-xs">N</div>
+        
+        {/* Border glow on hover */}
+        <div className="absolute inset-0 border-2 border-yellow-400/0 group-hover:border-yellow-400/50 rounded-lg transition-colors pointer-events-none" />
       </div>
       
-      {/* Hover hint */}
-      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <span className="text-[9px] text-[#fbbf24] whitespace-nowrap">Click for Map</span>
+      {/* Coordinates */}
+      <div className="absolute -bottom-5 left-0 right-0 text-center">
+        <span className="text-[10px] text-[#78716c] bg-[#0c0a09]/80 px-1 rounded">
+          {playerRef?.current ? `${Math.round(playerRef.current.position.x)}, ${Math.round(playerRef.current.position.z)}` : '0, 0'}
+        </span>
       </div>
     </div>
   );
