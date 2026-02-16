@@ -5196,9 +5196,18 @@ const GameWorld = () => {
               const newEnemy = {
                 id: enemyId,
                 ...pendingEnemyPlacementRef.current,
+                x: intersectPoint.x,
+                z: intersectPoint.z,
                 position: { x: intersectPoint.x, y: 0, z: intersectPoint.z },
                 zone: zone
               };
+              
+              // Store spawn data for respawning (IMPORTANT for enemy respawn system)
+              enemySpawnDataRef.current.set(enemyId, {
+                ...pendingEnemyPlacementRef.current,
+                x: intersectPoint.x,
+                z: intersectPoint.z
+              });
               
               setPlacedEnemies(prev => [...prev, newEnemy]);
               addNotification(`Spawned ${pendingEnemyPlacementRef.current.name} Lv.${pendingEnemyPlacementRef.current.level}`, 'success');
