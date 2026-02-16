@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Scroll, Coins, Star, Sword, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Scroll, Coins, Star, Sword, Check, Gift } from 'lucide-react';
 
 // Test quests for the quest giver
 const AVAILABLE_QUESTS = {
@@ -39,8 +39,10 @@ const QuestDialog = ({
   isOpen, 
   onClose, 
   npcName = 'Quest Giver',
+  npcType = 'questgiver',
   playerQuests = [],
-  onAcceptQuest
+  onAcceptQuest,
+  customQuest = null  // Custom quest assigned to this NPC via Quest Maker
 }) => {
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail
