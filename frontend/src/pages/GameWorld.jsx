@@ -6947,8 +6947,17 @@ const GameWorld = () => {
           <p><span className="text-[#fbbf24]">F2</span> - Terrain Editor</p>
           <p><span className="text-[#dc2626]">F3</span> - Enemy Editor</p>
           <p><span className="text-[#3b82f6]">F5</span> - Map Editor Mode</p>
+          <p><span className="text-[#8b5cf6]">F7</span> - Quest Maker</p>
         </div>
       </div>
+      
+      {/* Quest Maker */}
+      <QuestMaker
+        isOpen={isQuestMakerOpen}
+        onClose={() => setIsQuestMakerOpen(false)}
+        onSaveQuest={handleSaveQuest}
+        existingQuests={customQuests}
+      />
     </div>
   );
 };
