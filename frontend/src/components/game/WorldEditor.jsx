@@ -125,8 +125,6 @@ const OBJECT_CATEGORIES = {
       npc_villager_female: { label: 'Female Villager', icon: User },
       npc_guard: { label: 'Guard', icon: Shield },
       npc_guard_captain: { label: 'Guard Captain', icon: Crown },
-      npc_merchant: { label: 'Merchant', icon: Store },
-      npc_blacksmith: { label: 'Blacksmith NPC', icon: Axe },
       npc_innkeeper: { label: 'Innkeeper', icon: Home },
       npc_questgiver: { label: 'Quest Giver', icon: Crown },
       npc_trainer_warrior: { label: 'Warrior Trainer', icon: Sword },
@@ -140,6 +138,21 @@ const OBJECT_CATEGORIES = {
       npc_fisherman: { label: 'Fisherman', icon: Fish },
       npc_miner: { label: 'Miner', icon: Mountain },
       npc_child: { label: 'Child', icon: User },
+    }
+  },
+  vendors: {
+    label: 'Vendor NPCs',
+    icon: Store,
+    color: '#22c55e',
+    types: {
+      vendor_blacksmith: { label: 'Blacksmith Vendor', icon: Axe },
+      vendor_general: { label: 'General Goods', icon: Store },
+      vendor_trade: { label: 'Trade Goods', icon: Gem },
+      vendor_food: { label: 'Food & Water', icon: Utensils },
+      vendor_weapons: { label: 'Weapons Vendor', icon: Sword },
+      vendor_armor: { label: 'Armor Vendor', icon: Shield },
+      vendor_potions: { label: 'Potions Vendor', icon: Droplets },
+      vendor_magic: { label: 'Magic Supplies', icon: Sparkles },
     }
   },
   monsters: {
