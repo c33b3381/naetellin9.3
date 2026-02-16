@@ -5572,9 +5572,14 @@ const GameWorld = () => {
             return;
           }
         }
-        // No custom quest - just show greeting
+        // No custom quest - handle by type
         if (target.userData.type === 'vendor') {
-          addNotification(`${target.name}: "Take a look at my wares!"`, 'info');
+          // Open vendor panel on double-click
+          const vendorType = target.userData.vendorType || 'vendor_general';
+          const vendorName = target.name || 'Merchant';
+          setCurrentVendor({ type: vendorType, name: vendorName });
+          setIsVendorPanelOpen(true);
+          addNotification(`Trading with ${vendorName}`, 'info');
         } else {
           addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
         }
