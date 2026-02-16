@@ -699,6 +699,38 @@ async def assign_quest_to_npc(quest_id: str, npc_data: Dict[str, Any], auth: dic
     
     return {"message": "Quest assigned to NPC"}
 
+@api_router.delete("/quests/custom/remove/{quest_id}")
+async def remove_quest_from_npc(quest_id: str, auth: dict = Depends(verify_token)):
+    """Remove a quest from its assigned NPC"""
+    # First get the quest to find the NPC
+    quest = await db.custom_quests.find_one({"quest_id": quest_id, "creator_id": auth['player_id']}, {"_id": 0})
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    old_npc_id = quest.get("npc_id")
+    
+    # Clear NPC assignment from quest
+    await db.custom_quests.update_one(
+        {"quest_id": quest_id, "creator_id": auth['player_id']},
+        {"$set": {
+            "npc_id": None,
+            "npc_name": None,
+            "npc_position": None
+        }}
+    )
+    
+    # Remove quest_giver status from old NPC
+    if old_npc_id:
+        await db.world_objects.update_one(
+            {"id": old_npc_id},
+            {"$set": {
+                "quest_giver": False,
+                "quest_id": None
+            }}
+        )
+    
+    return {"message": "Quest removed from NPC"}
+
 @api_router.get("/quests/custom/by-npc/{npc_id}")
 async def get_quest_by_npc(npc_id: str):
     """Get quest assigned to an NPC"""
