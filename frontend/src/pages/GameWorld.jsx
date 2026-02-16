@@ -594,6 +594,7 @@ const GameWorld = () => {
     createCustomQuest,
     fetchCustomQuests,
     assignQuestToNPC,
+    removeQuestFromNPC,
     getQuestByNPC
   } = useGameStore();
   
