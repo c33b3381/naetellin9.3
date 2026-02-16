@@ -119,6 +119,37 @@ const QuestMaker = ({
         
         {/* Content */}
         <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+          {/* Selected NPC Info */}
+          {selectedNPC && (
+            <div className="bg-[#0c0a09] border-2 border-[#22c55e] rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-[#22c55e]" />
+                  <span className="text-white font-bold">Selected NPC</span>
+                </div>
+                {selectedNPC.quest_id && (
+                  <span className="text-xs bg-[#3b82f6] text-white px-2 py-1 rounded">Has Quest</span>
+                )}
+              </div>
+              <div className="text-[#a8a29e] text-sm">
+                <p><span className="text-[#22c55e]">Name:</span> {selectedNPC.name}</p>
+                <p><span className="text-[#22c55e]">Type:</span> {selectedNPC.type}</p>
+                <p><span className="text-[#22c55e]">Position:</span> ({selectedNPC.position?.x?.toFixed(1)}, {selectedNPC.position?.z?.toFixed(1)})</p>
+                {selectedNPC.quest_id && (
+                  <p><span className="text-[#22c55e]">Current Quest:</span> {selectedNPC.quest_name || 'Unknown Quest'}</p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {!selectedNPC && (
+            <div className="bg-[#422006] border border-[#fbbf24] rounded-lg p-3 text-center">
+              <p className="text-[#fbbf24] text-sm">
+                No NPC selected. Use F1 to spawn an NPC, then click on it to select it.
+              </p>
+            </div>
+          )}
+          
           {/* Quest Name */}
           <div>
             <label className="text-xs text-[#a8a29e] font-rajdhani block mb-1">Quest Name *</label>
