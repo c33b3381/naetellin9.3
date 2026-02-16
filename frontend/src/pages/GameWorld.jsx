@@ -2126,6 +2126,9 @@ const GameWorld = () => {
   
   // Update player position when position changes in store (after game state loads)
   useEffect(() => {
+    // Don't override position if player just teleported (death/respawn) or is ghost
+    if (justTeleportedRef.current || isGhostRef.current || isDeadRef.current) return;
+    
     if (playerRef.current && savedPosition && ready) {
       const currentPos = playerRef.current.position;
       // Only update if significantly different (to avoid fighting with movement)
