@@ -7841,8 +7841,17 @@ const GameWorld = () => {
       // Update preview mesh for object placement
       const placement = pendingPlacementRef.current;
       if (placement) {
-        // Create preview mesh if it doesn't exist
-        if (!previewMeshRef.current) {
+        // Check if we need to recreate preview (scale changed or doesn't exist)
+        const needsRecreate = !previewMeshRef.current || 
+          (previewMeshRef.current.userData.previewScale !== placement.scale);
+        
+        if (needsRecreate) {
+          // Remove old preview if exists
+          if (previewMeshRef.current) {
+            scene.remove(previewMeshRef.current);
+            previewMeshRef.current = null;
+          }
+          
           const fullType = placement.fullType || placement.type;
           const previewGroup = createWorldAsset(
             0, 0,
@@ -7853,6 +7862,9 @@ const GameWorld = () => {
           );
           
           if (previewGroup) {
+            // Store scale for comparison
+            previewGroup.userData.previewScale = placement.scale || 1;
+            
             // Make preview semi-transparent with green glow
             previewGroup.traverse((child) => {
               if (child.material) {
