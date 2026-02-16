@@ -1504,6 +1504,11 @@ const GameWorld = () => {
     }
   }, [addNotification, currentZone, createEnemyMesh]);
   
+  // Store createEnemyMesh in ref for respawn callback
+  useEffect(() => {
+    createEnemyMeshRef.current = createEnemyMesh;
+  }, [createEnemyMesh]);
+  
   // Enemy delete handler
   const handleDeleteEnemy = useCallback((enemyId) => {
     console.log('Deleting enemy:', enemyId);
