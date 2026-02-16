@@ -1136,12 +1136,8 @@ const GameWorld = () => {
   
   const handleRemoveQuestFromNPC = useCallback(async (questId, npcId) => {
     try {
-      // Call backend to remove quest
-      await assignQuestToNPC(questId, {
-        npc_id: null,
-        npc_name: null,
-        npc_position: null
-      });
+      // Call backend to remove quest using the dedicated endpoint
+      await removeQuestFromNPC(questId);
       
       // Update local NPC data
       setPlacedObjects(prev => prev.map(obj => 
@@ -1166,12 +1162,10 @@ const GameWorld = () => {
         }
       }
       
-      addNotification('Quest removed from NPC', 'success');
     } catch (err) {
       console.error('Failed to remove quest:', err);
-      addNotification('Failed to remove quest', 'error');
     }
-  }, [assignQuestToNPC, addNotification]);
+  }, [removeQuestFromNPC]);
   
   // Load custom quests on mount
   useEffect(() => {
