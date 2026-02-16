@@ -1276,6 +1276,12 @@ const GameWorld = () => {
       addNotification(`Defeated ${enemy.userData.name}! (No XP - trivial)`, 'info');
     }
     
+    // Update quest kill progress
+    const enemyName = enemy.userData.name || '';
+    const enemyType = enemy.userData.enemyType || enemy.userData.type || '';
+    const customName = enemy.userData.customName || '';
+    updateQuestKillProgress(enemyName, enemyType, customName);
+    
     // Remove from combat tracking
     if (enemyId) {
       combatEngagedEnemiesRef.current.delete(enemyId);
