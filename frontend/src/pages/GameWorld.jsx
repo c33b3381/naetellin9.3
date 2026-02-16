@@ -4397,6 +4397,7 @@ const GameWorld = () => {
       const selectableTypes = ['monster', 'npc', 'trainer', 'questgiver', 'vendor', 'guard'];
       if (group.userData.interactable || selectableTypes.includes(group.userData.type)) {
         selectableObjects.current.push(group);
+        console.log('[createWorldAsset] Added to selectableObjects:', group.name, 'type:', group.userData.type);
       }
       
       console.log('[createWorldAsset] Returning group with', group.children.length, 'children, position:', group.position);
