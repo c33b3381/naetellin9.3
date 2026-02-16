@@ -5314,7 +5314,7 @@ const GameWorld = () => {
               name: placement.name,
               level: placement.level,
               scale: placement.scale,
-              rotation: { x: 0, y: placement.rotation || 0, z: 0 }, // Save rotation in degrees
+              rotation: placement.rotation || 0, // Save rotation in degrees as simple number
               position: { x: intersectPoint.x, y: 0, z: intersectPoint.z },
               zone: zone
             };
