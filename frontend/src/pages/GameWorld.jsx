@@ -406,6 +406,146 @@ const GameWorld = () => {
   const [currentHealth, setCurrentHealth] = useState(100);
   const [maxHealth, setMaxHealth] = useState(100);
   
+  // ==================== EXPERIENCE & LEVELING SYSTEM ====================
+  const [playerLevel, setPlayerLevel] = useState(1);
+  const [currentXP, setCurrentXP] = useState(0);
+  const [xpToNextLevel, setXpToNextLevel] = useState(250);
+  
+  // XP thresholds for each level (cumulative XP needed to reach that level)
+  const XP_THRESHOLDS = [
+    0,      // Level 1 (starting)
+    250,    // Level 2
+    655,    // Level 3
+    1265,   // Level 4
+    2085,   // Level 5
+    3240,   // Level 6
+    4125,   // Level 7
+    4785,   // Level 8
+    5865,   // Level 9
+    7275,   // Level 10
+    8205,   // Level 11
+    9365,   // Level 12
+    10715,  // Level 13
+    12085,  // Level 14
+    13455,  // Level 15
+    14810,  // Level 16
+    16135,  // Level 17
+    17415,  // Level 18
+    18635,  // Level 19
+    19775,  // Level 20
+    20825   // Level 20 cap (max XP)
+  ];
+  
+  const MAX_LEVEL = 20;
+  
+  // Mob difficulty color system (based on level difference)
+  // Returns: { color: hex, name: string, xpMultiplier: number }
+  const getMobDifficultyColor = useCallback((mobLevel, playerLvl) => {
+    const levelDiff = mobLevel - playerLvl;
+    
+    if (levelDiff >= 5) {
+      // Skull (red) - 5+ levels higher, very dangerous
+      return { color: 0xff0000, name: 'Skull', xpMultiplier: 1.2, textColor: '#ff0000' };
+    } else if (levelDiff >= 3) {
+      // Red - 3-4 levels higher, dangerous
+      return { color: 0xff3333, name: 'Red', xpMultiplier: 1.15, textColor: '#ff3333' };
+    } else if (levelDiff >= 1) {
+      // Orange - 1-2 levels higher
+      return { color: 0xff8c00, name: 'Orange', xpMultiplier: 1.1, textColor: '#ff8c00' };
+    } else if (levelDiff >= -2) {
+      // Yellow - same level or up to 2 below
+      return { color: 0xffff00, name: 'Yellow', xpMultiplier: 1.0, textColor: '#ffff00' };
+    } else if (levelDiff >= -5) {
+      // Green - 3-5 levels below
+      return { color: 0x00ff00, name: 'Green', xpMultiplier: 0.8, textColor: '#00ff00' };
+    } else if (levelDiff >= -8) {
+      // Grey - 6-8 levels below, reduced XP
+      return { color: 0x808080, name: 'Grey', xpMultiplier: 0.1, textColor: '#808080' };
+    } else {
+      // Grey (trivial) - 9+ levels below, no XP
+      return { color: 0x505050, name: 'Trivial', xpMultiplier: 0, textColor: '#505050' };
+    }
+  }, []);
+  
+  // Calculate XP gained from killing a mob
+  const calculateXPGain = useCallback((mobLevel, playerLvl) => {
+    const difficulty = getMobDifficultyColor(mobLevel, playerLvl);
+    
+    // Base XP = mob level * 5 + 45 (WoW-like formula)
+    const baseXP = mobLevel * 5 + 45;
+    
+    // Apply difficulty multiplier
+    const finalXP = Math.floor(baseXP * difficulty.xpMultiplier);
+    
+    return finalXP;
+  }, [getMobDifficultyColor]);
+  
+  // Handle gaining XP
+  const gainXP = useCallback((amount) => {
+    if (playerLevel >= MAX_LEVEL) return; // Already max level
+    
+    setCurrentXP(prevXP => {
+      const newXP = prevXP + amount;
+      
+      // Check for level up
+      let newLevel = playerLevel;
+      while (newLevel < MAX_LEVEL && newXP >= XP_THRESHOLDS[newLevel]) {
+        newLevel++;
+      }
+      
+      // If leveled up
+      if (newLevel > playerLevel) {
+        // Schedule level up effects (using setTimeout to avoid state conflicts)
+        setTimeout(() => {
+          setPlayerLevel(newLevel);
+          
+          // Calculate new max health/mana based on level
+          const newMaxHealth = 100 + (newLevel - 1) * 15; // +15 HP per level
+          const newMaxMana = 50 + (newLevel - 1) * 10; // +10 mana per level
+          
+          setMaxHealth(newMaxHealth);
+          setMaxMana(newMaxMana);
+          
+          // Restore health and mana to full on level up
+          setCurrentHealth(newMaxHealth);
+          setCurrentMana(newMaxMana);
+          
+          // Update XP to next level
+          if (newLevel < MAX_LEVEL) {
+            setXpToNextLevel(XP_THRESHOLDS[newLevel] - XP_THRESHOLDS[newLevel - 1]);
+          } else {
+            setXpToNextLevel(0);
+          }
+          
+          // Show level up notification
+          addNotification(`LEVEL UP! You are now level ${newLevel}!`, 'success');
+          
+          // Combat log
+          setCombatLog(prev => [...prev.slice(-9), {
+            time: Date.now(),
+            text: `*** LEVEL ${newLevel} ***`
+          }]);
+        }, 0);
+      }
+      
+      return newXP;
+    });
+  }, [playerLevel, addNotification]);
+  
+  // Get current level progress (0-1)
+  const getLevelProgress = useCallback(() => {
+    if (playerLevel >= MAX_LEVEL) return 1;
+    
+    const currentLevelXP = XP_THRESHOLDS[playerLevel - 1] || 0;
+    const nextLevelXP = XP_THRESHOLDS[playerLevel] || 0;
+    const xpIntoLevel = currentXP - currentLevelXP;
+    const xpNeededForLevel = nextLevelXP - currentLevelXP;
+    
+    return Math.min(1, Math.max(0, xpIntoLevel / xpNeededForLevel));
+  }, [currentXP, playerLevel]);
+  
+  // ==================== END EXPERIENCE & LEVELING SYSTEM ====================
+  
   // Regeneration rates (per second)
   const [healthRegenRate] = useState(2); // 2 HP per second
   const [manaRegenRate] = useState(3); // 3 MP per second
