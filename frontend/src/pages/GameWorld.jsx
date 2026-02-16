@@ -6632,21 +6632,35 @@ const GameWorld = () => {
             return;
           }
           
-          // Chase player if outside melee range
+          // Chase player if outside melee range - WITH SPREAD POSITIONING
           if (distanceToPlayer > meleeRange) {
+            // Calculate spread position - enemies should position around the player, not stack
+            // Assign each enemy a unique angle slot based on their enemy ID hash
+            const enemyIdHash = enemyId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const numSlots = 8; // 8 positions around the player
+            const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
+            
+            // Target position is melee range distance from player, at assigned angle
+            const spreadDistance = meleeRange * 0.8; // Position just inside melee range
+            const targetPosX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
+            const targetPosZ = playerRef.current.position.z + Math.sin(slotAngle) * spreadDistance;
+            
+            const dxTarget = targetPosX - enemyMesh.position.x;
+            const dzTarget = targetPosZ - enemyMesh.position.z;
+            const distToTarget = Math.sqrt(dxTarget * dxTarget + dzTarget * dzTarget);
+            
+            if (distToTarget > 0.3) {
+              const chaseSpeed = 4 * delta; // NPC chase speed
+              enemyMesh.position.x += (dxTarget / distToTarget) * chaseSpeed;
+              enemyMesh.position.z += (dzTarget / distToTarget) * chaseSpeed;
+              enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+            }
+            
+            // Always face the player
             const dx = playerRef.current.position.x - enemyMesh.position.x;
             const dz = playerRef.current.position.z - enemyMesh.position.z;
-            const dist = Math.sqrt(dx * dx + dz * dz);
-            
-            if (dist > 0.1) {
-              const chaseSpeed = 4 * delta; // NPC chase speed
-              enemyMesh.position.x += (dx / dist) * chaseSpeed;
-              enemyMesh.position.z += (dz / dist) * chaseSpeed;
-              enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-              
-              const angle = Math.atan2(dx, dz);
-              enemyMesh.rotation.y = angle;
-            }
+            const angle = Math.atan2(dx, dz);
+            enemyMesh.rotation.y = angle;
           } else {
             // In melee range - attack player
             const npcAttackSpeed = 2.5; // NPC attack every 2.5 seconds
@@ -6673,6 +6687,21 @@ const GameWorld = () => {
               // Keep player in combat
               enterCombat();
             }
+            
+            // Face player while attacking - and maintain spread position
+            const enemyIdHash = enemyId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+            const numSlots = 8;
+            const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
+            const spreadDistance = meleeRange * 0.8;
+            
+            // Gently drift to assigned spread position while in melee range
+            const idealX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
+            const idealZ = playerRef.current.position.z + Math.sin(slotAngle) * spreadDistance;
+            const driftSpeed = 1.5 * delta;
+            
+            enemyMesh.position.x += (idealX - enemyMesh.position.x) * driftSpeed;
+            enemyMesh.position.z += (idealZ - enemyMesh.position.z) * driftSpeed;
+            enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
             
             // Face player
             const dx = playerRef.current.position.x - enemyMesh.position.x;
