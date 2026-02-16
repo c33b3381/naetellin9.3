@@ -179,6 +179,14 @@ const SPELL_COLORS = {
   fire: '#ef4444'
 };
 
+// Tier names for display
+const TIER_NAMES = {
+  1: 'Apprentice',
+  2: 'Journeyman',
+  3: 'Expert',
+  4: 'Master'
+};
+
 const TrainerPanel = ({ 
   isOpen, 
   onClose, 
@@ -208,9 +216,15 @@ const TrainerPanel = ({
     const spell = selectedSpell;
     const isLearned = learnedSpells.includes(spell.id);
     const canAfford = playerGold >= spell.cost;
+    const meetsLevelReq = playerLevel >= (spell.requiredLevel || 1);
     
     if (isLearned) {
-      setTrainingResult({ success: false, message: 'You already know this spell!' });
+      setTrainingResult({ success: false, message: 'You already know this ability!' });
+      return;
+    }
+    
+    if (!meetsLevelReq) {
+      setTrainingResult({ success: false, message: `Requires level ${spell.requiredLevel}!` });
       return;
     }
     
