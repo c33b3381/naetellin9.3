@@ -8272,7 +8272,7 @@ const GameWorld = () => {
           playerPosition={position}
           currentZone={currentZone}
           scene={sceneRef.current}
-          terrainMesh={terrainMeshRef.current}
+          playerRef={playerRef}
         />
 
         {/* Bag Bar - Bottom Right (WoW-style) */}
