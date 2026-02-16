@@ -6878,6 +6878,18 @@ const GameWorld = () => {
         onLootAll={handleLootAll}
       />
 
+      {/* Vendor Panel */}
+      <VendorPanel
+        isOpen={isVendorPanelOpen}
+        onClose={() => setIsVendorPanelOpen(false)}
+        vendorType={currentVendor.type}
+        vendorName={currentVendor.name}
+        playerInventory={backpack || []}
+        playerCopper={copper || 0}
+        onSellItem={handleSellItem}
+        onUpdateCopper={updateCopper}
+      />
+
       {/* Spell Book */}
       <SpellBook
         isOpen={isSpellBookOpen}
