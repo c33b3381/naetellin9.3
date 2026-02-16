@@ -3046,7 +3046,7 @@ const GameWorld = () => {
       branch2.rotation.x = 0.3;
       treeGroup.add(branch2);
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getActualTerrainHeight(x, z);
       treeGroup.position.set(x, terrainY, z);
       scene.add(treeGroup);
       return treeGroup;
