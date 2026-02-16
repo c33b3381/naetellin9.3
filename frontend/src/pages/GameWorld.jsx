@@ -1548,8 +1548,22 @@ const GameWorld = () => {
       delete enemyPatrolDataRef.current[enemyId];
       combatEngagedEnemiesRef.current.delete(enemyId);
       
+      // Remove spawn data (prevents respawn)
+      enemySpawnDataRef.current.delete(enemyId);
+      
       console.log('Enemy removed from scene');
     }
+    
+    // Delete from database
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies/${enemyId}`, {
+      method: 'DELETE'
+    }).then(res => {
+      if (res.ok) {
+        console.log('Enemy deleted from database:', enemyId);
+      }
+    }).catch(err => {
+      console.error('Failed to delete enemy from database:', err);
+    });
     
     setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
     setSelectedEditEnemy(null);
