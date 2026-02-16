@@ -2833,7 +2833,7 @@ const GameWorld = () => {
         stoneGroup.add(moss);
       }
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getActualTerrainHeight(x, z);
       stoneGroup.position.set(x, terrainY, z);
       stoneGroup.rotation.y = Math.random() * 0.3 - 0.15; // Slight random rotation
       scene.add(stoneGroup);
