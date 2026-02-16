@@ -5585,6 +5585,8 @@ const GameWorld = () => {
     };
     
     const handleWheel = (e) => {
+      e.preventDefault(); // Prevent browser default scroll behavior
+      
       const inMapEditor = isMapEditorModeRef.current;
       const inFlight = isFlightModeRef.current;
       
