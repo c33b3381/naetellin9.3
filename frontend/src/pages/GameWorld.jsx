@@ -5239,16 +5239,35 @@ const GameWorld = () => {
                 id: enemyId,
                 ...pendingEnemyPlacementRef.current,
                 x: intersectPoint.x,
+                y: 0,
                 z: intersectPoint.z,
                 position: { x: intersectPoint.x, y: 0, z: intersectPoint.z },
                 zone: zone
               };
               
               // Store spawn data for respawning (IMPORTANT for enemy respawn system)
-              enemySpawnDataRef.current.set(enemyId, {
+              const spawnData = {
                 ...pendingEnemyPlacementRef.current,
                 x: intersectPoint.x,
+                y: 0,
                 z: intersectPoint.z
+              };
+              enemySpawnDataRef.current.set(enemyId, spawnData);
+              console.log('[Enemy Placement] Stored spawn data:', enemyId, spawnData);
+              
+              // AUTO-SAVE enemy to database immediately
+              fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newEnemy)
+              }).then(res => {
+                if (res.ok) {
+                  console.log('[Enemy Placement] Enemy saved to database:', enemyId);
+                } else {
+                  console.error('[Enemy Placement] Failed to save enemy to database');
+                }
+              }).catch(err => {
+                console.error('[Enemy Placement] Error saving enemy:', err);
               });
               
               setPlacedEnemies(prev => [...prev, newEnemy]);
