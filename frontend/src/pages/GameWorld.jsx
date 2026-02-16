@@ -5145,39 +5145,36 @@ const GameWorld = () => {
           return;
         }
         
-        // QUEST MAKER - Select NPC for quest assignment
-        if (isQuestMakerOpen) {
-          const intersects = raycasterRef.current.intersectObjects(editorObjectsRef.current, true);
+        // NPC SELECTION - Select NPC for quest assignment (works anytime, not just when Quest Maker is open)
+        // Check if clicking on an NPC
+        const intersects = raycasterRef.current.intersectObjects(editorObjectsRef.current, true);
+        
+        if (intersects.length > 0) {
+          let targetObject = intersects[0].object;
           
-          if (intersects.length > 0) {
-            let targetObject = intersects[0].object;
+          // Walk up to find the root group
+          while (targetObject.parent && !targetObject.userData.editorId) {
+            targetObject = targetObject.parent;
+          }
+          
+          // Check if it's an NPC
+          if (targetObject.userData && (targetObject.userData.type === 'npc' || targetObject.userData.type === 'trainer')) {
+            const editorId = targetObject.userData.editorId;
+            const npcData = placedObjects.find(obj => obj.id === editorId);
             
-            // Walk up to find the root group
-            while (targetObject.parent && !targetObject.userData.editorId) {
-              targetObject = targetObject.parent;
-            }
-            
-            // Check if it's an NPC
-            if (targetObject.userData && (targetObject.userData.type === 'npc' || targetObject.userData.type === 'trainer')) {
-              const editorId = targetObject.userData.editorId;
-              const npcData = placedObjects.find(obj => obj.id === editorId);
-              
-              if (npcData) {
-                setSelectedNPCForQuest({
-                  id: npcData.id,
-                  name: npcData.name,
-                  type: npcData.fullType || npcData.type,
-                  position: npcData.position,
-                  quest_id: npcData.quest_id,
-                  quest_name: npcData.quest_name
-                });
-                addNotification(`Selected: ${npcData.name}`, 'info');
-              }
-            } else {
-              addNotification('Please click on an NPC to select it', 'warning');
+            if (npcData) {
+              setSelectedNPCForQuest({
+                id: npcData.id,
+                name: npcData.name,
+                type: npcData.fullType || npcData.type,
+                position: npcData.position,
+                quest_id: npcData.quest_id,
+                quest_name: npcData.quest_name
+              });
+              addNotification(`Selected NPC: ${npcData.name} (Press F7 for Quest Maker)`, 'info');
+              return;
             }
           }
-          return;
         }
         
         // Left click - check for target selection (same as right-click)
