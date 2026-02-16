@@ -1793,28 +1793,14 @@ const GameWorld = () => {
       
       // Check if monster defeated
       if (newHp <= 0) {
-        const xpGained = selectedTarget.userData.level * 10;
-        addNotification(`Defeated ${selectedTarget.name}! +${xpGained} XP`, 'success');
+        // Call the proper death handler to create lootable corpse and handle respawn
+        handleEnemyDeath(selectedTarget, enemyId);
         
-        // Remove from combat engaged list
-        if (enemyId) {
-          combatEngagedEnemiesRef.current.delete(enemyId);
-        }
-        
-        // Remove monster
-        setTimeout(() => {
-          sceneRef.current?.remove(selectedTarget);
-          selectableObjects.current = selectableObjects.current.filter(obj => obj !== selectedTarget);
-          delete monsterHealthBarsRef.current[monsterId];
-          // Also remove from enemy meshes ref if it's a placed enemy
-          if (enemyId) {
-            enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== enemyId);
-            delete enemyPatrolDataRef.current[enemyId];
-            setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
-          }
-          setSelectedTarget(null);
+        // Clear target selection
+        setSelectedTarget(null);
+        if (targetIndicatorRef.current) {
           targetIndicatorRef.current.visible = false;
-        }, 500);
+        }
       } else {
         // Monster counter-attack (simplified)
         const monsterDamage = Math.floor(Math.random() * 5) + 2;
