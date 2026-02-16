@@ -5566,24 +5566,8 @@ const GameWorld = () => {
       return group;
     };
     
-    // Well
-    const wellGroup = new THREE.Group();
-    const wellBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(1, 1, 0.8, 16),
-      new THREE.MeshStandardMaterial({ color: 0x696969 })
-    );
-    wellBase.position.y = 0.4;
-    wellGroup.add(wellBase);
-    
-    const wellWater = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.7, 0.7, 0.5, 16),
-      new THREE.MeshStandardMaterial({ color: 0x1e90ff, transparent: true, opacity: 0.8 })
-    );
-    wellWater.position.y = 0.25;
-    wellGroup.add(wellWater);
-    
-    wellGroup.position.set(6, 0, 3);
-    scene.add(wellGroup);
+    // NOTE: Legacy hardcoded well removed - use F1 World Builder to place wells
+    // wellGroup was at position (6, 0, 3)
     
     // ==================== LOAD SAVED WORLD OBJECTS ====================
     
