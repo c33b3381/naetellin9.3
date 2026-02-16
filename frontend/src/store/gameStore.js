@@ -314,7 +314,13 @@ export const useGameStore = create(
       
       updatePosition: async (position) => {
         try {
-          await axios.put(`${API}/player/position`, position, get().getHeaders());
+          // Also save current experience and level with position
+          const updateData = {
+            ...position,
+            combat_level: get().combat_level,
+            experience: get().experience
+          };
+          await axios.put(`${API}/player/position`, updateData, get().getHeaders());
           set({ position });
         } catch (err) {
           console.error('Failed to update position:', err);
