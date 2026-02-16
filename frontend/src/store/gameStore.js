@@ -714,6 +714,17 @@ export const useGameStore = create(
           return null;
         }
       },
+      
+      removeQuestFromNPC: async (questId) => {
+        try {
+          await axios.delete(`${API}/quests/custom/remove/${questId}`, get().getHeaders());
+          get().addNotification('Quest removed from NPC', 'success');
+        } catch (err) {
+          console.error('Failed to remove quest:', err);
+          get().addNotification('Failed to remove quest', 'error');
+          throw err;
+        }
+      },
     }),
     {
       name: 'quest-of-honor-storage',
