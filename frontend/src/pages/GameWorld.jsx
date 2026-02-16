@@ -780,6 +780,10 @@ const GameWorld = () => {
     removeItemFromBag
   } = useGameStore();
   
+  // Get experience and level from store
+  const storeExperience = useGameStore(state => state.experience);
+  const storeCombatLevel = useGameStore(state => state.combat_level);
+  
   // Use stable reference for addNotification to avoid re-renders
   const addNotification = useCallback((message, type = 'info') => {
     useGameStore.getState().addNotification(message, type);
@@ -790,6 +794,35 @@ const GameWorld = () => {
   const actionBarSpells = action_bar || ['autoAttack', 'warrior_attack', null, null, null, null];
   const playerCopper = copper || 2500;
   const savedPosition = position || { x: 0, y: 0, z: 0 };
+  
+  // Initialize player level and XP from store on mount
+  useEffect(() => {
+    if (storeExperience !== undefined && storeExperience > 0) {
+      setCurrentXP(storeExperience);
+    }
+    if (storeCombatLevel !== undefined && storeCombatLevel > 1) {
+      setPlayerLevel(storeCombatLevel);
+      // Update max health/mana based on loaded level
+      const loadedMaxHealth = 100 + (storeCombatLevel - 1) * 15;
+      const loadedMaxMana = 50 + (storeCombatLevel - 1) * 10;
+      setMaxHealth(loadedMaxHealth);
+      setMaxMana(loadedMaxMana);
+      setCurrentHealth(loadedMaxHealth);
+      setCurrentMana(loadedMaxMana);
+      // Update XP to next level
+      if (storeCombatLevel < MAX_LEVEL) {
+        setXpToNextLevel(XP_THRESHOLDS[storeCombatLevel] - XP_THRESHOLDS[storeCombatLevel - 1]);
+      }
+    }
+  }, [storeExperience, storeCombatLevel]);
+  
+  // Sync level and XP to store when they change
+  useEffect(() => {
+    useGameStore.setState({ 
+      experience: currentXP,
+      combat_level: playerLevel 
+    });
+  }, [currentXP, playerLevel]);
   
   // Keep terrain editor ref in sync
   useEffect(() => {
