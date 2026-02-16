@@ -2507,22 +2507,16 @@ const GameWorld = () => {
       sword.rotation.z = -0.3;
       trainerGroup.add(sword);
       
-      // Trainer indicator (book icon - yellow glow)
+      // Trainer indicator - orange book icon to distinguish from quest givers
       const indicatorMaterial = new THREE.MeshStandardMaterial({ 
         color: 0xf59e0b, 
         emissive: 0xf59e0b, 
         emissiveIntensity: 0.8 
       });
-      const indicator = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.1), indicatorMaterial);
-      indicator.position.y = 2.2;
+      const indicator = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.08), indicatorMaterial);
+      indicator.position.y = 2.1;
+      indicator.userData.trainerIndicator = true;
       trainerGroup.add(indicator);
-      
-      // "TRAINER" text marker
-      const markerGeometry = new THREE.PlaneGeometry(0.8, 0.2);
-      const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
-      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-      marker.position.y = 2.5;
-      trainerGroup.add(marker);
       
       trainerGroup.position.set(x, 0, z);
       scene.add(trainerGroup);
