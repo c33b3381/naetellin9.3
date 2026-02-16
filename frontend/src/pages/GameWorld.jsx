@@ -7726,10 +7726,15 @@ const GameWorld = () => {
     return <LoadingSpinner />;
   }
 
-  // Get target display color based on type
+  // Get target display color based on type (with mob difficulty for hostiles)
   const getTargetColor = () => {
     if (!selectedTarget) return '#fbbf24';
-    if (selectedTarget.userData.hostile) return '#dc2626';
+    if (selectedTarget.userData.hostile) {
+      // Use mob difficulty color for hostile targets
+      const mobLevel = selectedTarget.userData.level || 1;
+      const difficulty = getMobDifficultyColor(mobLevel, playerLevel);
+      return difficulty.textColor;
+    }
     if (selectedTarget.userData.type === 'trainer') return '#f59e0b';
     if (selectedTarget.userData.type === 'questgiver') return '#fbbf24';
     if (selectedTarget.userData.type === 'vendor') return '#22c55e';
