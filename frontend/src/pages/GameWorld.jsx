@@ -5095,6 +5095,41 @@ const GameWorld = () => {
           return;
         }
         
+        // QUEST MAKER - Select NPC for quest assignment
+        if (isQuestMakerOpen) {
+          const intersects = raycasterRef.current.intersectObjects(editorObjectsRef.current, true);
+          
+          if (intersects.length > 0) {
+            let targetObject = intersects[0].object;
+            
+            // Walk up to find the root group
+            while (targetObject.parent && !targetObject.userData.editorId) {
+              targetObject = targetObject.parent;
+            }
+            
+            // Check if it's an NPC
+            if (targetObject.userData && (targetObject.userData.type === 'npc' || targetObject.userData.type === 'trainer')) {
+              const editorId = targetObject.userData.editorId;
+              const npcData = placedObjects.find(obj => obj.id === editorId);
+              
+              if (npcData) {
+                setSelectedNPCForQuest({
+                  id: npcData.id,
+                  name: npcData.name,
+                  type: npcData.fullType || npcData.type,
+                  position: npcData.position,
+                  quest_id: npcData.quest_id,
+                  quest_name: npcData.quest_name
+                });
+                addNotification(`Selected: ${npcData.name}`, 'info');
+              }
+            } else {
+              addNotification('Please click on an NPC to select it', 'warning');
+            }
+          }
+          return;
+        }
+        
         // Left click - check for target selection (same as right-click)
         const intersects = raycasterRef.current.intersectObjects(selectableObjects.current, true);
         
