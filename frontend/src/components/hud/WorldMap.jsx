@@ -127,60 +127,62 @@ const WorldMap = ({
             {/* Background - ocean/unexplored */}
             <rect x="0" y="0" width={mapWidth} height={mapHeight} fill="#0a0a1a" />
             
-            {/* DEBUG: Test rectangle - should show in center */}
-            <rect x="200" y="200" width="200" height="200" fill="#228B22" opacity="0.8" stroke="#fbbf24" strokeWidth="2" />
+            {/* Zones - hardcoded for reliability */}
+            {/* Starter Village (center) */}
+            <rect x={worldToMap(-100, -100).x} y={worldToMap(-100, -100).y} 
+                  width={worldToMap(100, 100).x - worldToMap(-100, -100).x} 
+                  height={worldToMap(100, 100).y - worldToMap(-100, -100).y}
+                  fill="#228B22" opacity={currentZone === 'starter_village' ? 0.9 : 0.6} 
+                  stroke={currentZone === 'starter_village' ? '#fbbf24' : '#666'} strokeWidth={currentZone === 'starter_village' ? 3 : 2} rx="4" />
+            <text x={worldToMap(0, 0).x} y={worldToMap(0, -20).y} textAnchor="middle" 
+                  fill={currentZone === 'starter_village' ? '#fbbf24' : '#e0e0e0'} fontSize="13" fontFamily="Cinzel">
+              🏘️ Oakvale Village
+            </text>
+            <text x={worldToMap(0, 0).x} y={worldToMap(0, 10).y} textAnchor="middle" fill="#a0a0a0" fontSize="11">Lv. 1-5</text>
             
-            {/* Zones - rendered first as base layer */}
-            {Object.entries(WORLD_ZONES).map(([zoneKey, zone]) => {
-              const topLeft = worldToMap(zone.bounds.minX, zone.bounds.minZ);
-              const bottomRight = worldToMap(zone.bounds.maxX, zone.bounds.maxZ);
-              const width = bottomRight.x - topLeft.x;
-              const height = bottomRight.y - topLeft.y;
-              const isCurrentZone = zoneKey === currentZone;
-              
-              return (
-                <g key={zoneKey}>
-                  {/* Zone fill */}
-                  <rect
-                    x={topLeft.x}
-                    y={topLeft.y}
-                    width={width}
-                    height={height}
-                    fill={zone.color}
-                    opacity={isCurrentZone ? 0.9 : 0.6}
-                    stroke={isCurrentZone ? '#fbbf24' : '#666666'}
-                    strokeWidth={isCurrentZone ? 3 : 2}
-                    rx="4"
-                  />
-                  {/* Zone label */}
-                  <text
-                    x={topLeft.x + width / 2}
-                    y={topLeft.y + height / 2 - 10}
-                    textAnchor="middle"
-                    fill={isCurrentZone ? '#fbbf24' : '#e0e0e0'}
-                    fontSize="13"
-                    fontFamily="Cinzel, serif"
-                    fontWeight={isCurrentZone ? 'bold' : 'normal'}
-                  >
-                    {zone.icon} {zone.name}
-                  </text>
-                  {/* Level range */}
-                  <text
-                    x={topLeft.x + width / 2}
-                    y={topLeft.y + height / 2 + 10}
-                    textAnchor="middle"
-                    fill="#a0a0a0"
-                    fontSize="11"
-                  >
-                    {zoneKey === 'starter_village' ? 'Lv. 1-5' : 
-                     zoneKey === 'darkwood_forest' ? 'Lv. 5-10' :
-                     zoneKey === 'crystal_caves' ? 'Lv. 10-15' :
-                     zoneKey === 'scorched_plains' ? 'Lv. 15-20' :
-                     'Lv. 8-12'}
-                  </text>
-                </g>
-              );
-            })}
+            {/* Darkwood Forest (east) */}
+            <rect x={worldToMap(100, -100).x} y={worldToMap(100, -100).y}
+                  width={worldToMap(300, 100).x - worldToMap(100, -100).x}
+                  height={worldToMap(300, 100).y - worldToMap(100, -100).y}
+                  fill="#1a4d1a" opacity={currentZone === 'darkwood_forest' ? 0.9 : 0.6}
+                  stroke={currentZone === 'darkwood_forest' ? '#fbbf24' : '#666'} strokeWidth="2" rx="4" />
+            <text x={worldToMap(200, 0).x} y={worldToMap(200, -20).y} textAnchor="middle" fill="#e0e0e0" fontSize="13" fontFamily="Cinzel">
+              🌲 Darkwood Forest
+            </text>
+            <text x={worldToMap(200, 0).x} y={worldToMap(200, 10).y} textAnchor="middle" fill="#a0a0a0" fontSize="11">Lv. 5-10</text>
+            
+            {/* Crystal Caves (north) */}
+            <rect x={worldToMap(-100, 100).x} y={worldToMap(-100, 100).y}
+                  width={worldToMap(100, 300).x - worldToMap(-100, 100).x}
+                  height={worldToMap(100, 300).y - worldToMap(-100, 100).y}
+                  fill="#4a4a6a" opacity={currentZone === 'crystal_caves' ? 0.9 : 0.6}
+                  stroke={currentZone === 'crystal_caves' ? '#fbbf24' : '#666'} strokeWidth="2" rx="4" />
+            <text x={worldToMap(0, 200).x} y={worldToMap(0, 180).y} textAnchor="middle" fill="#e0e0e0" fontSize="13" fontFamily="Cinzel">
+              💎 Crystal Caves
+            </text>
+            <text x={worldToMap(0, 200).x} y={worldToMap(0, 210).y} textAnchor="middle" fill="#a0a0a0" fontSize="11">Lv. 10-15</text>
+            
+            {/* Scorched Plains (west) */}
+            <rect x={worldToMap(-300, -100).x} y={worldToMap(-300, -100).y}
+                  width={worldToMap(-100, 100).x - worldToMap(-300, -100).x}
+                  height={worldToMap(-100, 100).y - worldToMap(-300, -100).y}
+                  fill="#8b6914" opacity={currentZone === 'scorched_plains' ? 0.9 : 0.6}
+                  stroke={currentZone === 'scorched_plains' ? '#fbbf24' : '#666'} strokeWidth="2" rx="4" />
+            <text x={worldToMap(-200, 0).x} y={worldToMap(-200, -20).y} textAnchor="middle" fill="#e0e0e0" fontSize="13" fontFamily="Cinzel">
+              🔥 Scorched Plains
+            </text>
+            <text x={worldToMap(-200, 0).x} y={worldToMap(-200, 10).y} textAnchor="middle" fill="#a0a0a0" fontSize="11">Lv. 15-20</text>
+            
+            {/* Frozen Peaks (south) */}
+            <rect x={worldToMap(-100, -300).x} y={worldToMap(-100, -300).y}
+                  width={worldToMap(100, -100).x - worldToMap(-100, -300).x}
+                  height={worldToMap(100, -100).y - worldToMap(-100, -300).y}
+                  fill="#a8c8e8" opacity={currentZone === 'frozen_peaks' ? 0.9 : 0.6}
+                  stroke={currentZone === 'frozen_peaks' ? '#fbbf24' : '#666'} strokeWidth="2" rx="4" />
+            <text x={worldToMap(0, -200).x} y={worldToMap(0, -220).y} textAnchor="middle" fill="#e0e0e0" fontSize="13" fontFamily="Cinzel">
+              ❄️ Frozen Peaks
+            </text>
+            <text x={worldToMap(0, -200).x} y={worldToMap(0, -190).y} textAnchor="middle" fill="#a0a0a0" fontSize="11">Lv. 8-12</text>
             
             {/* Grid lines - on top of zones */}
             {[...Array(7)].map((_, i) => (
