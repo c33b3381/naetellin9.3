@@ -2967,7 +2967,15 @@ const GameWorld = () => {
     playerRef.current = player;
     
     // Restore player position from saved game state
-    player.position.set(savedPosition.x || 0, 0, savedPosition.z || 0);
+    const startX = savedPosition.x || 0;
+    const startZ = savedPosition.z || 0;
+    const startY = getTerrainHeight(startX, startZ);
+    player.position.set(startX, startY, startZ);
+    
+    // Mark if we started at a non-origin position
+    if (startX !== 0 || startZ !== 0) {
+      positionRestoredRef.current = true;
+    }
     
     // Create target selection indicator
     const targetIndicator = new THREE.Mesh(
