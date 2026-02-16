@@ -547,6 +547,9 @@ const GameWorld = () => {
   
   // Item Database Editor state
   const [isItemEditorOpen, setIsItemEditorOpen] = useState(false);
+  const [isQuestMakerOpen, setIsQuestMakerOpen] = useState(false);
+  const [customQuests, setCustomQuests] = useState([]);
+  const [selectedNPCForQuest, setSelectedNPCForQuest] = useState(null);
   
   // Loot system state
   const [isLootPanelOpen, setIsLootPanelOpen] = useState(false);
