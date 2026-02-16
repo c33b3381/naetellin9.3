@@ -2743,6 +2743,296 @@ const GameWorld = () => {
     createBuilding(-15, -8, 6, 5, 5, 0x4a4a4a, 'Armory', 'shop');
     createBuilding(15, -8, 5, 4, 5, 0x8B4513, 'Inn', 'building');
     
+    // ==================== GRAVEYARD AREA ====================
+    const GRAVEYARD_CENTER = { x: -40, z: -40 };
+    
+    // Create gravestone
+    const createGravestone = (x, z, scale = 1, variant = 0) => {
+      const stoneGroup = new THREE.Group();
+      stoneGroup.userData = { type: 'gravestone', interactable: false };
+      
+      const stoneColor = 0x6b7280; // Gray stone
+      const mossColor = 0x4a5d23;
+      
+      if (variant === 0) {
+        // Classic rounded gravestone
+        const baseGeom = new THREE.BoxGeometry(0.8 * scale, 0.15 * scale, 0.3 * scale);
+        const baseMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+        const base = new THREE.Mesh(baseGeom, baseMat);
+        base.position.y = 0.075 * scale;
+        stoneGroup.add(base);
+        
+        const stoneGeom = new THREE.BoxGeometry(0.6 * scale, 1.2 * scale, 0.15 * scale);
+        const stone = new THREE.Mesh(stoneGeom, baseMat);
+        stone.position.y = 0.75 * scale;
+        stoneGroup.add(stone);
+        
+        // Rounded top
+        const topGeom = new THREE.CylinderGeometry(0.3 * scale, 0.3 * scale, 0.15 * scale, 16, 1, false, 0, Math.PI);
+        const top = new THREE.Mesh(topGeom, baseMat);
+        top.rotation.x = Math.PI / 2;
+        top.rotation.z = Math.PI / 2;
+        top.position.y = 1.35 * scale;
+        stoneGroup.add(top);
+      } else if (variant === 1) {
+        // Cross gravestone
+        const vertGeom = new THREE.BoxGeometry(0.15 * scale, 1.5 * scale, 0.1 * scale);
+        const vertMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+        const vert = new THREE.Mesh(vertGeom, vertMat);
+        vert.position.y = 0.75 * scale;
+        stoneGroup.add(vert);
+        
+        const horizGeom = new THREE.BoxGeometry(0.8 * scale, 0.15 * scale, 0.1 * scale);
+        const horiz = new THREE.Mesh(horizGeom, vertMat);
+        horiz.position.y = 1.1 * scale;
+        stoneGroup.add(horiz);
+      } else {
+        // Simple slab
+        const slabGeom = new THREE.BoxGeometry(0.5 * scale, 0.8 * scale, 0.12 * scale);
+        const slabMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+        const slab = new THREE.Mesh(slabGeom, slabMat);
+        slab.position.y = 0.4 * scale;
+        slab.rotation.x = -0.1; // Slight lean
+        stoneGroup.add(slab);
+      }
+      
+      // Add moss patches randomly
+      if (Math.random() > 0.5) {
+        const mossGeom = new THREE.SphereGeometry(0.08 * scale, 8, 8);
+        const mossMat = new THREE.MeshStandardMaterial({ color: mossColor });
+        const moss = new THREE.Mesh(mossGeom, mossMat);
+        moss.position.set(0.15 * scale, 0.3 * scale, 0.08 * scale);
+        moss.scale.y = 0.5;
+        stoneGroup.add(moss);
+      }
+      
+      const terrainY = getTerrainHeight(x, z);
+      stoneGroup.position.set(x, terrainY, z);
+      stoneGroup.rotation.y = Math.random() * 0.3 - 0.15; // Slight random rotation
+      scene.add(stoneGroup);
+      return stoneGroup;
+    };
+    
+    // Create tomb/crypt
+    const createTomb = (x, z, scale = 1) => {
+      const tombGroup = new THREE.Group();
+      tombGroup.userData = { type: 'tomb', interactable: false };
+      
+      const stoneColor = 0x4b5563;
+      
+      // Main sarcophagus
+      const baseGeom = new THREE.BoxGeometry(3 * scale, 0.8 * scale, 1.5 * scale);
+      const baseMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+      const base = new THREE.Mesh(baseGeom, baseMat);
+      base.position.y = 0.4 * scale;
+      base.castShadow = true;
+      tombGroup.add(base);
+      
+      // Lid (slightly raised)
+      const lidGeom = new THREE.BoxGeometry(3.1 * scale, 0.3 * scale, 1.6 * scale);
+      const lidMat = new THREE.MeshStandardMaterial({ color: 0x6b7280 });
+      const lid = new THREE.Mesh(lidGeom, lidMat);
+      lid.position.y = 0.95 * scale;
+      lid.castShadow = true;
+      tombGroup.add(lid);
+      
+      // Decorative trim
+      const trimGeom = new THREE.BoxGeometry(3.2 * scale, 0.1 * scale, 1.7 * scale);
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0x374151 });
+      const trim = new THREE.Mesh(trimGeom, trimMat);
+      trim.position.y = 0.8 * scale;
+      tombGroup.add(trim);
+      
+      const terrainY = getTerrainHeight(x, z);
+      tombGroup.position.set(x, terrainY, z);
+      scene.add(tombGroup);
+      return tombGroup;
+    };
+    
+    // Create angel statue
+    const createAngelStatue = (x, z, scale = 1) => {
+      const statueGroup = new THREE.Group();
+      statueGroup.userData = { type: 'statue', interactable: false, name: 'Spirit Healer' };
+      
+      const stoneColor = 0xd1d5db; // Light gray marble
+      const wingColor = 0xe5e7eb;
+      
+      // Pedestal
+      const pedestalGeom = new THREE.BoxGeometry(2 * scale, 1.5 * scale, 2 * scale);
+      const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x6b7280 });
+      const pedestal = new THREE.Mesh(pedestalGeom, pedestalMat);
+      pedestal.position.y = 0.75 * scale;
+      pedestal.castShadow = true;
+      statueGroup.add(pedestal);
+      
+      // Body/robe
+      const robeGeom = new THREE.ConeGeometry(0.6 * scale, 2 * scale, 8);
+      const robeMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+      const robe = new THREE.Mesh(robeGeom, robeMat);
+      robe.position.y = 2.5 * scale;
+      robe.castShadow = true;
+      statueGroup.add(robe);
+      
+      // Head
+      const headGeom = new THREE.SphereGeometry(0.3 * scale, 16, 16);
+      const headMat = new THREE.MeshStandardMaterial({ color: stoneColor });
+      const head = new THREE.Mesh(headGeom, headMat);
+      head.position.y = 3.8 * scale;
+      head.castShadow = true;
+      statueGroup.add(head);
+      
+      // Halo
+      const haloGeom = new THREE.TorusGeometry(0.4 * scale, 0.05 * scale, 8, 32);
+      const haloMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.5 });
+      const halo = new THREE.Mesh(haloGeom, haloMat);
+      halo.rotation.x = Math.PI / 2;
+      halo.position.y = 4.3 * scale;
+      statueGroup.add(halo);
+      
+      // Wings (left)
+      const wingGeom = new THREE.BoxGeometry(0.1 * scale, 1.5 * scale, 1 * scale);
+      const wingMat = new THREE.MeshStandardMaterial({ color: wingColor });
+      const wingL = new THREE.Mesh(wingGeom, wingMat);
+      wingL.position.set(-0.5 * scale, 3 * scale, 0);
+      wingL.rotation.z = 0.3;
+      wingL.rotation.y = -0.5;
+      statueGroup.add(wingL);
+      
+      // Wings (right)
+      const wingR = new THREE.Mesh(wingGeom, wingMat);
+      wingR.position.set(0.5 * scale, 3 * scale, 0);
+      wingR.rotation.z = -0.3;
+      wingR.rotation.y = 0.5;
+      statueGroup.add(wingR);
+      
+      // Glow effect at base
+      const glowGeom = new THREE.CircleGeometry(3 * scale, 32);
+      const glowMat = new THREE.MeshBasicMaterial({ 
+        color: 0x60a5fa, 
+        transparent: true, 
+        opacity: 0.2,
+        side: THREE.DoubleSide
+      });
+      const glow = new THREE.Mesh(glowGeom, glowMat);
+      glow.rotation.x = -Math.PI / 2;
+      glow.position.y = 0.05;
+      statueGroup.add(glow);
+      
+      const terrainY = getTerrainHeight(x, z);
+      statueGroup.position.set(x, terrainY, z);
+      scene.add(statueGroup);
+      return statueGroup;
+    };
+    
+    // Create iron fence section
+    const createFence = (x, z, rotation = 0, length = 4) => {
+      const fenceGroup = new THREE.Group();
+      const ironColor = 0x1f2937;
+      
+      // Horizontal bars
+      const barGeom = new THREE.BoxGeometry(length, 0.08, 0.08);
+      const barMat = new THREE.MeshStandardMaterial({ color: ironColor });
+      const topBar = new THREE.Mesh(barGeom, barMat);
+      topBar.position.y = 1.2;
+      fenceGroup.add(topBar);
+      const bottomBar = new THREE.Mesh(barGeom, barMat);
+      bottomBar.position.y = 0.3;
+      fenceGroup.add(bottomBar);
+      
+      // Vertical posts
+      const numPosts = Math.floor(length / 0.5);
+      for (let i = 0; i <= numPosts; i++) {
+        const postGeom = new THREE.BoxGeometry(0.06, 1.4, 0.06);
+        const post = new THREE.Mesh(postGeom, barMat);
+        post.position.set(-length/2 + i * (length/numPosts), 0.7, 0);
+        fenceGroup.add(post);
+        
+        // Pointed top
+        if (i % 2 === 0) {
+          const pointGeom = new THREE.ConeGeometry(0.05, 0.15, 4);
+          const point = new THREE.Mesh(pointGeom, barMat);
+          point.position.set(-length/2 + i * (length/numPosts), 1.45, 0);
+          fenceGroup.add(point);
+        }
+      }
+      
+      const terrainY = getTerrainHeight(x, z);
+      fenceGroup.position.set(x, terrainY, z);
+      fenceGroup.rotation.y = rotation;
+      scene.add(fenceGroup);
+      return fenceGroup;
+    };
+    
+    // Build the graveyard
+    // Central angel statue (spirit healer location)
+    createAngelStatue(GRAVEYARD_CENTER.x, GRAVEYARD_CENTER.z, 1.2);
+    
+    // Tombs
+    createTomb(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 5, 0.8);
+    createTomb(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 5, 0.8);
+    createTomb(GRAVEYARD_CENTER.x, GRAVEYARD_CENTER.z - 10, 1);
+    
+    // Gravestones in rows
+    const gravestonePositions = [
+      [-6, -3], [-4, -3], [-2, -3], [2, -3], [4, -3], [6, -3],
+      [-6, -6], [-4, -6], [-2, -6], [2, -6], [4, -6], [6, -6],
+      [-5, 8], [-3, 8], [3, 8], [5, 8],
+      [-7, 10], [-5, 10], [-3, 10], [3, 10], [5, 10], [7, 10],
+    ];
+    gravestonePositions.forEach(([offsetX, offsetZ], i) => {
+      createGravestone(
+        GRAVEYARD_CENTER.x + offsetX, 
+        GRAVEYARD_CENTER.z + offsetZ, 
+        0.7 + Math.random() * 0.4,
+        i % 3
+      );
+    });
+    
+    // Iron fencing around graveyard
+    createFence(GRAVEYARD_CENTER.x, GRAVEYARD_CENTER.z + 15, 0, 20); // North
+    createFence(GRAVEYARD_CENTER.x, GRAVEYARD_CENTER.z - 15, 0, 20); // South
+    createFence(GRAVEYARD_CENTER.x + 10, GRAVEYARD_CENTER.z, Math.PI/2, 30); // East
+    createFence(GRAVEYARD_CENTER.x - 10, GRAVEYARD_CENTER.z, Math.PI/2, 30); // West
+    
+    // Dead trees for atmosphere
+    const createDeadTree = (x, z, scale = 1) => {
+      const treeGroup = new THREE.Group();
+      const woodColor = 0x3d3d3d;
+      
+      // Trunk
+      const trunkGeom = new THREE.CylinderGeometry(0.15 * scale, 0.25 * scale, 3 * scale, 6);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: woodColor });
+      const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+      trunk.position.y = 1.5 * scale;
+      treeGroup.add(trunk);
+      
+      // Branches
+      const branchGeom = new THREE.CylinderGeometry(0.03 * scale, 0.08 * scale, 1.5 * scale, 5);
+      const branch1 = new THREE.Mesh(branchGeom, trunkMat);
+      branch1.position.set(0.3 * scale, 2.5 * scale, 0);
+      branch1.rotation.z = -0.8;
+      treeGroup.add(branch1);
+      
+      const branch2 = new THREE.Mesh(branchGeom, trunkMat);
+      branch2.position.set(-0.3 * scale, 2.2 * scale, 0.2 * scale);
+      branch2.rotation.z = 0.6;
+      branch2.rotation.x = 0.3;
+      treeGroup.add(branch2);
+      
+      const terrainY = getTerrainHeight(x, z);
+      treeGroup.position.set(x, terrainY, z);
+      scene.add(treeGroup);
+      return treeGroup;
+    };
+    
+    // Dead trees around graveyard
+    createDeadTree(GRAVEYARD_CENTER.x - 12, GRAVEYARD_CENTER.z - 8, 1.2);
+    createDeadTree(GRAVEYARD_CENTER.x + 12, GRAVEYARD_CENTER.z - 8, 1);
+    createDeadTree(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 12, 0.9);
+    createDeadTree(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 12, 1.1);
+    
+    // ==================== END GRAVEYARD AREA ====================
+    
     // Trees
     const createTree = (x, z, scale = 1) => {
       // Skip if in water
