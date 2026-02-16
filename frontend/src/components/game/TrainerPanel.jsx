@@ -281,11 +281,15 @@ const TrainerPanel = ({
             
             {Object.entries(spellsByTier).map(([tier, spells]) => (
               <div key={tier} className="space-y-1">
-                <p className="text-xs text-[#78716c] font-semibold">Tier {tier}</p>
+                <p className="text-xs text-[#78716c] font-semibold">
+                  {TIER_NAMES[tier] || `Tier ${tier}`}
+                </p>
                 {spells.map(spell => {
                   const isLearned = learnedSpells.includes(spell.id);
                   const canAfford = playerGold >= spell.cost;
+                  const meetsLevelReq = playerLevel >= (spell.requiredLevel || 1);
                   const isSelected = selectedSpell?.id === spell.id;
+                  const isLocked = !meetsLevelReq && !isLearned;
                   
                   return (
                     <button
@@ -296,19 +300,23 @@ const TrainerPanel = ({
                           ? 'border-[#fbbf24] bg-[#fbbf24]/20' 
                           : isLearned
                             ? 'border-[#22c55e]/50 bg-[#22c55e]/10'
-                            : 'border-[#44403c] hover:border-[#57534e] bg-[#0c0a09]'
+                            : isLocked
+                              ? 'border-[#44403c] bg-[#0c0a09] opacity-60'
+                              : 'border-[#44403c] hover:border-[#57534e] bg-[#0c0a09]'
                       }`}
                       data-testid={`trainer-spell-${spell.id}`}
                     >
                       <div 
-                        className="w-10 h-10 rounded border-2 flex items-center justify-center"
+                        className="w-10 h-10 rounded border-2 flex items-center justify-center relative"
                         style={{ 
-                          borderColor: isLearned ? '#22c55e' : SPELL_COLORS[spell.type],
-                          backgroundColor: `${isLearned ? '#22c55e' : SPELL_COLORS[spell.type]}20`
+                          borderColor: isLearned ? '#22c55e' : isLocked ? '#44403c' : SPELL_COLORS[spell.type],
+                          backgroundColor: `${isLearned ? '#22c55e' : isLocked ? '#44403c' : SPELL_COLORS[spell.type]}20`
                         }}
                       >
                         {isLearned ? (
                           <Check className="w-5 h-5 text-[#22c55e]" />
+                        ) : isLocked ? (
+                          <Lock className="w-5 h-5 text-[#78716c]" />
                         ) : (
                           <spell.icon 
                             className="w-5 h-5" 
@@ -317,22 +325,28 @@ const TrainerPanel = ({
                         )}
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="font-rajdhani font-semibold text-[#f5f5f4] text-sm">
+                        <p className={`font-rajdhani font-semibold text-sm ${isLocked ? 'text-[#78716c]' : 'text-[#f5f5f4]'}`}>
                           {spell.name}
                         </p>
                         <p className="text-[10px] text-[#78716c]">
-                          {spell.manaCost} MP • {spell.cooldown}s CD
+                          {isLocked ? (
+                            <span className="text-[#dc2626]">Requires Level {spell.requiredLevel}</span>
+                          ) : (
+                            <>{spell.manaCost} MP • {spell.cooldown}s CD</>
+                          )}
                         </p>
                       </div>
                       <div className="text-right">
                         {isLearned ? (
                           <span className="text-[10px] text-[#22c55e] font-bold">LEARNED</span>
+                        ) : isLocked ? (
+                          <span className="text-[10px] text-[#dc2626]">Lv.{spell.requiredLevel}</span>
                         ) : spell.cost === 0 ? (
                           <span className="text-[10px] text-[#22c55e]">FREE</span>
                         ) : (
                           <span className={`text-xs flex items-center gap-1 ${canAfford ? 'text-[#fbbf24]' : 'text-[#dc2626]'}`}>
                             <Coins className="w-3 h-3" />
-                            {spell.cost}g
+                            {formatCurrency(spell.cost)}
                           </span>
                         )}
                       </div>
