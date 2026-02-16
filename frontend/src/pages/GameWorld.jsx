@@ -955,7 +955,8 @@ const GameWorld = () => {
       if (timer) clearTimeout(timer);
       corpseTimersRef.current.delete(currentLootCorpse);
       lootableCorpsesRef.current.delete(currentLootCorpse);
-      setPlacedEnemies(p => p.filter(e => e.id !== currentLootCorpse));
+      // DON'T remove from placedEnemies - let the respawn timer handle it
+      // setPlacedEnemies(p => p.filter(e => e.id !== currentLootCorpse));
       setCurrentLootCorpse(null);
     } else {
       setCurrentLootData(newLootData);
