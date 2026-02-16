@@ -447,11 +447,23 @@ const EnemyEditor = ({
           <div className="flex gap-2">
             <button
               onClick={handlePlace}
-              className="flex-1 py-2 bg-gradient-to-r from-[#dc2626] to-[#b91c1c] text-white font-bold rounded flex items-center justify-center gap-1 text-sm hover:shadow-lg transition-all"
+              className="flex-1 py-2 bg-gradient-to-r from-[#dc2626] to-[#b91c1c] text-white font-bold rounded flex flex-col items-center justify-center gap-0.5 text-sm hover:shadow-lg transition-all"
               data-testid="place-enemy-btn"
             >
-              <Plus className="w-4 h-4" />
-              Spawn Enemy
+              <div className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Spawn Enemy
+              </div>
+              {customName && (
+                <span className="text-[10px] text-[#fca5a5] font-normal">
+                  "{customName}" Lv.{enemyLevel}
+                </span>
+              )}
+              {!customName && currentEnemy && (
+                <span className="text-[10px] text-[#fca5a5] font-normal opacity-70">
+                  {currentEnemy.label} Lv.{enemyLevel}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setShowEnemyList(true)}
