@@ -5763,11 +5763,11 @@ const GameWorld = () => {
       }
     }
     
-    // More wolves in the forest
-    createMonster(150, 20, 0x4a4a4a, 'Dark Wolf', 'wolf', 8);
-    createMonster(180, -30, 0x3a3a3a, 'Shadow Wolf', 'wolf', 10);
-    createMonster(200, 50, 0x4a4a4a, 'Alpha Wolf', 'wolf', 15);
-    createMonster(220, -10, 0x5a5a5a, 'Gray Wolf', 'wolf', 6);
+    // NOTE: Legacy wolves in forest removed - use F3 Enemy Editor
+    // createMonster(150, 20, 0x4a4a4a, 'Dark Wolf', 'wolf', 8);
+    // createMonster(180, -30, 0x3a3a3a, 'Shadow Wolf', 'wolf', 10);
+    // createMonster(200, 50, 0x4a4a4a, 'Alpha Wolf', 'wolf', 15);
+    // createMonster(220, -10, 0x5a5a5a, 'Gray Wolf', 'wolf', 6);
     
     // Crystal Caves Zone (North) - Mining area with crystals
     for (let i = 0; i < 20; i++) {
