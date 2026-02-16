@@ -5448,6 +5448,27 @@ const GameWorld = () => {
           addNotification('Attack failed!', 'error');
         });
       } else if (target && target.userData.type === 'trainer') {
+        // Check if trainer has a custom quest first
+        const npcId = target.userData.editorId;
+        if (npcId) {
+          const npcData = placedObjectsRef.current.find(obj => obj.id === npcId);
+          if (npcData && npcData.quest_id) {
+            // Fetch and show the custom quest
+            getQuestByNPC(npcId).then(quest => {
+              setQuestGiverName(target.name || 'Trainer');
+              setQuestGiverType('trainer');
+              setCurrentNPCQuest(quest);
+              setIsQuestDialogOpen(true);
+            }).catch(() => {
+              // Fallback to trainer panel
+              if (target.userData.trainerClass === 'warrior') {
+                setIsTrainerOpen(true);
+                addNotification(`Training with ${target.name}`, 'info');
+              }
+            });
+            return;
+          }
+        }
         // Open trainer panel
         if (target.userData.trainerClass === 'warrior') {
           setIsTrainerOpen(true);
@@ -5464,11 +5485,37 @@ const GameWorld = () => {
       } else if (target && target.userData.type === 'questgiver') {
         // Open quest dialog for quest givers
         setQuestGiverName(target.name || 'Quest Giver');
+        setQuestGiverType('questgiver');
+        setCurrentNPCQuest(null); // Standard questgiver uses hardcoded quests
         setIsQuestDialogOpen(true);
-      } else if (target && target.userData.type === 'npc') {
-        addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
-      } else if (target && target.userData.type === 'vendor') {
-        addNotification(`${target.name}: "Take a look at my wares!"`, 'info');
+      } else if (target && (target.userData.type === 'npc' || target.userData.type === 'guard' || target.userData.type === 'vendor')) {
+        // Check if this NPC has a custom quest assigned
+        const npcId = target.userData.editorId;
+        if (npcId) {
+          const npcData = placedObjectsRef.current.find(obj => obj.id === npcId);
+          if (npcData && npcData.quest_id) {
+            // This NPC has a custom quest - fetch and show it
+            getQuestByNPC(npcId).then(quest => {
+              if (quest) {
+                setQuestGiverName(target.name || npcData.name || 'NPC');
+                setQuestGiverType(target.userData.type);
+                setCurrentNPCQuest(quest);
+                setIsQuestDialogOpen(true);
+              } else {
+                addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
+              }
+            }).catch(() => {
+              addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
+            });
+            return;
+          }
+        }
+        // No custom quest - just show greeting
+        if (target.userData.type === 'vendor') {
+          addNotification(`${target.name}: "Take a look at my wares!"`, 'info');
+        } else {
+          addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
+        }
       }
     };
     
