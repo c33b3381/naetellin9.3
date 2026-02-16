@@ -6214,6 +6214,48 @@ const GameWorld = () => {
         }
       });
       
+      // Update preview mesh for object placement
+      const placement = pendingPlacementRef.current;
+      if (placement) {
+        // Create preview mesh if it doesn't exist
+        if (!previewMeshRef.current) {
+          const fullType = placement.fullType || placement.type;
+          const previewGroup = createWorldAsset(
+            0, 0,
+            fullType,
+            placement.scale || 1,
+            placement.level || 1,
+            placement.name
+          );
+          
+          if (previewGroup) {
+            // Make preview semi-transparent with green glow
+            previewGroup.traverse((child) => {
+              if (child.material) {
+                child.material = child.material.clone();
+                child.material.transparent = true;
+                child.material.opacity = 0.5;
+                child.material.emissive = new THREE.Color(0x00ff00);
+                child.material.emissiveIntensity = 0.3;
+              }
+            });
+            
+            // Apply rotation from placement data
+            if (placement.rotation) {
+              previewGroup.rotation.y = (placement.rotation * Math.PI) / 180;
+            }
+            
+            previewGroup.position.y = -1000; // Start off screen
+            scene.add(previewGroup);
+            previewMeshRef.current = previewGroup;
+          }
+        }
+      } else if (previewMeshRef.current) {
+        // Remove preview mesh when placement is done
+        scene.remove(previewMeshRef.current);
+        previewMeshRef.current = null;
+      }
+      
       renderer.render(scene, camera);
     };
     animate();
