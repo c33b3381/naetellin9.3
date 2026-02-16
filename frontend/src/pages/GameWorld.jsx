@@ -823,9 +823,16 @@ const GameWorld = () => {
       
       // RESPAWN: Check if this enemy has spawn data saved (placed enemies respawn)
       const spawnData = enemySpawnDataRef.current.get(enemyId);
+      console.log('[RESPAWN] Checking respawn for enemy:', enemyId);
+      console.log('[RESPAWN] Spawn data found:', spawnData);
+      console.log('[RESPAWN] createEnemyMeshRef.current exists:', !!createEnemyMeshRef.current);
+      console.log('[RESPAWN] All spawn data keys:', Array.from(enemySpawnDataRef.current.keys()));
+      
       if (spawnData && sceneRef.current && createEnemyMeshRef.current) {
         // Generate new ID for respawned enemy
         const newEnemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.log('[RESPAWN] Creating new enemy with ID:', newEnemyId);
         
         // Create new enemy mesh at original spawn position using the ref
         const newEnemy = createEnemyMeshRef.current(
@@ -837,6 +844,8 @@ const GameWorld = () => {
           },
           newEnemyId
         );
+        
+        console.log('[RESPAWN] New enemy mesh created:', newEnemy);
         
         if (newEnemy) {
           sceneRef.current.add(newEnemy);
@@ -855,9 +864,12 @@ const GameWorld = () => {
           enemySpawnDataRef.current.set(newEnemyId, spawnData);
           
           addNotification(`${spawnData.name} has respawned!`, 'info');
-          console.log(`Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
+          console.log(`[RESPAWN] Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
+        } else {
+          console.error('[RESPAWN] Failed to create enemy mesh');
         }
       } else {
+        console.log('[RESPAWN] No respawn - missing data. spawnData:', !!spawnData, 'scene:', !!sceneRef.current, 'createFn:', !!createEnemyMeshRef.current);
         // No spawn data = temporary enemy, just remove from placedEnemies
         setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
       }
