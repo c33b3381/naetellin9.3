@@ -7321,6 +7321,54 @@ const GameWorld = () => {
         customQuest={currentNPCQuest}
       />
       
+      {/* Death Dialog - Release Corpse */}
+      {showReleaseDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#1a1513] border-2 border-[#dc2626] rounded-lg p-8 max-w-md text-center shadow-2xl">
+            <div className="text-6xl mb-4">💀</div>
+            <h2 className="font-cinzel text-3xl text-[#dc2626] mb-4">You Died</h2>
+            <p className="text-[#a8a29e] mb-6">
+              Release your spirit to return as a ghost at the graveyard. 
+              You must run back to your corpse to revive.
+            </p>
+            <button
+              onClick={handleReleaseCorpse}
+              className="bg-[#dc2626] hover:bg-[#ef4444] text-white font-cinzel px-8 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              data-testid="release-corpse-btn"
+            >
+              Release Corpse
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Revive Dialog - Near Corpse */}
+      {showReviveDialog && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-[#1a1513]/95 border-2 border-[#22c55e] rounded-lg p-6 text-center shadow-2xl animate-pulse">
+            <p className="text-[#22c55e] font-cinzel text-lg mb-4">Your corpse is nearby</p>
+            <button
+              onClick={handleRevive}
+              className="bg-[#22c55e] hover:bg-[#4ade80] text-black font-cinzel px-6 py-2 rounded-lg transition-all duration-200"
+              data-testid="revive-btn"
+            >
+              Revive (50% HP/Mana)
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Ghost Mode Indicator */}
+      {isGhost && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40">
+          <div className="bg-[#1a1513]/80 border border-[#6b7280] rounded-lg px-6 py-2">
+            <p className="text-[#9ca3af] font-cinzel text-sm">
+              👻 Ghost Mode - Return to your corpse to revive
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Quest Log */}
       <QuestLog
         isOpen={isQuestLogOpen}
