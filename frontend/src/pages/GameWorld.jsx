@@ -389,6 +389,7 @@ const GameWorld = () => {
   // Refs to track editor state for event handlers (closure fix)
   const isEditorOpenRef = useRef(false);
   const pendingPlacementRef = useRef(null);
+  const placementInProgressRef = useRef(false); // Prevent double-placement
   const currentZoneRef = useRef('starter_village');
   const placedObjectsRef = useRef([]);
   const previewMeshRef = useRef(null); // Preview mesh for object placement
