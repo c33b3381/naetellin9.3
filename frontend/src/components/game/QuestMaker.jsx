@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { X, Plus, Trash2, Save, Target, Gift, Scroll } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check } from 'lucide-react';
 
 const QuestMaker = ({ 
   isOpen, 
   onClose, 
   onSaveQuest,
-  existingQuests = []
+  onAssignQuest,
+  onRemoveQuest,
+  existingQuests = [],
+  selectedNPC = null
 }) => {
   const [questName, setQuestName] = useState('');
   const [questDescription, setQuestDescription] = useState('');
@@ -16,6 +19,12 @@ const QuestMaker = ({
     xp: 0,
     items: []
   });
+  const [selectedQuestForAssignment, setSelectedQuestForAssignment] = useState(null);
+  
+  // Reset selection when NPC changes
+  useEffect(() => {
+    setSelectedQuestForAssignment(null);
+  }, [selectedNPC]);
   
   // Objective types
   const objectiveTypes = [
