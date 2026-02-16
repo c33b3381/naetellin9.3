@@ -4594,6 +4594,12 @@ const GameWorld = () => {
               enemy.maxHealth,
               enemy.damage
             );
+            
+            // Store spawn data for respawning
+            enemySpawnDataRef.current.set(enemy.id, {
+              ...enemy,
+              color: color
+            });
           });
           
           // Store full enemy data including all properties
