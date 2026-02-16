@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { 
   Sword, Shield, Axe, Target, Flame,
-  X, Coins, BookOpen, GraduationCap, Check
+  X, Coins, BookOpen, GraduationCap, Check, Lock
 } from 'lucide-react';
 import { formatCurrency } from '../../store/gameStore';
 
 // Warrior Spell Definitions - Costs in copper (100 copper = 1 silver, 10000 copper = 1 gold)
+// Level requirements scaled for 1-20 leveling system
 export const WARRIOR_SPELLS = {
-  // Tier 1 - Basic
+  // Tier 1 - Basic (Levels 1-4)
   'warrior_attack': {
     id: 'warrior_attack',
     name: 'Attack',
@@ -19,7 +20,8 @@ export const WARRIOR_SPELLS = {
     range: 3,
     type: 'physical',
     cost: 0, // Free - default spell
-    tier: 1
+    tier: 1,
+    requiredLevel: 1
   },
   'warrior_heroic_strike': {
     id: 'warrior_heroic_strike',
@@ -31,23 +33,39 @@ export const WARRIOR_SPELLS = {
     cooldown: 6,
     range: 3,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 1
+    cost: 1000, // 10 silver
+    tier: 1,
+    requiredLevel: 2
   },
   
-  // Tier 2 - Intermediate
-  'warrior_power_strike': {
-    id: 'warrior_power_strike',
-    name: 'Power Strike',
+  // Tier 2 - Intermediate (Levels 4-8)
+  'warrior_rend': {
+    id: 'warrior_rend',
+    name: 'Rend',
     icon: Sword,
-    description: 'A devastating blow that deals massive damage',
-    damage: { min: 18, max: 28 },
-    manaCost: 15,
+    description: 'Wounds the target causing them to bleed',
+    damage: { min: 8, max: 14 },
+    manaCost: 10,
     cooldown: 8,
     range: 3,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 2
+    cost: 2000, // 20 silver
+    tier: 2,
+    requiredLevel: 4
+  },
+  'warrior_thunder_clap': {
+    id: 'warrior_thunder_clap',
+    name: 'Thunder Clap',
+    icon: Target,
+    description: 'Blasts nearby enemies with a thunderous clap',
+    damage: { min: 10, max: 16 },
+    manaCost: 15,
+    cooldown: 6,
+    range: 4,
+    type: 'physical',
+    cost: 2500, // 25 silver
+    tier: 2,
+    requiredLevel: 6
   },
   'warrior_shield_bash': {
     id: 'warrior_shield_bash',
@@ -59,11 +77,26 @@ export const WARRIOR_SPELLS = {
     cooldown: 10,
     range: 2,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 2
+    cost: 3000, // 30 silver
+    tier: 2,
+    requiredLevel: 8
   },
   
-  // Tier 3 - Advanced
+  // Tier 3 - Advanced (Levels 10-14)
+  'warrior_overpower': {
+    id: 'warrior_overpower',
+    name: 'Overpower',
+    icon: Sword,
+    description: 'A powerful counterattack that cannot be blocked',
+    damage: { min: 20, max: 30 },
+    manaCost: 15,
+    cooldown: 5,
+    range: 3,
+    type: 'physical',
+    cost: 5000, // 50 silver
+    tier: 3,
+    requiredLevel: 10
+  },
   'warrior_whirlwind': {
     id: 'warrior_whirlwind',
     name: 'Whirlwind',
@@ -74,8 +107,9 @@ export const WARRIOR_SPELLS = {
     cooldown: 12,
     range: 4,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 3
+    cost: 6000, // 60 silver
+    tier: 3,
+    requiredLevel: 12
   },
   'warrior_execute': {
     id: 'warrior_execute',
@@ -87,11 +121,12 @@ export const WARRIOR_SPELLS = {
     cooldown: 15,
     range: 3,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 3
+    cost: 7000, // 70 silver
+    tier: 3,
+    requiredLevel: 14
   },
   
-  // Tier 4 - Master
+  // Tier 4 - Master (Levels 16-20)
   'warrior_battle_shout': {
     id: 'warrior_battle_shout',
     name: 'Battle Shout',
@@ -102,8 +137,9 @@ export const WARRIOR_SPELLS = {
     cooldown: 30,
     range: 0,
     type: 'buff',
-    cost: 5000, // 50 silver
+    cost: 10000, // 1 gold
     tier: 4,
+    requiredLevel: 16,
     selfTarget: true
   },
   'warrior_mortal_strike': {
@@ -116,8 +152,23 @@ export const WARRIOR_SPELLS = {
     cooldown: 12,
     range: 3,
     type: 'physical',
-    cost: 5000, // 50 silver
-    tier: 4
+    cost: 15000, // 1g 50s
+    tier: 4,
+    requiredLevel: 18
+  },
+  'warrior_bladestorm': {
+    id: 'warrior_bladestorm',
+    name: 'Bladestorm',
+    icon: Target,
+    description: 'Become a whirlwind of steel, striking all nearby foes',
+    damage: { min: 35, max: 55 },
+    manaCost: 35,
+    cooldown: 20,
+    range: 5,
+    type: 'physical',
+    cost: 20000, // 2 gold
+    tier: 4,
+    requiredLevel: 20
   }
 };
 
