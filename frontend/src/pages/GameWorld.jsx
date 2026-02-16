@@ -2994,8 +2994,8 @@ const GameWorld = () => {
     createFence(GRAVEYARD_CENTER.x + 10, GRAVEYARD_CENTER.z, Math.PI/2, 30); // East
     createFence(GRAVEYARD_CENTER.x - 10, GRAVEYARD_CENTER.z, Math.PI/2, 30); // West
     
-    // Dead trees for atmosphere
-    const createDeadTree = (x, z, scale = 1) => {
+    // Barren trees for graveyard atmosphere
+    const createGraveyardTree = (x, z, scale = 1) => {
       const treeGroup = new THREE.Group();
       const woodColor = 0x3d3d3d;
       
@@ -3026,10 +3026,10 @@ const GameWorld = () => {
     };
     
     // Dead trees around graveyard
-    createDeadTree(GRAVEYARD_CENTER.x - 12, GRAVEYARD_CENTER.z - 8, 1.2);
-    createDeadTree(GRAVEYARD_CENTER.x + 12, GRAVEYARD_CENTER.z - 8, 1);
-    createDeadTree(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 12, 0.9);
-    createDeadTree(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 12, 1.1);
+    createGraveyardTree(GRAVEYARD_CENTER.x - 12, GRAVEYARD_CENTER.z - 8, 1.2);
+    createGraveyardTree(GRAVEYARD_CENTER.x + 12, GRAVEYARD_CENTER.z - 8, 1);
+    createGraveyardTree(GRAVEYARD_CENTER.x - 8, GRAVEYARD_CENTER.z + 12, 0.9);
+    createGraveyardTree(GRAVEYARD_CENTER.x + 8, GRAVEYARD_CENTER.z + 12, 1.1);
     
     // ==================== END GRAVEYARD AREA ====================
     
