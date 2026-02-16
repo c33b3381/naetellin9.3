@@ -435,10 +435,11 @@ const GameWorld = () => {
   const [showReviveDialog, setShowReviveDialog] = useState(false);
   const [corpsePosition, setCorpsePosition] = useState(null);
   const corpseMarkerRef = useRef(null);
+  const playerCorpseRef = useRef(null); // Visual corpse of the player
   const isDeadRef = useRef(false); // Ref for game loop access
   const isGhostRef = useRef(false); // Ref for game loop access
   const CORPSE_REVIVE_RADIUS = 5; // Must be within 5 units of corpse to revive
-  const SPAWN_POSITION = { x: 0, z: 0 }; // Spawn/graveyard location
+  const GRAVEYARD_POSITION = { x: -40, z: -40 }; // Graveyard location (away from spawn)
   
   // Keep death refs updated
   useEffect(() => {
