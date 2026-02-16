@@ -1070,6 +1070,63 @@ const GameWorld = () => {
     }
   }, [addNotification, deleteWorldObject]);
 
+  // Quest Maker handlers
+  const handleSaveQuest = useCallback(async (quest) => {
+    try {
+      const savedQuest = await createCustomQuest(quest);
+      setCustomQuests(prev => [...prev, savedQuest]);
+      setIsQuestMakerOpen(false);
+    } catch (err) {
+      console.error('Failed to save quest:', err);
+    }
+  }, [createCustomQuest]);
+  
+  const handleAssignQuestToNPC = useCallback(async () => {
+    if (!selectedNPCForQuest || customQuests.length === 0) {
+      addNotification('Please select an NPC and create a quest first', 'warning');
+      return;
+    }
+    
+    // Show quest selection UI
+    // For now, assign the most recent quest
+    const latestQuest = customQuests[customQuests.length - 1];
+    
+    try {
+      await assignQuestToNPC(latestQuest.quest_id, {
+        npc_id: selectedNPCForQuest.id,
+        npc_name: selectedNPCForQuest.name,
+        npc_position: selectedNPCForQuest.position
+      });
+      
+      // Update NPC visual to show quest marker
+      const npcMesh = editorObjectsRef.current.find(obj => obj.userData.editorId === selectedNPCForQuest.id);
+      if (npcMesh) {
+        // Add yellow "!" marker above NPC
+        const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
+        const markerMaterial = new THREE.MeshStandardMaterial({ 
+          color: 0xffff00,
+          emissive: 0xffff00,
+          emissiveIntensity: 0.8
+        });
+        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+        marker.position.y = 2.5;
+        marker.userData.questMarker = true;
+        npcMesh.add(marker);
+      }
+      
+      setSelectedNPCForQuest(null);
+    } catch (err) {
+      console.error('Failed to assign quest:', err);
+    }
+  }, [selectedNPCForQuest, customQuests, assignQuestToNPC, addNotification]);
+  
+  // Load custom quests on mount
+  useEffect(() => {
+    fetchCustomQuests().then(quests => {
+      setCustomQuests(quests || []);
+    });
+  }, [fetchCustomQuests]);
+
   // Handle logout with comprehensive world save
   const handleLogout = useCallback(async () => {
     addNotification('Saving all game data...', 'info');
