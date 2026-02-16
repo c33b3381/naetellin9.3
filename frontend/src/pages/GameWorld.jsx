@@ -1816,7 +1816,7 @@ const GameWorld = () => {
         }, 300);
       }
     }
-  }, [spellCooldowns, currentMana, selectedTarget, addNotification]);
+  }, [spellCooldowns, currentMana, selectedTarget, addNotification, handleEnemyDeath]);
 
   // Fetch player data and initial game state
   useEffect(() => {
