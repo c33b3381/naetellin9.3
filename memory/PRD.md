@@ -67,6 +67,8 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 ## Recent Changes (December 2025)
 - **Aggro Range Reduced**: Changed from 15 to 8 units for better gameplay balance
 - **Mouse Wheel Zoom Fix**: Added `e.preventDefault()` and `{ passive: false }` to wheel event handler for reliable zoom in map editor
+- **Randomized Patrol Patterns**: Enemies now have 7 different patrol patterns (circle, figure-8, triangle, line, diamond, zigzag, square) randomly assigned on spawn
+- **Combat Spread Positioning**: Enemies no longer stack on top of each other - they position around the player in 8 evenly distributed slots when in melee range
 
 ## Known Issues
 - None currently active
