@@ -1175,6 +1175,13 @@ const GameWorld = () => {
     }
   }, [removeQuestFromNPC]);
   
+  // Handle selling items to vendor
+  const handleSellItem = useCallback((item, slotIndex, sellPrice) => {
+    // Remove item from backpack (bag 0)
+    removeItemFromBag(0, slotIndex);
+    addNotification(`Sold ${item.name} for ${sellPrice} copper`, 'success');
+  }, [removeItemFromBag, addNotification]);
+  
   // Load custom quests on mount
   useEffect(() => {
     fetchCustomQuests().then(quests => {
