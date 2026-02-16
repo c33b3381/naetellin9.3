@@ -1075,11 +1075,13 @@ const GameWorld = () => {
     try {
       const savedQuest = await createCustomQuest(quest);
       setCustomQuests(prev => [...prev, savedQuest]);
-      setIsQuestMakerOpen(false);
+      // Don't close the Quest Maker - let user assign the quest to an NPC if one is selected
+      addNotification(`Quest "${quest.name}" saved!`, 'success');
     } catch (err) {
       console.error('Failed to save quest:', err);
+      addNotification('Failed to save quest', 'error');
     }
-  }, [createCustomQuest]);
+  }, [createCustomQuest, addNotification]);
   
   const handleAssignQuestToNPC = useCallback(async (questId, npcData) => {
     try {
