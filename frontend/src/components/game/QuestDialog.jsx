@@ -115,6 +115,11 @@ const QuestDialog = ({
   // Determine NPC role text
   const npcRoleText = customQuest ? 'Quest Giver' : (npcType === 'questgiver' ? 'Quest Giver' : 'NPC');
   
+  // Custom greeting based on whether NPC has custom quest
+  const greetingText = customQuest 
+    ? `"Greetings, adventurer! I have a task for you. Are you interested in helping me?"`
+    : `"Greetings, adventurer! I have tasks that need completing. Are you brave enough to help our village?"`;
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto" data-testid="quest-dialog">
       {/* Backdrop */}
@@ -130,7 +135,7 @@ const QuestDialog = ({
             </div>
             <div>
               <h2 className="font-cinzel text-lg text-[#fbbf24]">{npcName}</h2>
-              <p className="text-xs text-[#fcd34d]">Quest Giver</p>
+              <p className="text-xs text-[#fcd34d]">{npcRoleText}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-[#fbbf24] hover:text-white transition-colors">
@@ -145,7 +150,7 @@ const QuestDialog = ({
               {/* NPC Speech */}
               <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
                 <p className="text-[#f5f5f4] italic">
-                  "Greetings, adventurer! I have tasks that need completing. Are you brave enough to help our village?"
+                  {greetingText}
                 </p>
               </div>
               
