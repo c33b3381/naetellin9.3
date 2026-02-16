@@ -6710,8 +6710,9 @@ const GameWorld = () => {
       if (player) {
         // Check for sudden position change (teleportation detection)
         // If player moved more than 50 units in one frame, it's a bug - REVERT to last known position
+        // UNLESS the player just intentionally teleported (death/respawn)
         const posDiff = player.position.distanceTo(lastPlayerPos);
-        if (posDiff > 50 && (lastPlayerPos.x !== 0 || lastPlayerPos.z !== 0)) {
+        if (posDiff > 50 && (lastPlayerPos.x !== 0 || lastPlayerPos.z !== 0) && !justTeleportedRef.current) {
           // Large position change detected - REVERT player to last known good position
           player.position.x = lastPlayerPos.x;
           player.position.z = lastPlayerPos.z;
