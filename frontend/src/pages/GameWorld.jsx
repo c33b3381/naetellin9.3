@@ -1466,7 +1466,7 @@ const GameWorld = () => {
     };
     
     group.position.set(x, terrainY, z);
-    group.name = `enemy_${enemyData.name}_${enemyId}`;
+    group.name = enemyData.name; // Use custom name for display
     
     return group;
   }, []);
