@@ -391,6 +391,9 @@ const WorldEditor = ({
     } else if (selectedCategory === 'npcs') {
       baseType = 'npc';
       subType = selectedType.replace('npc_', '');
+    } else if (selectedCategory === 'vendors') {
+      baseType = 'vendor';
+      subType = selectedType.replace('vendor_', '');
     } else if (selectedCategory === 'monsters') {
       baseType = 'monster';
       subType = selectedType.replace('monster_', '');
