@@ -71,6 +71,9 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Combat Spread Positioning**: Enemies no longer stack - they position around the player in 8 slots at 2 units distance (close combat)
 - **Fixed Notification Spam**: Target selection notifications only show when selecting a NEW target (not re-clicking same target)
 - **Fixed Aggro Notification**: Combat aggro notifications now properly check flag BEFORE showing to prevent spam
+- **Fixed Enemy Duplication Bug**: Respawned enemies now DELETE old DB entry before creating new one
+- **Loot Performance Optimization**: Batched state updates and stable notification refs to eliminate lag
+- **Fixed Enemy Respawn During Gameplay**: Looting a corpse no longer cancels the respawn timer - enemies now properly respawn after being killed and looted
 
 ## Known Issues
 - None currently active
