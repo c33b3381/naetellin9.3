@@ -602,7 +602,8 @@ const GameWorld = () => {
     fetchCustomQuests,
     assignQuestToNPC,
     removeQuestFromNPC,
-    getQuestByNPC
+    getQuestByNPC,
+    removeItemFromBag
   } = useGameStore();
   
   // Use store values for spells and copper
