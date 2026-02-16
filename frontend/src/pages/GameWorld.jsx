@@ -904,7 +904,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification]);
+  }, []); // No dependencies needed - using refs for everything inside setTimeout
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
