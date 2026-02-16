@@ -160,8 +160,8 @@ const WorldMap = ({
                     width={width}
                     height={height}
                     fill={zone.color}
-                    opacity={isCurrentZone ? 0.6 : 0.3}
-                    stroke={isCurrentZone ? '#fbbf24' : '#44403c'}
+                    opacity={isCurrentZone ? 0.8 : 0.5}
+                    stroke={isCurrentZone ? '#fbbf24' : '#555555'}
                     strokeWidth={isCurrentZone ? 3 : 1}
                     rx="4"
                   />
