@@ -74,6 +74,14 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Fixed Enemy Duplication Bug**: Respawned enemies now DELETE old DB entry before creating new one
 - **Loot Performance Optimization**: Batched state updates and stable notification refs to eliminate lag
 - **Fixed Enemy Respawn During Gameplay**: Looting a corpse no longer cancels the respawn timer - enemies now properly respawn after being killed and looted
+- **Player Death & Resurrection System**: 
+  - Player dies when health reaches 0
+  - "Release Corpse" dialog appears on death
+  - Ghost mode teleports player to spawn (0,0)
+  - Red corpse marker shows death location
+  - "Revive" dialog appears when within 5 units of corpse
+  - Revival restores 50% HP and Mana
+  - Enemies ignore ghost players (no aggro)
 
 ## Known Issues
 - None currently active
