@@ -2430,8 +2430,33 @@ const GameWorld = () => {
       }
     }, 500); // Sync every 500ms
     
-    return () => clearInterval(syncInterval);
-  }, [ready, updatePosition]);
+    // Also save on window close/refresh
+    const handleBeforeUnload = () => {
+      const pos = playerRef.current?.position;
+      if (pos) {
+        // Use sendBeacon for reliable saving on page close
+        const data = JSON.stringify({
+          x: pos.x,
+          y: pos.y,
+          z: pos.z,
+          zone: currentZoneRef.current || 'starter_village',
+          combat_level: playerLevel,
+          experience: currentXP
+        });
+        navigator.sendBeacon(
+          `${process.env.REACT_APP_BACKEND_URL}/api/player/position`,
+          new Blob([data], { type: 'application/json' })
+        );
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [ready, updatePosition, playerLevel, currentXP]);
 
   // Setup Three.js scene with WoW controls
   useEffect(() => {
