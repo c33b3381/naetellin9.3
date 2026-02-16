@@ -720,5 +720,4 @@ const EnemyEditor = ({
   );
 };
 
-export { EnemyEditor, ENEMY_DATABASE };
 export default EnemyEditor;
