@@ -2541,12 +2541,15 @@ const GameWorld = () => {
     createTrainer(-8, -12, 'warrior');
     
     // Monsters with health bars
-    const createMonster = (x, z, color, name, type = 'goblin', level = 1) => {
+    const createMonster = (x, z, color, name, type = 'goblin', level = 1, id = null, maxHealth = null, damage = null) => {
       const monsterGroup = new THREE.Group();
       monsterGroup.name = name;
       
-      // Get max HP based on monster type
-      const maxHp = type === 'troll' ? 100 : type === 'wolf' ? 35 : 20;
+      // Get max HP based on monster type or use provided value
+      const defaultMaxHp = type === 'troll' ? 100 : type === 'wolf' ? 35 : 20;
+      const maxHp = maxHealth || defaultMaxHp;
+      const monsterId = id || `${type}_${x}_${z}_${Date.now()}`;
+      
       monsterGroup.userData = { 
         type: 'monster', 
         monsterType: type, 
@@ -2556,7 +2559,9 @@ const GameWorld = () => {
         hostile: true,
         maxHp: maxHp,
         currentHp: maxHp,
-        monsterId: `${type}_${x}_${z}`
+        damage: damage || (type === 'troll' ? 15 : type === 'wolf' ? 8 : 5),
+        monsterId: monsterId,
+        enemyId: monsterId // For placed enemies reference
       };
       
       const size = type === 'troll' ? 1.5 : type === 'wolf' ? 0.8 : 0.7;
