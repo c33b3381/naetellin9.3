@@ -946,6 +946,25 @@ async def get_placed_enemies():
     enemies = await db.placed_enemies.find({}, {"_id": 0}).to_list(1000)
     return {"enemies": enemies}
 
+@api_router.post("/world/enemies")
+async def save_placed_enemy(enemy: dict):
+    """Save a single placed enemy to the world"""
+    # Use upsert to update if exists or insert if new
+    await db.placed_enemies.update_one(
+        {"id": enemy["id"]},
+        {"$set": enemy},
+        upsert=True
+    )
+    return {"message": "Enemy saved", "id": enemy["id"]}
+
+@api_router.delete("/world/enemies/{enemy_id}")
+async def delete_placed_enemy(enemy_id: str):
+    """Delete a placed enemy from the world"""
+    result = await db.placed_enemies.delete_one({"id": enemy_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Enemy not found")
+    return {"message": "Enemy deleted", "id": enemy_id}
+
 @api_router.get("/world/objects")
 async def get_world_objects(zone: Optional[str] = None):
     """Get all placed world objects, optionally filtered by zone"""
