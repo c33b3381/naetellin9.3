@@ -4460,6 +4460,20 @@ const GameWorld = () => {
                 mesh.rotation.y = (obj.rotation.y * Math.PI) / 180; // Convert degrees to radians
               }
               
+              // Add quest marker if NPC has a quest assigned
+              if (obj.quest_id || obj.quest_giver) {
+                const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
+                const markerMaterial = new THREE.MeshStandardMaterial({ 
+                  color: 0xffff00,
+                  emissive: 0xffff00,
+                  emissiveIntensity: 0.8
+                });
+                const questMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+                questMarker.position.y = 2.5;
+                questMarker.userData.questMarker = true;
+                mesh.add(questMarker);
+              }
+              
               editorObjectsRef.current.push(mesh);
               console.log('World object created successfully:', obj.name, 'at mesh position:', mesh.position);
             } else {
