@@ -2430,23 +2430,25 @@ const GameWorld = () => {
       }
     }, 500); // Sync every 500ms
     
-    // Also save on window close/refresh
+    // Also save on window close/refresh using sendBeacon (modern, reliable API)
     const handleBeforeUnload = () => {
       const pos = playerRef.current?.position;
-      if (pos) {
-        // Synchronous XHR for reliable saving on page close
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', `${process.env.REACT_APP_BACKEND_URL}/api/player/position`, false); // false = synchronous
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.send(JSON.stringify({
+      if (pos && navigator.sendBeacon) {
+        // Use sendBeacon for reliable saving on page close
+        // Token is sent in body since sendBeacon can't set custom headers
+        const data = JSON.stringify({
+          token: token,
           x: pos.x,
           y: pos.y,
           z: pos.z,
           zone: currentZoneRef.current || 'starter_village',
-          combat_level: playerLevel,
-          experience: currentXP
-        }));
+          combat_level: playerLevelRef.current,
+          experience: currentXPRef.current
+        });
+        navigator.sendBeacon(
+          `${process.env.REACT_APP_BACKEND_URL}/api/player/position-beacon`,
+          new Blob([data], { type: 'application/json' })
+        );
       }
     };
     
