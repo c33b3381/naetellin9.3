@@ -1408,6 +1408,13 @@ const GameWorld = () => {
     // Update last attack time IMMEDIATELY to prevent double attacks
     lastAutoAttackRef.current = now;
     
+    // Play attack animation with alternating hands
+    const currentHand = attackHandRef.current;
+    playAttackAnimation(currentHand);
+    
+    // Alternate hands for next attack
+    attackHandRef.current = currentHand === 'right' ? 'left' : 'right';
+    
     // Enter combat
     if (enterCombatRef.current) {
       enterCombatRef.current();
