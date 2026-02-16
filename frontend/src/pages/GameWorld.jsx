@@ -2433,24 +2433,18 @@ const GameWorld = () => {
       head.castShadow = true;
       npcGroup.add(head);
       
-      // Role indicator
-      const indicatorMaterial = new THREE.MeshStandardMaterial({ 
-        color: color, 
-        emissive: color, 
-        emissiveIntensity: 0.6 
-      });
-      const indicator = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), indicatorMaterial);
-      indicator.position.y = 1.85;
-      npcGroup.add(indicator);
-      
-      // Quest marker for quest givers
+      // Quest marker for quest givers - consistent yellow cone style
       if (type === 'questgiver') {
-        const exclamation = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.05, 0.05, 0.3, 8),
-          new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.8 })
-        );
-        exclamation.position.y = 2.1;
-        npcGroup.add(exclamation);
+        const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
+        const markerMaterial = new THREE.MeshStandardMaterial({ 
+          color: 0xffff00,
+          emissive: 0xffff00,
+          emissiveIntensity: 0.8
+        });
+        const questMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+        questMarker.position.y = 2.2;
+        questMarker.userData.questMarker = true;
+        npcGroup.add(questMarker);
       }
       
       // Place NPC at terrain height
