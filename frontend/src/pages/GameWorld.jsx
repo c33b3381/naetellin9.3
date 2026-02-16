@@ -6240,15 +6240,15 @@ const GameWorld = () => {
               }
             });
             
-            // Apply rotation from placement data
-            if (placement.rotation) {
-              previewGroup.rotation.y = (placement.rotation * Math.PI) / 180;
-            }
-            
             previewGroup.position.y = -1000; // Start off screen
             scene.add(previewGroup);
             previewMeshRef.current = previewGroup;
           }
+        }
+        
+        // Update rotation every frame (in case user adjusts slider)
+        if (previewMeshRef.current && placement.rotation !== undefined) {
+          previewMeshRef.current.rotation.y = (placement.rotation * Math.PI) / 180;
         }
       } else if (previewMeshRef.current) {
         // Remove preview mesh when placement is done
