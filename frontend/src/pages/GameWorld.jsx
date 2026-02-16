@@ -417,12 +417,18 @@ const GameWorld = () => {
   const isAutoAttackingRef = useRef(false); // Ref for animation loop closure
   const autoAttackTimerRef = useRef(null);
   const lastAutoAttackRef = useRef(0);
-  const autoAttackSpeedRef = useRef(3.0); // 3.0 second swing timer
+  const autoAttackSpeedRef = useRef(2.0); // 2.0 second swing timer (reduced from 3.0)
   const globalCooldownRef = useRef(0); // GCD in seconds
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC: {enemyId: {inCombat, aggroTarget, lastAttack, spawnPos}}
   const meleeRange = 5; // 5 yards for melee
   const aggroRange = 8; // 8 yards aggro range (reduced for better gameplay)
   const leashRange = 40; // 40 yards leash range
+  
+  // Attack animation state
+  const attackHandRef = useRef('right'); // Alternates between 'right' and 'left'
+  const attackAnimationRef = useRef(null); // Current animation frame
+  const isAttackingRef = useRef(false); // Is currently in attack animation
+  const playerArmsRef = useRef({ left: null, right: null }); // References to arm meshes
   
   // Refs for functions used in animation loop (to avoid stale closures)
   const addNotificationRef = useRef(null);
