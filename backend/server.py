@@ -266,6 +266,48 @@ async def update_position(position: Dict[str, Any], auth: dict = Depends(verify_
     )
     return {"message": "Position updated"}
 
+@api_router.post("/player/position-beacon")
+async def update_position_beacon(data: Dict[str, Any]):
+    """
+    Beacon endpoint for saving position on page unload.
+    Uses token in body since sendBeacon can't set custom headers.
+    """
+    token = data.get('token')
+    if not token:
+        raise HTTPException(status_code=401, detail="Token required")
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        player_id = payload['player_id']
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Build update data
+    update_data = {}
+    if 'x' in data and 'y' in data and 'z' in data:
+        update_data['position'] = {
+            'x': data['x'],
+            'y': data['y'],
+            'z': data['z'],
+            'zone': data.get('zone', 'starter_village')
+        }
+    
+    # Also save experience and level if provided
+    if 'combat_level' in data:
+        update_data['combat_level'] = data['combat_level']
+    if 'experience' in data:
+        update_data['experience'] = data['experience']
+    
+    if update_data:
+        await db.players.update_one(
+            {"id": player_id},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Position saved via beacon"}
+
 # ==================== GAME STATE ROUTES ====================
 
 @api_router.post("/player/learn-spell")
