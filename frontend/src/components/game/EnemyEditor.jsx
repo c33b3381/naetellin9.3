@@ -5,8 +5,8 @@ import {
   Cat, Crown, Bone, Droplets, TreePine, Ghost, Zap
 } from 'lucide-react';
 
-// Enemy NPC Database with stats
-const ENEMY_DATABASE = {
+// Enemy NPC Database with stats - exported for use in QuestMaker
+export const ENEMY_DATABASE = {
   // Tier 1 - Starter Enemies (Level 1-5)
   tier1: {
     label: 'Starter (Lv 1-5)',
