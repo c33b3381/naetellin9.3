@@ -6353,6 +6353,62 @@ const GameWorld = () => {
         const patrolSpeed = 2 * delta; // Movement speed for patrolling
         const patrolNow = Date.now();
         
+        // Define different patrol pattern generators
+        const getPatrolPattern = (patternType, radius) => {
+          switch (patternType) {
+            case 'circle': // Circular patrol - 8 points around a circle
+              return Array.from({ length: 8 }, (_, i) => {
+                const angle = (i / 8) * Math.PI * 2;
+                return { x: Math.cos(angle) * radius, z: Math.sin(angle) * radius };
+              });
+            case 'figure8': // Figure-8 pattern
+              return Array.from({ length: 16 }, (_, i) => {
+                const t = (i / 16) * Math.PI * 2;
+                return { x: Math.sin(t) * radius, z: Math.sin(t * 2) * radius * 0.5 };
+              });
+            case 'triangle': // Triangle patrol
+              return [
+                { x: 0, z: radius },
+                { x: radius * 0.866, z: -radius * 0.5 },
+                { x: -radius * 0.866, z: -radius * 0.5 }
+              ];
+            case 'line': // Back and forth line patrol
+              return [
+                { x: radius, z: 0 },
+                { x: -radius, z: 0 }
+              ];
+            case 'diamond': // Diamond/rhombus patrol
+              return [
+                { x: 0, z: radius },
+                { x: radius, z: 0 },
+                { x: 0, z: -radius },
+                { x: -radius, z: 0 }
+              ];
+            case 'zigzag': // Zigzag patrol pattern
+              return [
+                { x: radius, z: radius },
+                { x: -radius * 0.5, z: radius * 0.3 },
+                { x: radius * 0.5, z: -radius * 0.3 },
+                { x: -radius, z: -radius }
+              ];
+            case 'square': // Original square pattern
+            default:
+              return [
+                { x: radius, z: 0 },
+                { x: radius, z: radius },
+                { x: 0, z: radius },
+                { x: -radius, z: radius },
+                { x: -radius, z: 0 },
+                { x: -radius, z: -radius },
+                { x: 0, z: -radius },
+                { x: radius, z: -radius }
+              ];
+          }
+        };
+        
+        // Available patrol patterns
+        const patrolPatterns = ['circle', 'figure8', 'triangle', 'line', 'diamond', 'zigzag', 'square'];
+        
         enemyMeshesRef.current.forEach(enemyMesh => {
           if (!enemyMesh || !enemyMesh.userData) return;
           
@@ -6367,10 +6423,14 @@ const GameWorld = () => {
           
           // Initialize patrol data if not exists
           if (!enemyPatrolDataRef.current[enemyId]) {
+            // Randomly assign a patrol pattern to each enemy
+            const randomPatternIndex = Math.floor(Math.random() * patrolPatterns.length);
             enemyPatrolDataRef.current[enemyId] = {
-              patrolState: 0, // 0-3 for square corners
+              patrolState: 0,
               lastStateChange: patrolNow,
-              patrolWaitTime: 2000 + Math.random() * 2000 // Wait 2-4 seconds at each corner
+              patrolWaitTime: 2000 + Math.random() * 2000,
+              patternType: patrolPatterns[randomPatternIndex], // Random patrol pattern
+              patternOffset: Math.random() * Math.PI * 2 // Random starting offset for variety
             };
           }
           
@@ -6405,18 +6465,8 @@ const GameWorld = () => {
             return;
           }
           
-          // Patrol in a square pattern
-          // Calculate target position based on patrol state
-          const patrolOffsets = [
-            { x: patrolRadius, z: 0 },      // East
-            { x: patrolRadius, z: patrolRadius },  // Southeast
-            { x: 0, z: patrolRadius },      // South
-            { x: -patrolRadius, z: patrolRadius }, // Southwest
-            { x: -patrolRadius, z: 0 },     // West
-            { x: -patrolRadius, z: -patrolRadius }, // Northwest
-            { x: 0, z: -patrolRadius },     // North
-            { x: patrolRadius, z: -patrolRadius }, // Northeast
-          ];
+          // Get patrol points based on enemy's assigned pattern
+          const patrolOffsets = getPatrolPattern(patrolData.patternType, patrolRadius);
           
           const currentPatrolState = patrolData.patrolState % patrolOffsets.length;
           const targetX = spawnX + patrolOffsets[currentPatrolState].x;
