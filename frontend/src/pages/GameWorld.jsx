@@ -8015,7 +8015,7 @@ const GameWorld = () => {
         isOpen={isTrainerOpen}
         onClose={() => setIsTrainerOpen(false)}
         playerClass={character?.class || 'warrior'}
-        playerLevel={character?.combatLevel || 1}
+        playerLevel={playerLevel}
         playerGold={playerCopper}
         learnedSpells={learnedSpells}
         onTrainSpell={handleTrainSpell}
