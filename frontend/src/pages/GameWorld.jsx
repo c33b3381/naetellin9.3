@@ -741,6 +741,9 @@ const GameWorld = () => {
   const [customQuests, setCustomQuests] = useState([]);
   const [selectedNPCForQuest, setSelectedNPCForQuest] = useState(null);
   
+  // World Map state
+  const [isWorldMapOpen, setIsWorldMapOpen] = useState(false);
+  
   // Loot system state
   const [isLootPanelOpen, setIsLootPanelOpen] = useState(false);
   const [currentLootData, setCurrentLootData] = useState(null);
