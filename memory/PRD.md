@@ -64,7 +64,15 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - `POST /api/world/enemy/save` - Save/update a single enemy
 - `DELETE /api/world/enemy/delete/{enemy_id}` - Delete a single enemy
 
-## Recent Changes (December 2025)
+## Changelog
+
+### December 2025 (Latest Session)
+- **Deployment Readiness Check**: Application verified deployment ready
+- **beforeunload Fix**: Replaced deprecated sync XHR with navigator.sendBeacon() for reliable page unload saves
+- **New Beacon Endpoint**: Added `/api/player/position-beacon` for sendBeacon API compatibility
+- **Security**: Added JWT_SECRET to backend .env
+
+### Previous Changes (December 2025)
 - **Aggro Range Reduced**: Changed from 15 to 8 units for better gameplay balance
 - **Mouse Wheel Zoom Fix**: Added `e.preventDefault()` and `{ passive: false }` to wheel event handler for reliable zoom in map editor
 - **Randomized Patrol Patterns**: Enemies now have 7 different patrol patterns (circle, figure-8, triangle, line, diamond, zigzag, square) randomly assigned on spawn
