@@ -747,6 +747,138 @@ const GameWorld = () => {
     enterCombatRef.current = enterCombat;
   }, [enterCombat]);
   
+  // ==================== PLAYER DEATH & RESURRECTION SYSTEM ====================
+  
+  // Handle player death
+  const handlePlayerDeath = useCallback(() => {
+    if (isDead) return; // Already dead
+    
+    setIsDead(true);
+    setShowReleaseDialog(true);
+    setIsAutoAttacking(false);
+    setIsInCombat(false);
+    
+    // Store corpse position
+    if (playerRef.current) {
+      setCorpsePosition({
+        x: playerRef.current.position.x,
+        z: playerRef.current.position.z
+      });
+    }
+    
+    // Clear all combat states
+    combatEngagedEnemiesRef.current.clear();
+    npcCombatStateRef.current.clear();
+    
+    // Deselect target
+    setSelectedTarget(null);
+    
+    addNotification('You have died!', 'error');
+  }, [isDead, addNotification]);
+  
+  // Handle releasing corpse (become ghost at spawn)
+  const handleReleaseCorpse = useCallback(() => {
+    setShowReleaseDialog(false);
+    setIsGhost(true);
+    
+    // Teleport to spawn point
+    if (playerRef.current) {
+      playerRef.current.position.x = SPAWN_POSITION.x;
+      playerRef.current.position.z = SPAWN_POSITION.z;
+      playerRef.current.position.y = getTerrainHeight(SPAWN_POSITION.x, SPAWN_POSITION.z);
+      
+      // Make player transparent (ghost effect)
+      playerRef.current.traverse((child) => {
+        if (child.material) {
+          child.material.transparent = true;
+          child.material.opacity = 0.5;
+        }
+      });
+    }
+    
+    // Create corpse marker at death location
+    if (sceneRef.current && corpsePosition) {
+      const markerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16);
+      const markerMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xff0000, 
+        transparent: true, 
+        opacity: 0.7 
+      });
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+      marker.position.set(corpsePosition.x, getTerrainHeight(corpsePosition.x, corpsePosition.z) + 0.1, corpsePosition.z);
+      marker.name = 'corpseMarker';
+      sceneRef.current.add(marker);
+      corpseMarkerRef.current = marker;
+    }
+    
+    addNotification('You are now a ghost. Return to your corpse to revive.', 'info');
+  }, [corpsePosition, addNotification]);
+  
+  // Handle reviving at corpse
+  const handleRevive = useCallback(() => {
+    setShowReviveDialog(false);
+    setIsGhost(false);
+    setIsDead(false);
+    
+    // Restore to 50% HP and Mana
+    setCurrentHealth(Math.floor(maxHealth * 0.5));
+    setCurrentMana(Math.floor(maxMana * 0.5));
+    
+    // Teleport to corpse position
+    if (playerRef.current && corpsePosition) {
+      playerRef.current.position.x = corpsePosition.x;
+      playerRef.current.position.z = corpsePosition.z;
+      playerRef.current.position.y = getTerrainHeight(corpsePosition.x, corpsePosition.z);
+      
+      // Restore player opacity (remove ghost effect)
+      playerRef.current.traverse((child) => {
+        if (child.material) {
+          child.material.transparent = false;
+          child.material.opacity = 1.0;
+        }
+      });
+    }
+    
+    // Remove corpse marker
+    if (corpseMarkerRef.current && sceneRef.current) {
+      sceneRef.current.remove(corpseMarkerRef.current);
+      corpseMarkerRef.current = null;
+    }
+    
+    setCorpsePosition(null);
+    addNotification('You have been resurrected!', 'success');
+  }, [corpsePosition, maxHealth, maxMana, addNotification]);
+  
+  // Check if player is near corpse (for revive dialog)
+  useEffect(() => {
+    if (!isGhost || !corpsePosition || !playerRef.current) return;
+    
+    const checkDistance = setInterval(() => {
+      if (!playerRef.current || !corpsePosition) return;
+      
+      const dx = playerRef.current.position.x - corpsePosition.x;
+      const dz = playerRef.current.position.z - corpsePosition.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      
+      if (distance <= CORPSE_REVIVE_RADIUS) {
+        setShowReviveDialog(true);
+      } else {
+        setShowReviveDialog(false);
+      }
+    }, 200);
+    
+    return () => clearInterval(checkDistance);
+  }, [isGhost, corpsePosition]);
+  
+  // Check for player death when health changes
+  useEffect(() => {
+    if (currentHealth <= 0 && !isDead) {
+      handlePlayerDeath();
+    }
+  }, [currentHealth, isDead, handlePlayerDeath]);
+  
+  // ==================== END DEATH & RESURRECTION SYSTEM ====================
+  
   // Handle enemy death - create lootable corpse
   const handleEnemyDeath = useCallback((enemy, enemyId) => {
     const xpGained = enemy.userData.level * 10;
