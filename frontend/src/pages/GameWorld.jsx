@@ -1277,10 +1277,10 @@ const GameWorld = () => {
     }
     
     // Update quest kill progress
-    const enemyName = enemy.userData.name || '';
-    const enemyType = enemy.userData.enemyType || enemy.userData.type || '';
-    const customName = enemy.userData.customName || '';
-    updateQuestKillProgress(enemyName, enemyType, customName);
+    const killedEnemyName = enemy.userData.name || '';
+    const killedEnemyType = enemy.userData.enemyType || enemy.userData.type || '';
+    const killedEnemyCustomName = enemy.userData.customName || '';
+    updateQuestKillProgress(killedEnemyName, killedEnemyType, killedEnemyCustomName);
     
     // Remove from combat tracking
     if (enemyId) {
