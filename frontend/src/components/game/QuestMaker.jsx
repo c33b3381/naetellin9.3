@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check, ChevronDown } from 'lucide-react';
+import { ENEMY_DATABASE } from './EnemyEditor';
 
 const QuestMaker = ({ 
   isOpen, 
@@ -8,7 +9,8 @@ const QuestMaker = ({
   onAssignQuest,
   onRemoveQuest,
   existingQuests = [],
-  selectedNPC = null
+  selectedNPC = null,
+  placedEnemies = [] // List of enemies spawned in the world
 }) => {
   const [questName, setQuestName] = useState('');
   const [questDescription, setQuestDescription] = useState('');
@@ -21,6 +23,44 @@ const QuestMaker = ({
   });
   const [selectedQuestForAssignment, setSelectedQuestForAssignment] = useState(null);
   const [justCreatedQuest, setJustCreatedQuest] = useState(null);
+  
+  // Build a list of unique enemy types from placed enemies AND the database
+  const availableEnemyTypes = useMemo(() => {
+    // Get unique enemy types from placed enemies (with custom names)
+    const placedTypes = {};
+    placedEnemies.forEach(enemy => {
+      const key = enemy.customName || enemy.name || enemy.type;
+      if (!placedTypes[key]) {
+        placedTypes[key] = {
+          id: enemy.type,
+          customName: enemy.customName,
+          name: enemy.customName || enemy.name || enemy.type,
+          count: 1,
+          isPlaced: true
+        };
+      } else {
+        placedTypes[key].count++;
+      }
+    });
+    
+    // Get all enemy types from the database
+    const databaseTypes = [];
+    Object.entries(ENEMY_DATABASE).forEach(([tierKey, tier]) => {
+      Object.entries(tier.enemies).forEach(([enemyKey, enemy]) => {
+        databaseTypes.push({
+          id: enemyKey,
+          name: enemy.label,
+          tier: tier.label,
+          isDatabase: true
+        });
+      });
+    });
+    
+    return {
+      placed: Object.values(placedTypes),
+      database: databaseTypes
+    };
+  }, [placedEnemies]);
   
   // Reset selection when NPC changes
   useEffect(() => {
@@ -41,6 +81,7 @@ const QuestMaker = ({
       type: 'kill',
       description: '',
       target: '',
+      targetId: '', // Store the enemy type ID for kill quests
       required: 1,
       current: 0
     }]);
@@ -54,6 +95,12 @@ const QuestMaker = ({
     setObjectives(objectives.map(obj => 
       obj.id === id ? { ...obj, [field]: value } : obj
     ));
+  };
+  
+  // Handle enemy selection for kill objective
+  const handleEnemySelect = (objId, enemyName, enemyId) => {
+    updateObjective(objId, 'target', enemyName);
+    updateObjective(objId, 'targetId', enemyId);
   };
   
   const handleSave = () => {
@@ -77,6 +124,7 @@ const QuestMaker = ({
         type: obj.type,
         description: obj.description,
         target: obj.target,
+        targetId: obj.targetId,
         required: obj.required
       })),
       rewards: {
@@ -116,7 +164,7 @@ const QuestMaker = ({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       
       {/* Quest Maker Panel */}
-      <div className="relative bg-[#1a1a1a] border-2 border-[#8b5cf6] rounded-lg shadow-2xl w-[700px] max-h-[85vh] overflow-hidden">
+      <div className="relative bg-[#1a1a1a] border-2 border-[#8b5cf6] rounded-lg shadow-2xl w-[750px] max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#6d28d9] to-[#7c3aed] px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -254,34 +302,114 @@ const QuestMaker = ({
                       ))}
                     </div>
                     
+                    {/* Kill Enemies - Show Enemy Selector */}
+                    {obj.type === 'kill' && (
+                      <div className="mb-2">
+                        <label className="text-xs text-[#78716c] block mb-1">Select Enemy Type</label>
+                        
+                        {/* Placed Enemies Section */}
+                        {availableEnemyTypes.placed.length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-[10px] text-[#22c55e] mb-1 flex items-center gap-1">
+                              <Target className="w-3 h-3" />
+                              Spawned in World ({availableEnemyTypes.placed.length} types)
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {availableEnemyTypes.placed.map((enemy, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleEnemySelect(obj.id, enemy.name, enemy.id)}
+                                  className={`px-2 py-1 rounded text-xs border transition-all ${
+                                    obj.target === enemy.name
+                                      ? 'border-[#22c55e] bg-[#22c55e]/20 text-[#22c55e]'
+                                      : 'border-[#44403c] text-[#a8a29e] hover:border-[#22c55e]'
+                                  }`}
+                                >
+                                  {enemy.name} <span className="text-[#78716c]">({enemy.count})</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Database Enemies Section - Collapsible */}
+                        <details className="group">
+                          <summary className="text-[10px] text-[#78716c] cursor-pointer hover:text-white flex items-center gap-1 mb-1">
+                            <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
+                            All Enemy Types (Database)
+                          </summary>
+                          <div className="ml-2 mt-1 space-y-2 max-h-32 overflow-y-auto">
+                            {Object.entries(ENEMY_DATABASE).map(([tierKey, tier]) => (
+                              <div key={tierKey}>
+                                <div className="text-[9px] text-[#57534e] mb-1">{tier.label}</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {Object.entries(tier.enemies).map(([enemyKey, enemy]) => (
+                                    <button
+                                      key={enemyKey}
+                                      onClick={() => handleEnemySelect(obj.id, enemy.label, enemyKey)}
+                                      className={`px-2 py-0.5 rounded text-[10px] border transition-all ${
+                                        obj.target === enemy.label
+                                          ? 'border-[#8b5cf6] bg-[#8b5cf6]/20 text-[#c4b5fd]'
+                                          : 'border-[#44403c] text-[#78716c] hover:border-[#8b5cf6]'
+                                      }`}
+                                    >
+                                      {enemy.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                        
+                        {/* Custom target input */}
+                        <div className="mt-2">
+                          <input
+                            type="text"
+                            value={obj.target}
+                            onChange={(e) => updateObjective(obj.id, 'target', e.target.value)}
+                            placeholder="Or type custom enemy name..."
+                            className="w-full p-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Description */}
                     <input
                       type="text"
                       value={obj.description}
                       onChange={(e) => updateObjective(obj.id, 'description', e.target.value)}
-                      placeholder="Objective description..."
+                      placeholder={obj.type === 'kill' ? `e.g., Slay the ${obj.target || 'enemies'} threatening the village` : "Objective description..."}
                       className="w-full p-2 mb-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
                     />
                     
                     <div className="grid grid-cols-2 gap-2">
-                      {/* Target */}
-                      <input
-                        type="text"
-                        value={obj.target}
-                        onChange={(e) => updateObjective(obj.id, 'target', e.target.value)}
-                        placeholder={obj.type === 'kill' ? 'Enemy name' : obj.type === 'collect' ? 'Item name' : obj.type === 'talk' ? 'NPC name' : 'Location name'}
-                        className="p-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
-                      />
+                      {/* Target (only for non-kill types) */}
+                      {obj.type !== 'kill' && (
+                        <input
+                          type="text"
+                          value={obj.target}
+                          onChange={(e) => updateObjective(obj.id, 'target', e.target.value)}
+                          placeholder={obj.type === 'collect' ? 'Item name' : obj.type === 'talk' ? 'NPC name' : 'Location name'}
+                          className="p-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
+                        />
+                      )}
                       
                       {/* Required */}
-                      <input
-                        type="number"
-                        value={obj.required}
-                        onChange={(e) => updateObjective(obj.id, 'required', parseInt(e.target.value) || 1)}
-                        min="1"
-                        placeholder="Required"
-                        className="p-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
-                      />
+                      <div className={obj.type === 'kill' ? 'col-span-2' : ''}>
+                        <label className="text-[10px] text-[#78716c] block mb-1">
+                          {obj.type === 'kill' ? 'Kill Count' : 'Required Amount'}
+                        </label>
+                        <input
+                          type="number"
+                          value={obj.required}
+                          onChange={(e) => updateObjective(obj.id, 'required', parseInt(e.target.value) || 1)}
+                          min="1"
+                          placeholder="Required"
+                          className="w-full p-2 bg-[#1a1a1a] border border-[#44403c] rounded text-white text-sm focus:border-[#8b5cf6] outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))
