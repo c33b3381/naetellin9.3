@@ -2945,7 +2945,7 @@ const GameWorld = () => {
       glow.position.y = 0.05;
       statueGroup.add(glow);
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getActualTerrainHeight(x, z);
       statueGroup.position.set(x, terrainY, z);
       scene.add(statueGroup);
       return statueGroup;
