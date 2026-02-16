@@ -408,11 +408,21 @@ const TrainerPanel = ({
                   </div>
                 </div>
                 
-                {/* Training Cost */}
+                {/* Level Requirement */}
                 <div className="border-t border-[#44403c] pt-3 space-y-2">
-                  <p className="text-xs text-[#78716c]">Training Cost:</p>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-[#a8a29e]">Cost:</span>
+                    <span className="text-[#78716c]">Required Level:</span>
+                    <span className={`font-bold ${playerLevel >= (selectedSpell.requiredLevel || 1) ? 'text-[#22c55e]' : 'text-[#dc2626]'}`}>
+                      {selectedSpell.requiredLevel || 1}
+                      {playerLevel >= (selectedSpell.requiredLevel || 1) ? (
+                        <Check className="w-4 h-4 inline ml-1" />
+                      ) : (
+                        <Lock className="w-4 h-4 inline ml-1" />
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#78716c]">Training Cost:</span>
                     <span className={`flex items-center gap-1 ${playerGold >= selectedSpell.cost ? 'text-[#fbbf24]' : 'text-[#dc2626]'}`}>
                       <Coins className="w-4 h-4" />
                       {selectedSpell.cost === 0 ? 'Free' : formatCurrency(selectedSpell.cost)}
@@ -431,19 +441,41 @@ const TrainerPanel = ({
                 
                 {/* Train Button */}
                 {!learnedSpells.includes(selectedSpell.id) ? (
-                  <button
-                    onClick={handleTrain}
-                    disabled={playerGold < selectedSpell.cost && selectedSpell.cost > 0}
-                    className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${
-                      playerGold >= selectedSpell.cost || selectedSpell.cost === 0
-                        ? 'bg-[#fbbf24] hover:bg-[#f59e0b] text-[#1a1a1a]'
-                        : 'bg-[#44403c] text-[#78716c] cursor-not-allowed'
-                    }`}
-                    data-testid="train-spell-btn"
-                  >
-                    <GraduationCap className="w-5 h-5" />
-                    Train Spell ({selectedSpell.cost === 0 ? 'Free' : formatCurrency(selectedSpell.cost)})
-                  </button>
+                  (() => {
+                    const meetsLevelReq = playerLevel >= (selectedSpell.requiredLevel || 1);
+                    const canAfford = playerGold >= selectedSpell.cost || selectedSpell.cost === 0;
+                    const canTrain = meetsLevelReq && canAfford;
+                    
+                    return (
+                      <button
+                        onClick={handleTrain}
+                        disabled={!canTrain}
+                        className={`w-full py-3 rounded font-bold flex items-center justify-center gap-2 transition-all ${
+                          canTrain
+                            ? 'bg-[#fbbf24] hover:bg-[#f59e0b] text-[#1a1a1a]'
+                            : 'bg-[#44403c] text-[#78716c] cursor-not-allowed'
+                        }`}
+                        data-testid="train-spell-btn"
+                      >
+                        {!meetsLevelReq ? (
+                          <>
+                            <Lock className="w-5 h-5" />
+                            Requires Level {selectedSpell.requiredLevel}
+                          </>
+                        ) : !canAfford ? (
+                          <>
+                            <Coins className="w-5 h-5" />
+                            Not Enough Gold
+                          </>
+                        ) : (
+                          <>
+                            <GraduationCap className="w-5 h-5" />
+                            Train Ability ({selectedSpell.cost === 0 ? 'Free' : formatCurrency(selectedSpell.cost)})
+                          </>
+                        )}
+                      </button>
+                    );
+                  })()
                 ) : (
                   <div className="w-full py-3 rounded bg-[#22c55e]/20 text-[#22c55e] text-center font-bold flex items-center justify-center gap-2">
                     <Check className="w-5 h-5" />
