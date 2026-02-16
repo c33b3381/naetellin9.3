@@ -8257,11 +8257,10 @@ const GameWorld = () => {
         {/* Minimap - Top Right */}
         <div className="absolute top-4 right-4 pointer-events-auto">
           <Minimap 
-            playerPosition={position}
-            playerRotation={playerRef.current?.rotation?.y || 0}
-            currentZone={currentZone}
-            enemies={placedEnemies}
-            npcs={placedObjects.filter(obj => obj.type === 'npc' || obj.type === 'vendor' || obj.isVendor)}
+            scene={sceneRef.current}
+            playerRef={playerRef}
+            cameraRef={cameraRef}
+            rendererRef={rendererRef}
             onClick={() => setIsWorldMapOpen(true)}
           />
         </div>
@@ -8272,9 +8271,8 @@ const GameWorld = () => {
           onClose={() => setIsWorldMapOpen(false)}
           playerPosition={position}
           currentZone={currentZone}
-          enemies={placedEnemies}
-          npcs={placedObjects.filter(obj => obj.type === 'npc' || obj.type === 'vendor' || obj.isVendor)}
-          worldObjects={placedObjects}
+          scene={sceneRef.current}
+          terrainMesh={terrainMeshRef.current}
         />
 
         {/* Bag Bar - Bottom Right (WoW-style) */}
