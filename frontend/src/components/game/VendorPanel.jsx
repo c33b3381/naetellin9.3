@@ -252,7 +252,7 @@ const VendorPanel = ({
                         <p className="text-[#22c55e] text-sm font-bold">
                           Sell: {formatMoney(getSellPrice(hoveredItem.item))}
                         </p>
-                        <p className="text-[#78716c] text-xs">Right-click to sell</p>
+                        <p className="text-[#78716c] text-xs">Click to sell</p>
                       </div>
                     </div>
                   </div>
