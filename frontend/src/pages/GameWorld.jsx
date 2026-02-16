@@ -6772,7 +6772,8 @@ const GameWorld = () => {
           }
           
           // PROXIMITY AGGRO: If enemy is hostile and player is within aggro range, engage!
-          if (!combatState.inCombat && enemyMesh.userData.hostile && distanceToPlayer <= aggroRange) {
+          // Skip if player is dead or a ghost
+          if (!isDeadRef.current && !isGhostRef.current && !combatState.inCombat && enemyMesh.userData.hostile && distanceToPlayer <= aggroRange) {
             combatState.inCombat = true;
             combatState.aggroTarget = playerRef.current;
             combatState.lastAttack = combatNow - 2; // Allow attack after 0.5s
@@ -6785,6 +6786,16 @@ const GameWorld = () => {
             }
             if (enterCombatRef.current) {
               enterCombatRef.current();
+            }
+          }
+          
+          // If player dies or becomes ghost, drop aggro
+          if (isDeadRef.current || isGhostRef.current) {
+            if (combatState.inCombat) {
+              combatState.inCombat = false;
+              combatState.aggroTarget = null;
+              combatState.notifiedAggro = false;
+              combatEngagedEnemiesRef.current.delete(enemyId);
             }
           }
           
