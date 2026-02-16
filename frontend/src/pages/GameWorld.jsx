@@ -4379,7 +4379,9 @@ const GameWorld = () => {
       group.position.set(x, terrainY, z);
       scene.add(group);
       
-      if (group.userData.interactable || group.userData.type === 'monster' || group.userData.type === 'npc') {
+      // Add to selectableObjects if it's an interactable entity
+      const selectableTypes = ['monster', 'npc', 'trainer', 'questgiver', 'vendor', 'guard'];
+      if (group.userData.interactable || selectableTypes.includes(group.userData.type)) {
         selectableObjects.current.push(group);
       }
       
