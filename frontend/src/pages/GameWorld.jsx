@@ -7520,7 +7520,7 @@ const GameWorld = () => {
             return;
           }
           
-          // If no patrol radius, stay stationary
+          // If no patrol radius or it's 0, stay stationary (though we now default to 5)
           if (patrolRadius <= 0) {
             // Make health bar face camera even when stationary
             const healthBarBg = enemyMesh.getObjectByName('healthBarBg');
@@ -7529,6 +7529,12 @@ const GameWorld = () => {
               healthBarBg.lookAt(camera.position);
               healthBarFill.lookAt(camera.position);
             }
+            return;
+          }
+          
+          // Check spawn position is valid
+          if (spawnX === undefined || spawnZ === undefined) {
+            console.warn('[Patrol] Enemy missing spawn position:', enemyId);
             return;
           }
           
