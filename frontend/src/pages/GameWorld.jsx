@@ -438,8 +438,10 @@ const GameWorld = () => {
   const playerCorpseRef = useRef(null); // Visual corpse of the player
   const isDeadRef = useRef(false); // Ref for game loop access
   const isGhostRef = useRef(false); // Ref for game loop access
+  const justTeleportedRef = useRef(false); // Prevent position override after teleport
   const CORPSE_REVIVE_RADIUS = 5; // Must be within 5 units of corpse to revive
-  const GRAVEYARD_POSITION = { x: -40, z: -40 }; // Graveyard location (away from spawn)
+  const GRAVEYARD_X = -40;
+  const GRAVEYARD_Z = -40;
   
   // Keep death refs updated
   useEffect(() => {
