@@ -9,6 +9,9 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Game World**: 3D world with multiple zones (Oakvale Village, Darkwood Forest, etc.)
 - **Character System**: Player stats, inventory, equipment, skills
 - **Combat System**: Auto-attack, abilities, monster battles
+  - **Aggro Range**: 8 units (enemies engage when player is within 8 yards)
+  - **Melee Range**: 5 units
+  - **Leash Range**: 40 units (enemies return to spawn if player is too far)
 - **Editor Tools**:
   - F1: World Builder - Place NPCs, objects, furniture, **Vendor NPCs**
   - F2: Terrain Editor - Modify terrain height/color
@@ -22,7 +25,7 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
   - Quest assignment to NPCs with visual "!" markers
   - Quest dialog integration for custom quests
   - Quest removal from NPCs
-- **Vendor System** (NEW):
+- **Vendor System**:
   - 8 vendor types: Blacksmith, General Goods, Trade Goods, Food/Water, Weapons, Armor, Potions, Magic
   - Visual gold coin indicator above vendor heads
   - VendorPanel UI for selling items from inventory
@@ -43,13 +46,13 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 ## Technical Architecture
 
 ### Frontend (React + Three.js)
-- `/app/frontend/src/pages/GameWorld.jsx` - Main game component (~7000 lines)
+- `/app/frontend/src/pages/GameWorld.jsx` - Main game component (~8000 lines)
 - `/app/frontend/src/components/game/` - Game UI components
 - `/app/frontend/src/store/gameStore.js` - Zustand state management
 
 ### Backend (FastAPI)
 - `/app/backend/server.py` - All API endpoints
-- MongoDB collections: players, world_objects, custom_quests, terrain
+- MongoDB collections: players, world_objects, custom_quests, terrain, placed_enemies
 
 ### Key API Endpoints
 - `POST /api/quests/custom/create` - Create custom quest
@@ -57,11 +60,20 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - `PUT /api/quests/custom/assign/{quest_id}` - Assign quest to NPC
 - `DELETE /api/quests/custom/remove/{quest_id}` - Remove quest from NPC
 - `GET /api/quests/custom/by-npc/{npc_id}` - Get quest assigned to NPC
+- `GET/POST /api/world/enemies` - Bulk save/load placed enemies
+- `POST /api/world/enemy/save` - Save/update a single enemy
+- `DELETE /api/world/enemy/delete/{enemy_id}` - Delete a single enemy
+
+## Recent Changes (December 2025)
+- **Aggro Range Reduced**: Changed from 15 to 8 units for better gameplay balance
+- **Mouse Wheel Zoom Fix**: Added `e.preventDefault()` and `{ passive: false }` to wheel event handler for reliable zoom in map editor
 
 ## Known Issues
-1. Mouse wheel zoom can become unreliable after toggling F5/F6 modes (P1)
+- None currently active
 
 ## Future Improvements
 - Refactor GameWorld.jsx into smaller components
 - Quest completion tracking and rewards
 - More quest objective types
+- Vendor buy system (players can buy items from vendors)
+
