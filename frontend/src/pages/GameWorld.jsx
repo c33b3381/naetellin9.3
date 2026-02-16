@@ -6705,12 +6705,21 @@ const GameWorld = () => {
       // Prepare placed enemies
       const placedEnemiesData = placedEnemies.map(enemy => ({
         id: enemy.id,
-        type: enemy.type,
-        position: enemy.position,
+        enemyType: enemy.enemyType,
         name: enemy.name,
         level: enemy.level,
-        health: enemy.health,
-        max_health: enemy.maxHealth
+        x: enemy.position?.x || enemy.x || 0,
+        y: enemy.position?.y || enemy.y || 0,
+        z: enemy.position?.z || enemy.z || 0,
+        maxHealth: enemy.maxHealth,
+        currentHealth: enemy.currentHealth,
+        damage: enemy.damage,
+        color: enemy.color,
+        patrolRadius: enemy.patrolRadius || 5,
+        respawnTime: enemy.respawnTime || 60,
+        tier: enemy.tier,
+        xpReward: enemy.xpReward,
+        goldDrop: enemy.goldDrop
       }));
       
       // Prepare path nodes
