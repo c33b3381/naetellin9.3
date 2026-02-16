@@ -6743,15 +6743,16 @@ const GameWorld = () => {
         return;
       }
       
-      // Don't process keys if a dialog is open
-      if (isQuestDialogOpen || isQuestLogOpen || isTrainerOpen || isSpellBookOpen || isCharacterPanelOpen || isItemEditorOpen) {
-        if (e.code === 'Escape') {
+      // Don't process keys if a dialog is open (except M and Escape)
+      if (isQuestDialogOpen || isQuestLogOpen || isTrainerOpen || isSpellBookOpen || isCharacterPanelOpen || isItemEditorOpen || isWorldMapOpen) {
+        if (e.code === 'Escape' || e.code === 'KeyM') {
           setIsQuestDialogOpen(false);
           setIsQuestLogOpen(false);
           setIsTrainerOpen(false);
           setIsSpellBookOpen(false);
           setIsCharacterPanelOpen(false);
           setIsItemEditorOpen(false);
+          setIsWorldMapOpen(false);
         }
         return;
       }
