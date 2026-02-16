@@ -970,23 +970,83 @@ const GameWorld = () => {
     });
   }, [addNotification, currentLootCorpse, addItemToBag, copper, updateCopper]);
   
-  // Handle loot all button
+  // Handle loot all button - OPTIMIZED to batch operations
   const handleLootAll = useCallback(() => {
     if (!currentLootData) return;
     
+    // Collect looted items for single notification
+    const lootedItems = [];
+    let goldLooted = 0;
+    
     // Loot gold (stored as copper) first
     if (currentLootData.gold > 0) {
+      goldLooted = currentLootData.gold;
       const currentCopper = copper || 0;
-      const copperToAdd = currentLootData.gold; // Already in copper
-      useGameStore.setState({ copper: currentCopper + copperToAdd });
-      updateCopper(copperToAdd).catch(err => console.error('Failed to save copper:', err));
+      useGameStore.setState({ copper: currentCopper + goldLooted });
+      updateCopper(goldLooted).catch(err => console.error('Failed to save copper:', err));
     }
     
-    // Loot all items
+    // Loot all items - add to bag WITHOUT individual notifications
     if (currentLootData.items && currentLootData.items.length > 0) {
+      const { backpack, bags } = useGameStore.getState();
+      let backpackCopy = [...backpack];
+      let bagsCopy = bags.map(b => ({ ...b, items: [...b.items] }));
+      
       currentLootData.items.forEach(item => {
-        addItemToBag(item);
+        let added = false;
+        
+        // Try to stack with existing item in backpack
+        for (let i = 0; i < backpackCopy.length; i++) {
+          if (backpackCopy[i].id === item.id && item.type !== 'bag') {
+            backpackCopy[i] = { ...backpackCopy[i], quantity: backpackCopy[i].quantity + (item.quantity || 1) };
+            added = true;
+            lootedItems.push(item.name);
+            break;
+          }
+        }
+        
+        // If not stacked and backpack has space
+        if (!added && backpackCopy.length < 16) {
+          backpackCopy.push({ ...item, quantity: item.quantity || 1 });
+          added = true;
+          lootedItems.push(item.name);
+        }
+        
+        // Try other bags if backpack is full
+        if (!added) {
+          for (let bagIndex = 0; bagIndex < bagsCopy.length; bagIndex++) {
+            const bag = bagsCopy[bagIndex];
+            if (!bag.bagItem) continue;
+            
+            for (let i = 0; i < bag.items.length; i++) {
+              if (bag.items[i].id === item.id && item.type !== 'bag') {
+                bag.items[i] = { ...bag.items[i], quantity: bag.items[i].quantity + (item.quantity || 1) };
+                added = true;
+                lootedItems.push(item.name);
+                break;
+              }
+            }
+            
+            if (!added && bag.items.length < bag.bagItem.slots) {
+              bag.items.push({ ...item, quantity: item.quantity || 1 });
+              added = true;
+              lootedItems.push(item.name);
+              break;
+            }
+          }
+        }
       });
+      
+      // Single state update for all items
+      useGameStore.setState({ backpack: backpackCopy, bags: bagsCopy });
+    }
+    
+    // Single notification for all loot
+    if (lootedItems.length > 0 || goldLooted > 0) {
+      const lootSummary = [];
+      if (goldLooted > 0) lootSummary.push(`${goldLooted} copper`);
+      if (lootedItems.length > 0) lootSummary.push(`${lootedItems.length} item${lootedItems.length > 1 ? 's' : ''}`);
+      addNotification(`Looted: ${lootSummary.join(', ')}`, 'success');
     }
     
     // Close panel and remove corpse
