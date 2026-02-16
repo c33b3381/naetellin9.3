@@ -6069,7 +6069,7 @@ const GameWorld = () => {
     renderer.domElement.addEventListener('mousedown', handleMouseDown);
     renderer.domElement.addEventListener('mouseup', handleMouseUp);
     renderer.domElement.addEventListener('mousemove', handleMouseMove);
-    renderer.domElement.addEventListener('wheel', handleWheel);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
     renderer.domElement.addEventListener('contextmenu', handleContextMenu);
     renderer.domElement.addEventListener('dblclick', handleDoubleClick);
     window.addEventListener('keydown', handleKeyDown);
