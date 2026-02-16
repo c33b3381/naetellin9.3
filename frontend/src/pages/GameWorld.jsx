@@ -4515,21 +4515,32 @@ const GameWorld = () => {
           console.log(`Loading ${data.enemies.length} saved enemies...`);
           
           data.enemies.forEach(enemy => {
+            // Use saved color or derive from enemy type
+            const color = enemy.color ? 
+              (typeof enemy.color === 'string' ? parseInt(enemy.color.replace('#', ''), 16) : enemy.color) :
+              (enemy.enemyType === 'goblin' ? 0x2d5016 :
+               enemy.enemyType === 'wolf' ? 0x4a4a4a :
+               enemy.enemyType === 'skeleton' ? 0xd4d4d4 :
+               enemy.enemyType === 'troll' ? 0x3d5c3d : 0x6b7280);
+            
             createMonster(
               enemy.x,
               enemy.z,
-              enemy.enemyType === 'goblin' ? 0x2d5016 :
-              enemy.enemyType === 'wolf' ? 0x4a4a4a :
-              enemy.enemyType === 'skeleton' ? 0xd4d4d4 :
-              enemy.enemyType === 'troll' ? 0x3d5c3d : 0x6b7280,
+              color,
               enemy.name,
               enemy.enemyType,
               enemy.level,
-              enemy.id
+              enemy.id,
+              enemy.maxHealth,
+              enemy.damage
             );
           });
           
-          setPlacedEnemies(data.enemies);
+          // Store full enemy data including all properties
+          setPlacedEnemies(data.enemies.map(enemy => ({
+            ...enemy,
+            position: { x: enemy.x, y: enemy.y || 0, z: enemy.z }
+          })));
           console.log('Saved enemies loaded successfully');
         }
       } catch (err) {
