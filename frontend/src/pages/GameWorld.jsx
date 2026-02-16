@@ -952,11 +952,10 @@ const GameWorld = () => {
       }
       
       const timer = corpseTimersRef.current.get(currentLootCorpse);
-      if (timer) clearTimeout(timer);
-      corpseTimersRef.current.delete(currentLootCorpse);
+      // DON'T clear the respawn timer - it needs to run to respawn the enemy
+      // Just remove the corpse from lootable tracking (visual already removed above)
       lootableCorpsesRef.current.delete(currentLootCorpse);
       // DON'T remove from placedEnemies - let the respawn timer handle it
-      // setPlacedEnemies(p => p.filter(e => e.id !== currentLootCorpse));
       setCurrentLootCorpse(null);
     } else {
       setCurrentLootData(newLootData);
