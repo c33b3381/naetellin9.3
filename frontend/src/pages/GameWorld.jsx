@@ -5313,6 +5313,13 @@ const GameWorld = () => {
         }
         
         if (editorOpen && placement) {
+          // Prevent double-placement from rapid clicks
+          if (placementInProgressRef.current) {
+            console.log('[NPC Placement] Placement already in progress, ignoring click');
+            return;
+          }
+          placementInProgressRef.current = true;
+          
           const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
           const intersectPoint = new THREE.Vector3();
           raycasterRef.current.ray.intersectPlane(groundPlane, intersectPoint);
