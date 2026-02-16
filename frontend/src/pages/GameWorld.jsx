@@ -8511,6 +8511,7 @@ const GameWorld = () => {
         onRemoveQuest={handleRemoveQuestFromNPC}
         existingQuests={customQuests}
         selectedNPC={selectedNPCForQuest}
+        placedEnemies={placedEnemies}
       />
     </div>
   );
