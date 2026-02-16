@@ -8456,6 +8456,13 @@ const GameWorld = () => {
         selectedEditObject={selectedEditObject}
         onSelectEditObject={setSelectedEditObject}
         currentZone={currentZone}
+        onUpdatePreview={(updates) => {
+          // Update pending placement with new scale/rotation
+          setPendingPlacement(prev => {
+            if (!prev) return prev;
+            return { ...prev, ...updates };
+          });
+        }}
       />
       
       {/* Terrain Editor */}
