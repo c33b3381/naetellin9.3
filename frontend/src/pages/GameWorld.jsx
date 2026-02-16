@@ -798,7 +798,7 @@ const GameWorld = () => {
     }
     
     // Set 30-second corpse despawn timer, then RESPAWN the enemy
-    const RESPAWN_TIME = 30000; // 30 seconds
+    const RESPAWN_TIME = 15000; // 15 seconds
     const despawnTimer = setTimeout(() => {
       // Remove corpse from scene
       if (sceneRef.current && enemy.parent) {
