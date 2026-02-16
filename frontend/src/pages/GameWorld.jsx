@@ -561,6 +561,10 @@ const GameWorld = () => {
   const corpseTimersRef = useRef(new Map()); // Track corpse despawn timers
   const lootableCorpsesRef = useRef(new Map()); // Track lootable corpses: enemyId -> { mesh, loot }
   
+  // Vendor system state
+  const [isVendorPanelOpen, setIsVendorPanelOpen] = useState(false);
+  const [currentVendor, setCurrentVendor] = useState({ type: 'vendor_general', name: 'Merchant' });
+  
   // Bag system state
   const [openBagIndex, setOpenBagIndex] = useState(null);
   
