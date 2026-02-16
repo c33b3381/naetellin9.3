@@ -5182,9 +5182,9 @@ const GameWorld = () => {
         // Left click - check for target selection (same as right-click)
         const selectableIntersects = raycasterRef.current.intersectObjects(selectableObjects.current, true);
         
-        if (intersects.length > 0) {
+        if (selectableIntersects.length > 0) {
           // Find the root group with interactable flag
-          let targetObject = intersects[0].object;
+          let targetObject = selectableIntersects[0].object;
           
           // Walk up the parent chain to find the selectable group
           while (targetObject) {
