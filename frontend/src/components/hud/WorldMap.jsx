@@ -127,6 +127,9 @@ const WorldMap = ({
             {/* Background - ocean/unexplored */}
             <rect x="0" y="0" width={mapWidth} height={mapHeight} fill="#0a0a1a" />
             
+            {/* DEBUG: Test rectangle - should show in center */}
+            <rect x="200" y="200" width="200" height="200" fill="#228B22" opacity="0.8" stroke="#fbbf24" strokeWidth="2" />
+            
             {/* Zones - rendered first as base layer */}
             {Object.entries(WORLD_ZONES).map(([zoneKey, zone]) => {
               const topLeft = worldToMap(zone.bounds.minX, zone.bounds.minZ);
