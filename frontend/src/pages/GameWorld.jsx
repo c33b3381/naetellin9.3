@@ -906,16 +906,29 @@ const GameWorld = () => {
       // Restore player opacity (remove ghost effect)
       playerRef.current.traverse((child) => {
         if (child.material) {
-          child.material.transparent = false;
-          child.material.opacity = 1.0;
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => {
+              m.transparent = false;
+              m.opacity = 1.0;
+            });
+          } else {
+            child.material.transparent = false;
+            child.material.opacity = 1.0;
+          }
         }
       });
     }
     
-    // Remove corpse marker
+    // Remove corpse marker (legacy)
     if (corpseMarkerRef.current && sceneRef.current) {
       sceneRef.current.remove(corpseMarkerRef.current);
       corpseMarkerRef.current = null;
+    }
+    
+    // Remove player corpse model
+    if (playerCorpseRef.current && sceneRef.current) {
+      sceneRef.current.remove(playerCorpseRef.current);
+      playerCorpseRef.current = null;
     }
     
     setCorpsePosition(null);
