@@ -868,15 +868,20 @@ const GameWorld = () => {
           enemySpawnDataRef.current.delete(enemyId);
           enemySpawnDataRef.current.set(newEnemyId, spawnData);
           
-          // Update database with new enemy ID
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...spawnData,
-              id: newEnemyId,
-              currentHealth: spawnData.maxHealth
-            })
+          // DELETE old enemy from database FIRST, then add new one
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies/${enemyId}`, {
+            method: 'DELETE'
+          }).then(() => {
+            // Now save the respawned enemy with new ID
+            return fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...spawnData,
+                id: newEnemyId,
+                currentHealth: spawnData.maxHealth
+              })
+            });
           }).catch(err => console.error('[RESPAWN] Failed to update database:', err));
           
           addNotification(`${spawnData.name} has respawned!`, 'info');
