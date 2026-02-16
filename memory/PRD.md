@@ -77,11 +77,20 @@ A browser-based RPG game called "Quest of Honor" built with React, Three.js, Fas
 - **Player Death & Resurrection System**: 
   - Player dies when health reaches 0
   - "Release Corpse" dialog appears on death
-  - Ghost mode teleports player to spawn (0,0)
-  - Red corpse marker shows death location
+  - Ghost mode teleports player to graveyard (-40, -40)
+  - Player corpse model created at death location (lying down body)
+  - Yellow glow highlights corpse location for visibility
   - "Revive" dialog appears when within 5 units of corpse
   - Revival restores 50% HP and Mana
   - Enemies ignore ghost players (no aggro)
+- **Graveyard Area Added**:
+  - Located at coordinates (-40, -40)
+  - Angel statue with halo (Spirit Healer marker)
+  - Multiple gravestones in various styles (rounded, cross, slab)
+  - Stone tombs/sarcophagi
+  - Iron fence perimeter
+  - Dead/barren trees for atmosphere
+  - Blue glow effect at statue base
 
 ## Known Issues
 - None currently active
