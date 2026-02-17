@@ -723,7 +723,7 @@ async def create_custom_quest(quest: Dict[str, Any], auth: dict = Depends(verify
 @api_router.get("/quests/custom/list")
 async def list_custom_quests(auth: dict = Depends(verify_token)):
     """Get all custom quests created by player"""
-    quests = await db.custom_quests.find({"creator_id": auth['player_id']}, {"_id": 0}).to_list(None)
+    quests = await db.custom_quests.find({"creator_id": auth['player_id']}, {"_id": 0}).to_list(100)
     return {"quests": quests}
 
 @api_router.put("/quests/custom/assign/{quest_id}")
