@@ -63,8 +63,14 @@ const QuestDialog = ({
   
   // Build the list of available quests from database
   // Only show quests that are assigned to THIS specific NPC
+  console.log('QuestDialog: Building quest list. npcId:', npcId, 'databaseQuests:', databaseQuests);
+  
   const formattedDatabaseQuests = databaseQuests
-    .filter(quest => quest.assigned_npc_id === npcId)
+    .filter(quest => {
+      const matches = quest.assigned_npc_id === npcId;
+      console.log('QuestDialog: Quest', quest.name, 'assigned_npc_id:', quest.assigned_npc_id, 'npcId:', npcId, 'matches:', matches);
+      return matches;
+    })
     .map(quest => ({
       id: quest.quest_id,
       quest_id: quest.quest_id,
