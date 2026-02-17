@@ -10,11 +10,15 @@ const QuestLog = ({
   trackedQuestId
 }) => {
   
+  // Get quest ID (handles both id and quest_id)
+  const getQuestId = (quest) => quest.id || quest.quest_id;
+  
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case 'easy': return '#22c55e';
       case 'medium': return '#f59e0b';
       case 'hard': return '#dc2626';
+      case 'epic': return '#a855f7';
       default: return '#78716c';
     }
   };
