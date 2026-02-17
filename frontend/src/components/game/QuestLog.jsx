@@ -67,11 +67,13 @@ const QuestLog = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {activeQuests.map(quest => (
+                {activeQuests.map(quest => {
+                  const questId = getQuestId(quest);
+                  return (
                   <div 
-                    key={quest.id}
+                    key={questId}
                     className={`bg-[#0c0a09] rounded-lg p-4 border transition-all ${
-                      trackedQuestId === quest.id 
+                      trackedQuestId === questId 
                         ? 'border-[#fbbf24] shadow-lg shadow-[#fbbf24]/10' 
                         : 'border-[#44403c]'
                     }`}
@@ -81,24 +83,31 @@ const QuestLog = ({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-cinzel text-[#fbbf24]">{quest.name}</h4>
-                          <span 
-                            className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
-                            style={{ 
-                              backgroundColor: `${getDifficultyColor(quest.difficulty)}20`,
-                              color: getDifficultyColor(quest.difficulty)
-                            }}
-                          >
-                            {quest.difficulty}
-                          </span>
+                          {quest.difficulty && (
+                            <span 
+                              className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
+                              style={{ 
+                                backgroundColor: `${getDifficultyColor(quest.difficulty)}20`,
+                                color: getDifficultyColor(quest.difficulty)
+                              }}
+                            >
+                              {quest.difficulty}
+                            </span>
+                          )}
+                          {quest.isComplete && (
+                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e]">
+                              Ready to Turn In
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-[#78716c] mt-1">From: {quest.giver}</p>
+                        <p className="text-xs text-[#78716c] mt-1">From: {quest.giver || 'Unknown'}</p>
                       </div>
                       
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => onTrackQuest && onTrackQuest(quest.id)}
+                          onClick={() => onTrackQuest && onTrackQuest(questId)}
                           className={`p-1.5 rounded transition-all ${
-                            trackedQuestId === quest.id
+                            trackedQuestId === questId
                               ? 'bg-[#fbbf24] text-[#1a1a1a]'
                               : 'bg-[#44403c] text-[#a8a29e] hover:bg-[#57534e]'
                           }`}
@@ -107,7 +116,7 @@ const QuestLog = ({
                           <MapPin className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onAbandonQuest && onAbandonQuest(quest.id)}
+                          onClick={() => onAbandonQuest && onAbandonQuest(questId)}
                           className="p-1.5 bg-[#44403c] text-[#a8a29e] hover:bg-[#dc2626] hover:text-white rounded transition-all"
                           title="Abandon Quest"
                         >
@@ -131,48 +140,53 @@ const QuestLog = ({
                     </div>
                     
                     {/* Objectives */}
-                    <div className="space-y-1.5">
-                      {quest.objectives.map(obj => {
-                        const isComplete = (obj.current || 0) >= obj.required;
-                        return (
-                          <div 
-                            key={obj.id}
-                            className={`flex items-center gap-2 text-sm ${isComplete ? 'text-[#22c55e]' : 'text-[#a8a29e]'}`}
-                          >
-                            {isComplete ? (
-                              <CheckCircle className="w-4 h-4 text-[#22c55e]" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-[#44403c]" />
-                            )}
-                            <span className={isComplete ? 'line-through' : ''}>
-                              {obj.description}
-                            </span>
-                            <span className="ml-auto text-xs font-mono">
-                              {obj.current || 0}/{obj.required}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    {quest.objectives && quest.objectives.length > 0 && (
+                      <div className="space-y-1.5">
+                        {quest.objectives.map(obj => {
+                          const isComplete = (obj.current || 0) >= obj.required;
+                          return (
+                            <div 
+                              key={obj.id}
+                              className={`flex items-center gap-2 text-sm ${isComplete ? 'text-[#22c55e]' : 'text-[#a8a29e]'}`}
+                            >
+                              {isComplete ? (
+                                <CheckCircle className="w-4 h-4 text-[#22c55e]" />
+                              ) : (
+                                <Circle className="w-4 h-4 text-[#44403c]" />
+                              )}
+                              <span className={isComplete ? 'line-through' : ''}>
+                                {obj.description || `${obj.type}: ${obj.target}`}
+                              </span>
+                              <span className="ml-auto text-xs font-mono">
+                                {obj.current || 0}/{obj.required}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     
                     {/* Rewards Preview */}
-                    <div className="mt-3 pt-3 border-t border-[#44403c] flex items-center gap-4">
-                      <span className="text-[10px] text-[#78716c] uppercase">Rewards:</span>
-                      {quest.rewards?.xp && (
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-[#a855f7]" />
-                          <span className="text-xs text-[#a855f7]">+{quest.rewards.xp} XP</span>
-                        </div>
-                      )}
-                      {quest.rewards?.gold && (
-                        <div className="flex items-center gap-1">
-                          <Coins className="w-3 h-3 text-[#fbbf24]" />
-                          <span className="text-xs text-[#fbbf24]">+{quest.rewards.gold}</span>
-                        </div>
-                      )}
-                    </div>
+                    {quest.rewards && (quest.rewards.xp || quest.rewards.gold) && (
+                      <div className="mt-3 pt-3 border-t border-[#44403c] flex items-center gap-4">
+                        <span className="text-[10px] text-[#78716c] uppercase">Rewards:</span>
+                        {quest.rewards.xp > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-[#a855f7]" />
+                            <span className="text-xs text-[#a855f7]">+{quest.rewards.xp} XP</span>
+                          </div>
+                        )}
+                        {quest.rewards.gold > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Coins className="w-3 h-3 text-[#fbbf24]" />
+                            <span className="text-xs text-[#fbbf24]">+{quest.rewards.gold} Gold</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
