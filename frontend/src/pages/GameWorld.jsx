@@ -8681,6 +8681,7 @@ const GameWorld = () => {
         existingQuests={customQuests}
         selectedNPC={selectedNPCForQuest}
         placedEnemies={placedEnemies}
+        placedNPCs={placedObjects.filter(obj => obj.type === 'npc' || obj.type?.includes('questgiver'))}
       />
     </div>
   );
