@@ -8257,8 +8257,9 @@ const GameWorld = () => {
         }}
         npcName={questGiverName}
         npcType={questGiverType}
-        playerQuests={activeQuests}
+        playerQuests={[...activeQuests, ...customQuests.filter(q => q.npc_id)]}
         onAcceptQuest={handleAcceptQuest}
+        onTurnInQuest={handleTurnInQuest}
         customQuest={currentNPCQuest}
       />
       
