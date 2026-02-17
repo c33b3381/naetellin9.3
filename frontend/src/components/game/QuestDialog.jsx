@@ -25,11 +25,20 @@ const QuestDialog = ({
   // Load global quests from database when dialog opens
   useEffect(() => {
     if (isOpen && npcType === 'questgiver') {
+      console.log('QuestDialog: Fetching global quests for questgiver NPC');
       fetchGlobalQuests().then(quests => {
+        console.log('QuestDialog: Fetched quests:', quests);
+        setDatabaseQuests(quests || []);
+      });
+    } else if (isOpen && npcId) {
+      // Also fetch for regular NPCs that have quests assigned
+      console.log('QuestDialog: Fetching global quests for NPC with npcId:', npcId);
+      fetchGlobalQuests().then(quests => {
+        console.log('QuestDialog: Fetched quests:', quests);
         setDatabaseQuests(quests || []);
       });
     }
-  }, [isOpen, npcType, fetchGlobalQuests]);
+  }, [isOpen, npcType, npcId, fetchGlobalQuests]);
   
   // Reset state when dialog opens/closes or NPC changes
   useEffect(() => {
