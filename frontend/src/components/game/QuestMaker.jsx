@@ -168,6 +168,37 @@ const QuestMaker = ({
     setActiveTab('create');
   };
   
+  // Assign quest to NPC
+  const handleAssignToNPC = async (quest, npc) => {
+    try {
+      await assignGlobalQuestToNPC(quest.quest_id, npc.id, npc.name || npc.customName || 'Quest Giver');
+      // Update local state
+      setGlobalQuests(prev => prev.map(q => 
+        q.quest_id === quest.quest_id 
+          ? { ...q, assigned_npc_id: npc.id, assigned_npc_name: npc.name || npc.customName || 'Quest Giver' }
+          : q
+      ));
+      setAssigningQuest(null);
+    } catch (err) {
+      console.error('Failed to assign quest:', err);
+    }
+  };
+  
+  // Unassign quest from NPC
+  const handleUnassignQuest = async (quest) => {
+    try {
+      await unassignGlobalQuest(quest.quest_id);
+      // Update local state
+      setGlobalQuests(prev => prev.map(q => 
+        q.quest_id === quest.quest_id 
+          ? { ...q, assigned_npc_id: null, assigned_npc_name: null }
+          : q
+      ));
+    } catch (err) {
+      console.error('Failed to unassign quest:', err);
+    }
+  };
+  
   // Delete quest from database
   const handleDeleteQuest = async (questId) => {
     if (confirm('Are you sure you want to delete this quest from the database?')) {
