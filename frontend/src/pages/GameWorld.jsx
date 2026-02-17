@@ -5679,8 +5679,8 @@ const GameWorld = () => {
                 console.log('Applied rotation to', obj.name, ':', obj.rotation, 'degrees');
               }
               
-              // Add quest marker if NPC has a quest assigned
-              if (obj.quest_id || obj.quest_giver) {
+              // Add quest marker if NPC has a quest assigned (check all quest assignment fields)
+              if (obj.quest_id || obj.quest_giver || obj.global_quest_id) {
                 const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
                 const markerMaterial = new THREE.MeshStandardMaterial({ 
                   color: 0xffff00,
