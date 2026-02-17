@@ -5707,6 +5707,7 @@ const GameWorld = () => {
           });
           
           setPlacedObjects(savedObjects);
+          placedObjectsRef.current = savedObjects; // Update ref immediately
           console.log('World objects loaded successfully');
         } else {
           console.log('No saved world objects found');
