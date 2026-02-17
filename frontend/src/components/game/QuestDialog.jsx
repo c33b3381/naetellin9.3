@@ -1,36 +1,21 @@
 import { useState, useEffect } from 'react';
 import { X, Scroll, Coins, Star, Sword, Check, Gift, CheckCircle, Trophy } from 'lucide-react';
 
-// Test quests for the quest giver
+// Permanent quests available from Quest Giver NPCs - shared across all accounts
 const AVAILABLE_QUESTS = {
-  'goblin_slayer': {
-    id: 'goblin_slayer',
-    name: 'Goblin Slayer',
+  'goblins_in_the_land': {
+    id: 'goblins_in_the_land',
+    name: 'Goblins in the Land!',
     giver: 'Quest Giver',
-    description: 'The village has been plagued by goblins! Travel to the forest and slay 5 goblins to protect the villagers.',
+    description: 'There has been an incursion into our land by the accursed Goblins, head over to the old ruins and slay three of them.',
     objectives: [
-      { id: 'kill_goblins', description: 'Kill Goblins', current: 0, required: 5 }
+      { id: 'kill_goblins', description: 'Kill Goblins', target: 'Goblin', current: 0, required: 3 }
     ],
     rewards: {
-      xp: 100,
-      gold: 25
+      xp: 300,
+      gold: 1
     },
-    difficulty: 'easy',
-    level: 1
-  },
-  'forest_explorer': {
-    id: 'forest_explorer',
-    name: 'Forest Explorer',
-    giver: 'Quest Giver',
-    description: 'The elders need someone to scout the Dark Forest. Venture into the forest zone and return safely.',
-    objectives: [
-      { id: 'visit_forest', description: 'Visit the Dark Forest', current: 0, required: 1 }
-    ],
-    rewards: {
-      xp: 50,
-      gold: 10
-    },
-    difficulty: 'easy',
+    difficulty: 'medium',
     level: 1
   }
 };
