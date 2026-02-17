@@ -2322,7 +2322,9 @@ const GameWorld = () => {
     
     // Award gold (copper)
     if (goldReward > 0) {
-      setCopper(prev => prev + goldReward);
+      const currentCopper = copper || 0;
+      useGameStore.setState({ copper: currentCopper + goldReward });
+      updateCopper(goldReward).catch(err => console.error('Failed to save copper:', err));
       addNotification(`+${goldReward} Gold!`, 'success');
     }
     
@@ -2338,7 +2340,7 @@ const GameWorld = () => {
     }
     
     addNotification(`Quest completed: ${quest.name}!`, 'success');
-  }, [addNotification, gainXP, trackedQuestId]);
+  }, [addNotification, gainXP, trackedQuestId, copper, updateCopper]);
   
   const handleAbandonQuest = useCallback((questId) => {
     setActiveQuests(prev => prev.filter(q => q.id !== questId));
