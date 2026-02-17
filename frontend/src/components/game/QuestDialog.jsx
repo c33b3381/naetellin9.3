@@ -536,4 +536,4 @@ const QuestDialog = ({
 };
 
 export default QuestDialog;
-export { AVAILABLE_QUESTS };
+export { HARDCODED_QUESTS as AVAILABLE_QUESTS };
