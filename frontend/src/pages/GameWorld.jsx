@@ -5671,7 +5671,9 @@ const GameWorld = () => {
             );
             
             if (mesh) {
+              // Set editorId FIRST before any other operations
               mesh.userData.editorId = obj.id;
+              mesh.userData.objectData = obj; // Store full object data for quest checking
               
               // Apply rotation if saved (rotation is stored in degrees)
               if (obj.rotation !== undefined && obj.rotation !== 0) {
