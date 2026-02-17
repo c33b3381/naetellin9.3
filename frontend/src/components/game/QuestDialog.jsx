@@ -141,10 +141,12 @@ const QuestDialog = ({
   // Determine NPC role text
   const npcRoleText = customQuest ? 'Quest Giver' : (npcType === 'questgiver' ? 'Quest Giver' : 'NPC');
   
-  // Custom greeting based on whether NPC has custom quest
-  const greetingText = customQuest 
-    ? `"Greetings, adventurer! I have a task for you. Are you interested in helping me?"`
-    : `"Greetings, adventurer! I have tasks that need completing. Are you brave enough to help our village?"`;
+  // Custom greeting based on whether NPC has custom quest or quests to turn in
+  const greetingText = questsToTurnIn.length > 0
+    ? `"Ah, you're back! Have you completed the task I gave you?"`
+    : customQuest 
+      ? `"Greetings, adventurer! I have a task for you. Are you interested in helping me?"`
+      : `"Greetings, adventurer! I have tasks that need completing. Are you brave enough to help our village?"`;
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto" data-testid="quest-dialog">
@@ -182,6 +184,21 @@ const QuestDialog = ({
               
               {/* Dialog Options */}
               <div className="space-y-2">
+                {/* Turn In Quest Option - Show first if there are completed quests */}
+                {questsToTurnIn.length > 0 && (
+                  <button
+                    onClick={() => setDialogState('turnIn')}
+                    className="w-full text-left px-4 py-3 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 border border-[#22c55e] hover:border-[#22c55e] rounded transition-all flex items-center gap-3 animate-pulse"
+                    data-testid="turn-in-quest-btn"
+                  >
+                    <CheckCircle className="w-5 h-5 text-[#22c55e]" />
+                    <span className="text-[#22c55e] font-semibold">I've completed your task!</span>
+                    <span className="ml-auto bg-[#22c55e] text-[#1a1a1a] text-xs font-bold px-2 py-0.5 rounded">
+                      {questsToTurnIn.length}
+                    </span>
+                  </button>
+                )}
+                
                 <button
                   onClick={() => setDialogState('quests')}
                   className="w-full text-left px-4 py-3 bg-[#0c0a09] hover:bg-[#fbbf24]/10 border border-[#44403c] hover:border-[#fbbf24] rounded transition-all flex items-center gap-3"
