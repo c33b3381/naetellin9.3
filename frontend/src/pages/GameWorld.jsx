@@ -2362,7 +2362,11 @@ const GameWorld = () => {
   }, [addNotification, gainXP, trackedQuestId, copper, updateCopper]);
   
   const handleAbandonQuest = useCallback((questId) => {
-    setActiveQuests(prev => prev.filter(q => q.id !== questId));
+    // Remove from activeQuests (handles both id and quest_id)
+    setActiveQuests(prev => prev.filter(q => q.id !== questId && q.quest_id !== questId));
+    // Also remove from customQuests if it was a custom quest
+    setCustomQuests(prev => prev.filter(q => q.id !== questId && q.quest_id !== questId));
+    
     if (trackedQuestId === questId) {
       setTrackedQuestId(null);
     }
