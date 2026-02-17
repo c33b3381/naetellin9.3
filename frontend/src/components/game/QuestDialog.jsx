@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { X, Scroll, Coins, Star, Sword, Check, Gift, CheckCircle, Trophy } from 'lucide-react';
+import { useGameStore } from '../../store/gameStore';
 
-// Permanent quests available from Quest Giver NPCs - shared across all accounts
-const AVAILABLE_QUESTS = {
+// Hardcoded fallback quests (shown if database is empty)
+const HARDCODED_QUESTS = {
   'goblins_in_the_land': {
     id: 'goblins_in_the_land',
     name: 'Goblins in the Land!',
@@ -30,8 +31,20 @@ const QuestDialog = ({
   onTurnInQuest,
   customQuest = null  // Custom quest assigned to this NPC via Quest Maker
 }) => {
+  const { fetchGlobalQuests } = useGameStore();
+  
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail, turnIn, turnedIn
+  const [databaseQuests, setDatabaseQuests] = useState([]);
+  
+  // Load global quests from database when dialog opens
+  useEffect(() => {
+    if (isOpen && npcType === 'questgiver') {
+      fetchGlobalQuests().then(quests => {
+        setDatabaseQuests(quests || []);
+      });
+    }
+  }, [isOpen, npcType, fetchGlobalQuests]);
   
   // Reset state when dialog opens/closes or NPC changes
   useEffect(() => {
