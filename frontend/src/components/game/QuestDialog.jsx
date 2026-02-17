@@ -352,6 +352,155 @@ const QuestDialog = ({
               <p className="text-sm text-[#a8a29e]">Good luck, adventurer!</p>
             </div>
           )}
+          
+          {/* Turn In Quest Selection */}
+          {dialogState === 'turnIn' && (
+            <div className="space-y-4">
+              <button 
+                onClick={() => setDialogState('greeting')}
+                className="text-xs text-[#fbbf24] hover:underline flex items-center gap-1"
+              >
+                ← Back
+              </button>
+              
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <p className="text-[#f5f5f4] italic">
+                  "Excellent work! Which task have you completed?"
+                </p>
+              </div>
+              
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {questsToTurnIn.map(quest => (
+                  <button
+                    key={quest.id || quest.quest_id}
+                    onClick={() => {
+                      setSelectedQuest(quest);
+                      setDialogState('turnInDetail');
+                    }}
+                    className="w-full text-left p-3 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 border border-[#22c55e]/50 hover:border-[#22c55e] rounded transition-all"
+                    data-testid={`turnin-quest-${quest.id || quest.quest_id}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-[#22c55e]" />
+                        <div>
+                          <p className="font-cinzel text-[#22c55e]">{quest.name}</p>
+                          <p className="text-xs text-[#a8a29e] mt-1">Ready to turn in!</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {quest.rewards?.xp && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-[#a855f7]" />
+                            <span className="text-xs text-[#a855f7]">+{quest.rewards.xp}</span>
+                          </div>
+                        )}
+                        {quest.rewards?.gold && (
+                          <div className="flex items-center gap-1">
+                            <Coins className="w-3 h-3 text-[#fbbf24]" />
+                            <span className="text-xs text-[#fbbf24]">+{quest.rewards.gold}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Turn In Quest Detail */}
+          {dialogState === 'turnInDetail' && selectedQuest && (
+            <div className="space-y-4">
+              <button 
+                onClick={() => setDialogState('turnIn')}
+                className="text-xs text-[#fbbf24] hover:underline flex items-center gap-1"
+              >
+                ← Back
+              </button>
+              
+              {/* Quest Complete Header */}
+              <div className="bg-[#22c55e]/10 rounded-lg p-4 border border-[#22c55e]/50">
+                <div className="flex items-center gap-3 mb-2">
+                  <Trophy className="w-6 h-6 text-[#22c55e]" />
+                  <h3 className="font-cinzel text-xl text-[#22c55e]">{selectedQuest.name}</h3>
+                </div>
+                <p className="text-sm text-[#a8a29e]">Quest Complete!</p>
+              </div>
+              
+              {/* NPC Thank You Message */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <p className="text-[#f5f5f4] italic">
+                  "Wonderful work, adventurer! You've exceeded my expectations. Please accept these rewards for your efforts."
+                </p>
+              </div>
+              
+              {/* Completed Objectives */}
+              <div className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c]">
+                <h4 className="text-xs text-[#78716c] uppercase tracking-wider mb-2">Completed Objectives</h4>
+                <div className="space-y-2">
+                  {selectedQuest.objectives?.map(obj => (
+                    <div key={obj.id} className="flex items-center gap-2 text-sm text-[#22c55e]">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="line-through">{obj.description}</span>
+                      <span className="ml-auto">{obj.current || obj.required}/{obj.required}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Rewards to Receive */}
+              <div className="bg-[#fbbf24]/10 rounded-lg p-4 border border-[#fbbf24]/50">
+                <h4 className="text-xs text-[#fbbf24] uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Gift className="w-4 h-4" />
+                  Rewards
+                </h4>
+                <div className="flex items-center gap-6">
+                  {selectedQuest.rewards?.xp && (
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-[#a855f7]" />
+                      <span className="text-lg font-bold text-[#a855f7]">+{selectedQuest.rewards.xp} XP</span>
+                    </div>
+                  )}
+                  {selectedQuest.rewards?.gold && (
+                    <div className="flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-[#fbbf24]" />
+                      <span className="text-lg font-bold text-[#fbbf24]">+{selectedQuest.rewards.gold} Gold</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Turn In Button */}
+              <button
+                onClick={handleTurnIn}
+                className="w-full py-3 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded flex items-center justify-center gap-2 transition-all"
+                data-testid="complete-quest-btn"
+              >
+                <Trophy className="w-5 h-5" />
+                Complete Quest
+              </button>
+            </div>
+          )}
+          
+          {/* Quest Turned In Success */}
+          {dialogState === 'turnedIn' && selectedQuest && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#fbbf24]/20 border-2 border-[#fbbf24] flex items-center justify-center animate-bounce">
+                <Trophy className="w-10 h-10 text-[#fbbf24]" />
+              </div>
+              <h3 className="font-cinzel text-2xl text-[#fbbf24] mb-2">Quest Complete!</h3>
+              <div className="space-y-2 mt-4">
+                {selectedQuest.rewards?.xp && (
+                  <p className="text-[#a855f7] text-lg">+{selectedQuest.rewards.xp} Experience</p>
+                )}
+                {selectedQuest.rewards?.gold && (
+                  <p className="text-[#fbbf24] text-lg">+{selectedQuest.rewards.gold} Gold</p>
+                )}
+              </div>
+              <p className="text-sm text-[#a8a29e] mt-4">Thank you for your service, hero!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
