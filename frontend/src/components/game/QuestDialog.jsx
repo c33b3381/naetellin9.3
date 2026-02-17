@@ -522,11 +522,11 @@ const QuestDialog = ({
               </div>
               <h3 className="font-cinzel text-2xl text-[#fbbf24] mb-2">Quest Complete!</h3>
               <div className="space-y-2 mt-4">
-                {selectedQuest.rewards?.xp > 0 && (
-                  <p className="text-[#a855f7] text-lg">+{selectedQuest.rewards.xp} Experience</p>
+                {(selectedQuest.rewards?.xp > 0 || selectedQuest.xp > 0) && (
+                  <p className="text-[#a855f7] text-lg">+{selectedQuest.rewards?.xp || selectedQuest.xp} Experience</p>
                 )}
-                {selectedQuest.rewards?.gold > 0 && (
-                  <p className="text-[#fbbf24] text-lg">+{selectedQuest.rewards.gold} Gold</p>
+                {(selectedQuest.rewards?.gold > 0 || selectedQuest.gold > 0) && (
+                  <p className="text-[#fbbf24] text-lg">+{selectedQuest.rewards?.gold || selectedQuest.gold} Gold</p>
                 )}
               </div>
               <p className="text-sm text-[#a8a29e] mt-4">Thank you for your service, hero!</p>
