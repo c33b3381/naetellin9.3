@@ -8281,9 +8281,11 @@ const GameWorld = () => {
         onClose={() => {
           setIsQuestDialogOpen(false);
           setCurrentNPCQuest(null);
+          setQuestGiverId(null);
         }}
         npcName={questGiverName}
         npcType={questGiverType}
+        npcId={questGiverId}
         playerQuests={[...activeQuests, ...customQuests.filter(q => q.npc_id)]}
         onAcceptQuest={handleAcceptQuest}
         onTurnInQuest={handleTurnInQuest}
