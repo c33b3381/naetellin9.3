@@ -42,10 +42,11 @@ const QuestDialog = ({
   npcType = 'questgiver',
   playerQuests = [],
   onAcceptQuest,
+  onTurnInQuest,
   customQuest = null  // Custom quest assigned to this NPC via Quest Maker
 }) => {
   const [selectedQuest, setSelectedQuest] = useState(null);
-  const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail
+  const [dialogState, setDialogState] = useState('greeting'); // greeting, quests, questDetail, turnIn, turnedIn
   
   // Reset state when dialog opens/closes or NPC changes
   useEffect(() => {
