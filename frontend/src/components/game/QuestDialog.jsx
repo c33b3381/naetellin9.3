@@ -62,14 +62,22 @@ const QuestDialog = ({
   });
   
   // Build the list of available quests from database
-  // Only show quests that are assigned to THIS specific NPC
-  console.log('QuestDialog: Building quest list. npcId:', npcId, 'databaseQuests:', databaseQuests);
+  // Show quests that are assigned to THIS specific NPC, or show all quests if NPC has a quest marker
+  console.log('QuestDialog: Building quest list. npcId:', npcId, 'databaseQuests:', databaseQuests.length);
   
   const formattedDatabaseQuests = databaseQuests
     .filter(quest => {
-      const matches = quest.assigned_npc_id === npcId;
-      console.log('QuestDialog: Quest', quest.name, 'assigned_npc_id:', quest.assigned_npc_id, 'npcId:', npcId, 'matches:', matches);
-      return matches;
+      // If npcId is set, filter by it. Otherwise show all assigned quests
+      if (npcId) {
+        const matches = quest.assigned_npc_id === npcId;
+        console.log('QuestDialog: Quest', quest.name, 'assigned_npc_id:', quest.assigned_npc_id, 'npcId:', npcId, 'matches:', matches);
+        return matches;
+      } else {
+        // Show quest if it's assigned to any NPC (for debugging)
+        const hasAssignment = !!quest.assigned_npc_id;
+        console.log('QuestDialog: No npcId, quest', quest.name, 'hasAssignment:', hasAssignment);
+        return hasAssignment;
+      }
     })
     .map(quest => ({
       id: quest.quest_id,
