@@ -2308,6 +2308,38 @@ const GameWorld = () => {
     setIsQuestDialogOpen(false);
   }, [addNotification]);
   
+  const handleTurnInQuest = useCallback((quest) => {
+    // Get rewards from quest
+    const rewards = quest.rewards || {};
+    const xpReward = rewards.xp || 0;
+    const goldReward = rewards.gold || 0;
+    
+    // Award XP
+    if (xpReward > 0) {
+      gainXP(xpReward);
+      addNotification(`+${xpReward} Experience!`, 'success');
+    }
+    
+    // Award gold (copper)
+    if (goldReward > 0) {
+      setCopper(prev => prev + goldReward);
+      addNotification(`+${goldReward} Gold!`, 'success');
+    }
+    
+    // Remove from active quests and add to completed
+    const questId = quest.id || quest.quest_id;
+    setActiveQuests(prev => prev.filter(q => (q.id || q.quest_id) !== questId));
+    setCustomQuests(prev => prev.filter(q => (q.id || q.quest_id) !== questId));
+    setCompletedQuests(prev => [...prev, { ...quest, completedAt: Date.now() }]);
+    
+    // Clear tracking if this quest was tracked
+    if (trackedQuestId === questId) {
+      setTrackedQuestId(null);
+    }
+    
+    addNotification(`Quest completed: ${quest.name}!`, 'success');
+  }, [addNotification, gainXP, trackedQuestId]);
+  
   const handleAbandonQuest = useCallback((questId) => {
     setActiveQuests(prev => prev.filter(q => q.id !== questId));
     if (trackedQuestId === questId) {
