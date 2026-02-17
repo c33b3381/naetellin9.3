@@ -5593,10 +5593,741 @@ const GameWorld = () => {
                 return;
               }
               
-              // Generic box for anything else
+              // ========== EXPANDED GENERIC FALLBACKS ==========
+              
+              // Trees (additional types)
+              if (fullType.includes('tree_') || fullType === 'tree') {
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * s, 0.3 * s, 2.5 * s, 8), wood());
+                trunk.position.y = 1.25 * s;
+                group.add(trunk);
+                const foliage = new THREE.Mesh(new THREE.SphereGeometry(1.5 * s, 8, 8), leaf());
+                foliage.position.y = 3 * s;
+                group.add(foliage);
+                group.userData = { type: 'tree', interactable: true, resource: 'wood' };
+                return;
+              }
+              
+              // Plants (bush variants, ferns, grass, etc.)
+              if (fullType.includes('bush') || fullType.includes('fern') || fullType.includes('grass') || fullType.includes('reed') || fullType.includes('ivy') || fullType.includes('vine') || fullType.includes('moss')) {
+                const plant = new THREE.Mesh(new THREE.SphereGeometry(0.5 * s, 8, 8), leaf());
+                plant.position.y = 0.3 * s;
+                plant.scale.y = 0.7;
+                group.add(plant);
+                group.userData = { type: 'plant' };
+                return;
+              }
+              
+              // Flowers
+              if (fullType.includes('flower') || fullType.includes('rose') || fullType.includes('sunflower') || fullType.includes('moonflower') || fullType.includes('lily')) {
+                for (let i = 0; i < 5; i++) {
+                  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 4), new THREE.MeshStandardMaterial({ color: 0x228B22 }));
+                  stem.position.set((Math.random() - 0.5) * 0.6 * s, 0.2, (Math.random() - 0.5) * 0.6 * s);
+                  group.add(stem);
+                  const flowerHead = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshStandardMaterial({ color: [0xff69b4, 0xffff00, 0xff6347, 0x9370db, 0xffffff][i % 5] }));
+                  flowerHead.position.set(stem.position.x, 0.45, stem.position.z);
+                  group.add(flowerHead);
+                }
+                group.userData = { type: 'plant' };
+                return;
+              }
+              
+              // Rocks (additional types)  
+              if (fullType.includes('rock') || fullType.includes('boulder') || fullType.includes('stone') || fullType.includes('cliff')) {
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6 * s, 0), stone());
+                rock.position.y = 0.4 * s;
+                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                group.add(rock);
+                group.userData = { type: 'rock' };
+                return;
+              }
+              
+              // Stalagmite/Stalactite
+              if (fullType.includes('stalag')) {
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.3 * s, 1.5 * s, 6), stone());
+                spike.position.y = 0.75 * s;
+                group.add(spike);
+                group.userData = { type: 'rock' };
+                return;
+              }
+              
+              // Crystal variants
+              if (fullType.includes('crystal') || fullType.includes('gem') || fullType.includes('geode')) {
+                const crystal = new THREE.Mesh(
+                  new THREE.OctahedronGeometry(0.5 * s, 0),
+                  new THREE.MeshStandardMaterial({ color: 0x9933ff, transparent: true, opacity: 0.8, emissive: 0x9933ff, emissiveIntensity: 0.3 })
+                );
+                crystal.position.y = 0.6 * s;
+                group.add(crystal);
+                group.userData = { type: 'resource', resource: 'crystal', interactable: true };
+                return;
+              }
+              
+              // Ore nodes
+              if (fullType.includes('ore_')) {
+                const oreColors = { ore_copper: 0xb87333, ore_iron: 0x434343, ore_gold: 0xffd700, ore_silver: 0xc0c0c0, ore_mithril: 0x4169e1, ore_adamantite: 0x2f4f4f, ore_darkstone: 0x1a1a1a };
+                const color = oreColors[fullType] || 0x808080;
+                const ore = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5 * s, 0), new THREE.MeshStandardMaterial({ color, metalness: 0.6, roughness: 0.4 }));
+                ore.position.y = 0.4 * s;
+                group.add(ore);
+                group.userData = { type: 'resource', resource: fullType.replace('ore_', ''), interactable: true };
+                return;
+              }
+              
+              // Fences and walls
+              if (fullType.includes('fence') || fullType.includes('palisade') || fullType.includes('hedge') || fullType.includes('wall')) {
+                const isMetal = fullType.includes('iron');
+                const isHedge = fullType.includes('hedge');
+                const mat = isHedge ? leaf() : (isMetal ? metal() : wood());
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(2 * s, 1.2 * s, 0.15 * s), mat);
+                wall.position.y = 0.6 * s;
+                group.add(wall);
+                group.userData = { type: 'structure' };
+                return;
+              }
+              
+              // Gates and doors
+              if (fullType.includes('gate') || fullType.includes('door')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 2.5 * s, 0.3 * s), wood());
+                frame.position.y = 1.25 * s;
+                group.add(frame);
+                group.userData = { type: 'structure', interactable: true };
+                return;
+              }
+              
+              // Pillars and columns
+              if (fullType.includes('pillar') || fullType.includes('column')) {
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.35 * s, 3 * s, 8), stone());
+                pillar.position.y = 1.5 * s;
+                group.add(pillar);
+                group.userData = { type: 'structure' };
+                return;
+              }
+              
+              // Archways
+              if (fullType.includes('arch')) {
+                const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.4 * s, 3 * s, 0.4 * s), stone());
+                leftPillar.position.set(-0.8 * s, 1.5 * s, 0);
+                group.add(leftPillar);
+                const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(0.4 * s, 3 * s, 0.4 * s), stone());
+                rightPillar.position.set(0.8 * s, 1.5 * s, 0);
+                group.add(rightPillar);
+                const top = new THREE.Mesh(new THREE.BoxGeometry(2 * s, 0.4 * s, 0.4 * s), stone());
+                top.position.y = 3.2 * s;
+                group.add(top);
+                group.userData = { type: 'structure' };
+                return;
+              }
+              
+              // Barrels
+              if (fullType.includes('barrel')) {
+                const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * s, 0.3 * s, 0.8 * s, 12), wood());
+                barrel.position.y = 0.4 * s;
+                group.add(barrel);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Crates and boxes
+              if (fullType.includes('crate') || fullType.includes('box')) {
+                const crate = new THREE.Mesh(new THREE.BoxGeometry(0.7 * s, 0.7 * s, 0.7 * s), wood());
+                crate.position.y = 0.35 * s;
+                group.add(crate);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Sacks and bags
+              if (fullType.includes('sack') || fullType.includes('bag')) {
+                const sack = new THREE.Mesh(new THREE.SphereGeometry(0.35 * s, 8, 8), new THREE.MeshStandardMaterial({ color: 0xd2b48c }));
+                sack.position.y = 0.25 * s;
+                sack.scale.y = 0.7;
+                group.add(sack);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Wagon and cart
+              if (fullType.includes('wagon') || fullType.includes('cart') || fullType.includes('wheelbarrow')) {
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.6 * s, 0.8 * s), wood());
+                body.position.y = 0.6 * s;
+                group.add(body);
+                for (let i = 0; i < 2; i++) {
+                  const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.3 * s, 0.1 * s, 12), wood());
+                  wheel.rotation.z = Math.PI / 2;
+                  wheel.position.set((i === 0 ? -0.8 : 0.8) * s, 0.3 * s, 0);
+                  group.add(wheel);
+                }
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Banners, flags, tapestries
+              if (fullType.includes('banner') || fullType.includes('flag') || fullType.includes('tapestry')) {
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.05 * s, 3 * s, 6), wood());
+                pole.position.y = 1.5 * s;
+                group.add(pole);
+                const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.8 * s, 1.2 * s), new THREE.MeshStandardMaterial({ color: 0xdc2626, side: 2 }));
+                cloth.position.set(0.4 * s, 2.2 * s, 0);
+                group.add(cloth);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Signs
+              if (fullType.includes('sign')) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * s, 0.08 * s, 1.5 * s, 6), wood());
+                post.position.y = 0.75 * s;
+                group.add(post);
+                const board = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.5 * s, 0.1 * s), wood());
+                board.position.y = 1.6 * s;
+                group.add(board);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Graves and tombstones
+              if (fullType.includes('grave') || fullType.includes('tomb')) {
+                const stone_grave = new THREE.Mesh(new THREE.BoxGeometry(0.5 * s, 1 * s, 0.15 * s), stone());
+                stone_grave.position.y = 0.5 * s;
+                group.add(stone_grave);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Coffin and sarcophagus
+              if (fullType.includes('coffin') || fullType.includes('sarcophagus')) {
+                const coffin = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.4 * s, 2 * s), wood());
+                coffin.position.y = 0.2 * s;
+                group.add(coffin);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Pots, vases, urns, baskets
+              if (fullType.includes('pot') || fullType.includes('vase') || fullType.includes('urn') || fullType.includes('basket') || fullType.includes('bucket')) {
+                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * s, 0.15 * s, 0.4 * s, 8), new THREE.MeshStandardMaterial({ color: 0xcd853f }));
+                pot.position.y = 0.2 * s;
+                group.add(pot);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Anvil
+              if (fullType.includes('anvil')) {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.3 * s, 0.4 * s), metal());
+                base.position.y = 0.15 * s;
+                group.add(base);
+                const top = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.2 * s, 0.3 * s), metal());
+                top.position.y = 0.4 * s;
+                group.add(top);
+                group.userData = { type: 'crafting', interactable: true };
+                return;
+              }
+              
+              // Forge, kiln, smelter, furnace
+              if (fullType.includes('forge') || fullType.includes('kiln') || fullType.includes('smelter') || fullType.includes('furnace')) {
+                const forge = new THREE.Mesh(new THREE.BoxGeometry(1.2 * s, 1 * s, 1 * s), stone());
+                forge.position.y = 0.5 * s;
+                group.add(forge);
+                const fire = new THREE.Mesh(new THREE.SphereGeometry(0.3 * s, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500, emissiveIntensity: 0.8 }));
+                fire.position.y = 0.7 * s;
+                group.add(fire);
+                group.userData = { type: 'crafting', interactable: true };
+                return;
+              }
+              
+              // Cauldron
+              if (fullType.includes('cauldron')) {
+                const pot = new THREE.Mesh(new THREE.SphereGeometry(0.5 * s, 12, 12), metal());
+                pot.position.y = 0.4 * s;
+                pot.scale.y = 0.7;
+                group.add(pot);
+                group.userData = { type: 'crafting', interactable: true };
+                return;
+              }
+              
+              // Brazier
+              if (fullType.includes('brazier')) {
+                const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.4 * s, 0.3 * s, 0.3 * s, 8), metal());
+                bowl.position.y = 0.8 * s;
+                group.add(bowl);
+                const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * s, 0.2 * s, 0.8 * s, 8), metal());
+                stand.position.y = 0.4 * s;
+                group.add(stand);
+                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.25 * s, 0.5 * s, 8), new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500, emissiveIntensity: 0.8 }));
+                flame.position.y = 1.2 * s;
+                group.add(flame);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Candle, candelabra
+              if (fullType.includes('candle')) {
+                const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.05 * s, 0.3 * s, 8), new THREE.MeshStandardMaterial({ color: 0xf5f5dc }));
+                candle.position.y = 0.15 * s;
+                group.add(candle);
+                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.03 * s, 0.1 * s, 6), new THREE.MeshStandardMaterial({ color: 0xffa500, emissive: 0xffa500, emissiveIntensity: 1 }));
+                flame.position.y = 0.35 * s;
+                group.add(flame);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Chandelier
+              if (fullType.includes('chandelier')) {
+                const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * s, 0.02 * s, 1 * s, 6), metal());
+                chain.position.y = 2.5 * s;
+                group.add(chain);
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5 * s, 0.05 * s, 8, 16), gold());
+                ring.position.y = 2 * s;
+                ring.rotation.x = Math.PI / 2;
+                group.add(ring);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Fireplace
+              if (fullType.includes('fireplace')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 1.2 * s, 0.5 * s), stone());
+                frame.position.y = 0.6 * s;
+                group.add(frame);
+                const fire = new THREE.Mesh(new THREE.ConeGeometry(0.3 * s, 0.5 * s, 8), new THREE.MeshStandardMaterial({ color: 0xff4500, emissive: 0xff4500, emissiveIntensity: 0.8 }));
+                fire.position.set(0, 0.3 * s, 0.1 * s);
+                group.add(fire);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Rug and carpet
+              if (fullType.includes('rug') || fullType.includes('carpet')) {
+                const rug = new THREE.Mesh(new THREE.BoxGeometry(2 * s, 0.05 * s, 1.5 * s), new THREE.MeshStandardMaterial({ color: 0x8b0000 }));
+                rug.position.y = 0.025 * s;
+                group.add(rug);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Mirror
+              if (fullType.includes('mirror')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 1.2 * s, 0.1 * s), gold());
+                frame.position.y = 1.2 * s;
+                group.add(frame);
+                const glass = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 1 * s, 0.05 * s), new THREE.MeshStandardMaterial({ color: 0xadd8e6, metalness: 1, roughness: 0 }));
+                glass.position.set(0, 1.2 * s, 0.03 * s);
+                group.add(glass);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Paintings
+              if (fullType.includes('painting') || fullType.includes('portrait')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(1 * s, 0.8 * s, 0.1 * s), gold());
+                frame.position.y = 1.5 * s;
+                group.add(frame);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Bookshelf
+              if (fullType.includes('bookshelf') || fullType.includes('book')) {
+                const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.2 * s, 2 * s, 0.4 * s), wood());
+                shelf.position.y = 1 * s;
+                group.add(shelf);
+                group.userData = { type: 'furniture' };
+                return;
+              }
+              
+              // Weapon/armor racks and stands
+              if (fullType.includes('rack') || fullType.includes('stand') || fullType.includes('mount')) {
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4 * s, 0.5 * s, 0.1 * s, 8), wood());
+                base.position.y = 0.05 * s;
+                group.add(base);
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * s, 0.08 * s, 1.5 * s, 6), wood());
+                pole.position.y = 0.8 * s;
+                group.add(pole);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Training dummy
+              if (fullType.includes('dummy') || fullType.includes('target')) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 1.5 * s, 6), wood());
+                post.position.y = 0.75 * s;
+                group.add(post);
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.3 * s, 0.8 * s, 8), new THREE.MeshStandardMaterial({ color: 0xdeb887 }));
+                body.position.y = 1.5 * s;
+                group.add(body);
+                group.userData = { type: 'prop', interactable: true };
+                return;
+              }
+              
+              // Boats
+              if (fullType.includes('boat') || fullType.includes('canoe') || fullType.includes('raft') || fullType.includes('ship')) {
+                const hull = new THREE.Mesh(new THREE.BoxGeometry(1 * s, 0.3 * s, 2.5 * s), wood());
+                hull.position.y = 0.15 * s;
+                group.add(hull);
+                group.userData = { type: 'vehicle' };
+                return;
+              }
+              
+              // Dock, pier
+              if (fullType.includes('dock') || fullType.includes('pier') || fullType.includes('boardwalk')) {
+                const platform = new THREE.Mesh(new THREE.BoxGeometry(2 * s, 0.2 * s, 4 * s), wood());
+                platform.position.y = 0.5 * s;
+                group.add(platform);
+                group.userData = { type: 'structure' };
+                return;
+              }
+              
+              // Portals
+              if (fullType.includes('portal') || fullType.includes('rift')) {
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(1 * s, 0.15 * s, 16, 32), new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x8b5cf6, emissiveIntensity: 0.5 }));
+                ring.position.y = 1.5 * s;
+                group.add(ring);
+                const glow = new THREE.Mesh(new THREE.CircleGeometry(0.9 * s, 32), new THREE.MeshStandardMaterial({ color: 0x9933ff, transparent: true, opacity: 0.5, side: 2 }));
+                glow.position.y = 1.5 * s;
+                group.add(glow);
+                group.userData = { type: 'portal', interactable: true };
+                return;
+              }
+              
+              // Magic circles and runes
+              if (fullType.includes('magic_circle') || fullType.includes('rune') || fullType.includes('pentagram') || fullType.includes('summoning')) {
+                const circle = new THREE.Mesh(new THREE.RingGeometry(0.8 * s, 1 * s, 32), new THREE.MeshStandardMaterial({ color: 0x9933ff, emissive: 0x9933ff, emissiveIntensity: 0.5, side: 2 }));
+                circle.position.y = 0.01;
+                circle.rotation.x = -Math.PI / 2;
+                group.add(circle);
+                group.userData = { type: 'magical' };
+                return;
+              }
+              
+              // Altars and shrines
+              if (fullType.includes('altar') || fullType.includes('shrine')) {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.8 * s, 0.8 * s), stone());
+                base.position.y = 0.4 * s;
+                group.add(base);
+                group.userData = { type: 'magical', interactable: true };
+                return;
+              }
+              
+              // Totems
+              if (fullType.includes('totem')) {
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.35 * s, 2.5 * s, 8), wood());
+                pole.position.y = 1.25 * s;
+                group.add(pole);
+                group.userData = { type: 'magical' };
+                return;
+              }
+              
+              // Runestones
+              if (fullType.includes('runestone')) {
+                const stone_rune = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 1.5 * s, 0.3 * s), stone());
+                stone_rune.position.y = 0.75 * s;
+                group.add(stone_rune);
+                group.userData = { type: 'magical', interactable: true };
+                return;
+              }
+              
+              // Siege weapons
+              if (fullType.includes('catapult') || fullType.includes('trebuchet') || fullType.includes('ballista') || fullType.includes('cannon')) {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.5 * s, 2 * s), wood());
+                base.position.y = 0.25 * s;
+                group.add(base);
+                const arm = new THREE.Mesh(new THREE.BoxGeometry(0.2 * s, 0.2 * s, 2 * s), wood());
+                arm.position.set(0, 0.8 * s, 0);
+                arm.rotation.x = -0.3;
+                group.add(arm);
+                group.userData = { type: 'siege' };
+                return;
+              }
+              
+              // Battering ram
+              if (fullType.includes('battering')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(1 * s, 1.5 * s, 3 * s), wood());
+                frame.position.y = 0.75 * s;
+                group.add(frame);
+                const ram = new THREE.Mesh(new THREE.CylinderGeometry(0.25 * s, 0.25 * s, 2.5 * s, 8), wood());
+                ram.position.y = 0.5 * s;
+                ram.rotation.x = Math.PI / 2;
+                group.add(ram);
+                group.userData = { type: 'siege' };
+                return;
+              }
+              
+              // Traps
+              if (fullType.includes('trap') || fullType.includes('spike')) {
+                for (let i = 0; i < 5; i++) {
+                  const spike = new THREE.Mesh(new THREE.ConeGeometry(0.1 * s, 0.5 * s, 6), metal());
+                  spike.position.set((Math.random() - 0.5) * s, 0.25 * s, (Math.random() - 0.5) * s);
+                  group.add(spike);
+                }
+                group.userData = { type: 'trap' };
+                return;
+              }
+              
+              // Animal pens (chicken coop, pig pen, etc.)
+              if (fullType.includes('_pen') || fullType.includes('coop') || fullType.includes('stable')) {
+                const walls = new THREE.Mesh(new THREE.BoxGeometry(3 * s, 1 * s, 3 * s), wood());
+                walls.position.y = 0.5 * s;
+                group.add(walls);
+                group.userData = { type: 'agriculture' };
+                return;
+              }
+              
+              // Trough
+              if (fullType.includes('trough')) {
+                const trough = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.4 * s, 0.5 * s), wood());
+                trough.position.y = 0.2 * s;
+                group.add(trough);
+                group.userData = { type: 'agriculture' };
+                return;
+              }
+              
+              // Silo, granary
+              if (fullType.includes('silo') || fullType.includes('granary')) {
+                const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(1 * s, 1 * s, 3 * s, 12), wood());
+                cylinder.position.y = 1.5 * s;
+                group.add(cylinder);
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(1.1 * s, 1 * s, 12), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+                roof.position.y = 3.5 * s;
+                group.add(roof);
+                group.userData = { type: 'building' };
+                return;
+              }
+              
+              // Mill (windmill, watermill, grain mill)
+              if (fullType.includes('mill')) {
+                const building = new THREE.Mesh(new THREE.CylinderGeometry(1.2 * s, 1.5 * s, 3 * s, 8), stone());
+                building.position.y = 1.5 * s;
+                group.add(building);
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(1.6 * s, 1.2 * s, 8), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
+                roof.position.y = 3.6 * s;
+                group.add(roof);
+                group.userData = { type: 'building' };
+                return;
+              }
+              
+              // Beehive
+              if (fullType.includes('beehive')) {
+                const hive = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.35 * s, 0.5 * s, 8), new THREE.MeshStandardMaterial({ color: 0xdaa520 }));
+                hive.position.y = 0.25 * s;
+                group.add(hive);
+                group.userData = { type: 'agriculture', interactable: true };
+                return;
+              }
+              
+              // Guillotine, gallows
+              if (fullType.includes('guillotine') || fullType.includes('gallows')) {
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 3 * s, 0.2 * s), wood());
+                frame.position.y = 1.5 * s;
+                group.add(frame);
+                group.userData = { type: 'dungeon' };
+                return;
+              }
+              
+              // Stocks, pillory
+              if (fullType.includes('stocks') || fullType.includes('pillory')) {
+                const posts = new THREE.Mesh(new THREE.BoxGeometry(0.2 * s, 1.5 * s, 0.2 * s), wood());
+                posts.position.y = 0.75 * s;
+                group.add(posts);
+                const board = new THREE.Mesh(new THREE.BoxGeometry(1.5 * s, 0.3 * s, 0.15 * s), wood());
+                board.position.y = 1.2 * s;
+                group.add(board);
+                group.userData = { type: 'dungeon' };
+                return;
+              }
+              
+              // Shackles
+              if (fullType.includes('shackle')) {
+                const chain1 = new THREE.Mesh(new THREE.TorusGeometry(0.1 * s, 0.02 * s, 8, 8), metal());
+                chain1.position.set(-0.3 * s, 1 * s, 0);
+                group.add(chain1);
+                const chain2 = new THREE.Mesh(new THREE.TorusGeometry(0.1 * s, 0.02 * s, 8, 8), metal());
+                chain2.position.set(0.3 * s, 1 * s, 0);
+                group.add(chain2);
+                group.userData = { type: 'dungeon' };
+                return;
+              }
+              
+              // Cobweb
+              if (fullType.includes('cobweb') || fullType.includes('web')) {
+                const web = new THREE.Mesh(new THREE.CircleGeometry(1 * s, 8), new THREE.MeshStandardMaterial({ color: 0xf5f5f5, transparent: true, opacity: 0.5, side: 2 }));
+                web.position.y = 1.5 * s;
+                web.rotation.x = Math.PI / 6;
+                group.add(web);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Blood splatter (aesthetic)
+              if (fullType.includes('blood')) {
+                const splat = new THREE.Mesh(new THREE.CircleGeometry(0.5 * s, 8), new THREE.MeshStandardMaterial({ color: 0x8b0000, side: 2 }));
+                splat.position.y = 0.01;
+                splat.rotation.x = -Math.PI / 2;
+                group.add(splat);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Coins/gold pile
+              if (fullType.includes('coin') || fullType.includes('gold_pile')) {
+                for (let i = 0; i < 8; i++) {
+                  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 0.02 * s, 12), gold());
+                  coin.position.set((Math.random() - 0.5) * 0.5 * s, i * 0.02 * s + 0.01, (Math.random() - 0.5) * 0.5 * s);
+                  coin.rotation.x = Math.random() * 0.3;
+                  group.add(coin);
+                }
+                group.userData = { type: 'treasure', interactable: true };
+                return;
+              }
+              
+              // Chalice, goblet, cup
+              if (fullType.includes('chalice') || fullType.includes('goblet') || fullType.includes('cup')) {
+                const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * s, 0.08 * s, 0.25 * s, 8), gold());
+                cup.position.y = 0.125 * s;
+                group.add(cup);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Idol, relic, artifact
+              if (fullType.includes('idol') || fullType.includes('relic') || fullType.includes('artifact')) {
+                const idol = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * s, 0.2 * s, 0.5 * s, 6), gold());
+                idol.position.y = 0.25 * s;
+                group.add(idol);
+                group.userData = { type: 'treasure', interactable: true };
+                return;
+              }
+              
+              // Scepter, crown
+              if (fullType.includes('scepter') || fullType.includes('crown')) {
+                const item = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.05 * s, 0.8 * s, 8), gold());
+                item.position.y = 0.4 * s;
+                group.add(item);
+                const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.1 * s, 0), new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 }));
+                gem.position.y = 0.85 * s;
+                group.add(gem);
+                group.userData = { type: 'treasure', interactable: true };
+                return;
+              }
+              
+              // Display case/pedestal
+              if (fullType.includes('display') || fullType.includes('pedestal')) {
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4 * s, 0.5 * s, 1 * s, 8), stone());
+                base.position.y = 0.5 * s;
+                group.add(base);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Scales (weighing)
+              if (fullType.includes('scale')) {
+                const base = new THREE.Mesh(new THREE.BoxGeometry(0.6 * s, 0.05 * s, 0.3 * s), metal());
+                base.position.y = 0.5 * s;
+                group.add(base);
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.03 * s, 0.5 * s, 6), metal());
+                pole.position.y = 0.75 * s;
+                group.add(pole);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Safe, vault
+              if (fullType.includes('safe') || fullType.includes('vault')) {
+                const safe = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 1 * s, 0.6 * s), metal());
+                safe.position.y = 0.5 * s;
+                group.add(safe);
+                group.userData = { type: 'prop', interactable: true };
+                return;
+              }
+              
+              // Notice/quest board
+              if (fullType.includes('notice') || fullType.includes('quest_board') || fullType.includes('wanted')) {
+                const posts_notice = new THREE.Mesh(new THREE.BoxGeometry(0.1 * s, 2 * s, 0.1 * s), wood());
+                posts_notice.position.y = 1 * s;
+                group.add(posts_notice);
+                const board_notice = new THREE.Mesh(new THREE.BoxGeometry(1.2 * s, 1 * s, 0.1 * s), wood());
+                board_notice.position.y = 1.5 * s;
+                group.add(board_notice);
+                group.userData = { type: 'prop', interactable: true };
+                return;
+              }
+              
+              // Lighthouse
+              if (fullType.includes('lighthouse')) {
+                const tower_light = new THREE.Mesh(new THREE.CylinderGeometry(0.8 * s, 1.2 * s, 5 * s, 8), stone());
+                tower_light.position.y = 2.5 * s;
+                group.add(tower_light);
+                const light_light = new THREE.Mesh(new THREE.SphereGeometry(0.5 * s, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 1 }));
+                light_light.position.y = 5.5 * s;
+                group.add(light_light);
+                group.userData = { type: 'building' };
+                return;
+              }
+              
+              // Buoy
+              if (fullType.includes('buoy')) {
+                const buoy = new THREE.Mesh(new THREE.SphereGeometry(0.4 * s, 8, 8), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+                buoy.position.y = 0.2 * s;
+                group.add(buoy);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Anchor
+              if (fullType.includes('anchor')) {
+                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * s, 0.1 * s, 1.5 * s, 8), metal());
+                shaft.position.y = 0.75 * s;
+                group.add(shaft);
+                const cross = new THREE.Mesh(new THREE.BoxGeometry(1 * s, 0.15 * s, 0.15 * s), metal());
+                cross.position.y = 0.2 * s;
+                group.add(cross);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Ship wheel
+              if (fullType.includes('ship_wheel') || fullType.includes('helm')) {
+                const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.4 * s, 0.05 * s, 8, 16), wood());
+                wheel.position.y = 1 * s;
+                group.add(wheel);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Mast, sail
+              if (fullType.includes('mast') || fullType.includes('sail')) {
+                const mast_pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * s, 0.2 * s, 5 * s, 8), wood());
+                mast_pole.position.y = 2.5 * s;
+                group.add(mast_pole);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Fishing net, lobster trap
+              if (fullType.includes('net') || fullType.includes('lobster')) {
+                const net = new THREE.Mesh(new THREE.BoxGeometry(0.8 * s, 0.5 * s, 0.8 * s), new THREE.MeshStandardMaterial({ color: 0x8b7355, wireframe: true }));
+                net.position.y = 0.25 * s;
+                group.add(net);
+                group.userData = { type: 'prop' };
+                return;
+              }
+              
+              // Generic box for anything else - with category-based coloring
+              let boxColor = 0x888888; // Default gray
+              if (fullType.includes('nature') || fullType.includes('plant')) boxColor = 0x228B22;
+              else if (fullType.includes('rock') || fullType.includes('stone')) boxColor = 0x696969;
+              else if (fullType.includes('building') || fullType.includes('house')) boxColor = 0x8B4513;
+              else if (fullType.includes('magic') || fullType.includes('mystic')) boxColor = 0x9933ff;
+              else if (fullType.includes('treasure') || fullType.includes('gold')) boxColor = 0xffd700;
+              else if (fullType.includes('dungeon') || fullType.includes('prison')) boxColor = 0x4a4a4a;
+              else if (fullType.includes('military') || fullType.includes('siege')) boxColor = 0x8b0000;
+              else if (fullType.includes('farm') || fullType.includes('agriculture')) boxColor = 0x4a7c23;
+              else if (fullType.includes('maritime') || fullType.includes('ship') || fullType.includes('boat')) boxColor = 0x4682b4;
+              
               const box = new THREE.Mesh(
                 new THREE.BoxGeometry(s, s, s),
-                new THREE.MeshStandardMaterial({ color: 0x888888 })
+                new THREE.MeshStandardMaterial({ color: boxColor })
               );
               box.position.y = s / 2;
               group.add(box);
