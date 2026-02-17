@@ -114,6 +114,18 @@ const QuestDialog = ({
     }
   };
   
+  const handleTurnIn = () => {
+    if (selectedQuest && onTurnInQuest) {
+      onTurnInQuest(selectedQuest);
+      setDialogState('turnedIn');
+      setTimeout(() => {
+        onClose();
+        setDialogState('greeting');
+        setSelectedQuest(null);
+      }, 2000);
+    }
+  };
+  
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case 'easy': return '#22c55e';
