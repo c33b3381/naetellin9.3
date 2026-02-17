@@ -788,6 +788,60 @@ async def get_quest_by_npc(npc_id: str):
     quest = await db.custom_quests.find_one({"npc_id": npc_id}, {"_id": 0})
     return {"quest": quest}
 
+# ==================== GLOBAL QUEST DATABASE ====================
+# These quests are available to ALL players from any Quest Giver NPC
+
+@api_router.post("/quests/global")
+async def create_global_quest(quest: Dict[str, Any], auth: dict = Depends(verify_token)):
+    """Create a global quest available to all players"""
+    quest["quest_id"] = f"global_{datetime.now(timezone.utc).timestamp()}_{quest.get('name', 'quest').lower().replace(' ', '_')}"
+    quest["is_global"] = True
+    quest["created_by"] = auth['player_id']
+    quest["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Save to global_quests collection
+    result = await db.global_quests.insert_one(quest)
+    quest.pop('_id', None)
+    return {"message": "Global quest created", "quest": quest}
+
+@api_router.get("/quests/global")
+async def list_global_quests():
+    """Get all global quests (available to everyone)"""
+    quests = await db.global_quests.find({}, {"_id": 0}).to_list(100)
+    return {"quests": quests}
+
+@api_router.delete("/quests/global/{quest_id}")
+async def delete_global_quest(quest_id: str, auth: dict = Depends(verify_token)):
+    """Delete a global quest (only creator can delete)"""
+    quest = await db.global_quests.find_one({"quest_id": quest_id})
+    if not quest:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    # Only the creator can delete
+    if quest.get("created_by") != auth['player_id']:
+        raise HTTPException(status_code=403, detail="You can only delete quests you created")
+    
+    await db.global_quests.delete_one({"quest_id": quest_id})
+    return {"message": "Quest deleted"}
+
+@api_router.put("/quests/global/{quest_id}")
+async def update_global_quest(quest_id: str, quest_data: Dict[str, Any], auth: dict = Depends(verify_token)):
+    """Update a global quest"""
+    existing = await db.global_quests.find_one({"quest_id": quest_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    # Only the creator can update
+    if existing.get("created_by") != auth['player_id']:
+        raise HTTPException(status_code=403, detail="You can only edit quests you created")
+    
+    # Update the quest
+    await db.global_quests.update_one(
+        {"quest_id": quest_id},
+        {"$set": quest_data}
+    )
+    return {"message": "Quest updated"}
+
 # ==================== COMBAT ROUTES ====================
 
 @api_router.post("/combat/attack/{monster_type}")
