@@ -56,6 +56,19 @@ const QuestDialog = ({
     }
   }, [isOpen, npcName]);
   
+  // Find quests ready to turn in (completed quests from this NPC)
+  const questsToTurnIn = playerQuests.filter(quest => {
+    // Check if quest is complete
+    const isComplete = quest.isComplete || (quest.objectives && quest.objectives.every(obj => (obj.current || 0) >= obj.required));
+    
+    // Check if this NPC is the quest giver
+    const isFromThisNPC = quest.giver === npcName || 
+                          quest.npc_name === npcName ||
+                          (customQuest && quest.quest_id === customQuest.quest_id);
+    
+    return isComplete && isFromThisNPC;
+  });
+  
   // Build the list of available quests - combine standard quests with custom quest
   const standardQuests = Object.values(AVAILABLE_QUESTS).filter(
     quest => !playerQuests.some(pq => pq.id === quest.id || pq.quest_id === quest.id)
