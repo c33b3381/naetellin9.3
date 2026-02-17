@@ -898,8 +898,13 @@ class WorldObject(BaseModel):
     level: int = 1
     scale: float = 1.0
     position: Dict[str, float]
-    rotation: Dict[str, float] = {"x": 0, "y": 0, "z": 0}
+    rotation: Optional[Any] = 0  # Can be a number (Y rotation in degrees) or dict {"x": 0, "y": 0, "z": 0}
     zone: str = "starter_village"
+    category: Optional[str] = None
+    quest_id: Optional[str] = None
+    quest_giver: Optional[bool] = False
+    isVendor: Optional[bool] = False
+    hasQuest: Optional[bool] = False
 
 class TerrainData(BaseModel):
     """Terrain heightmap data for persistence"""
