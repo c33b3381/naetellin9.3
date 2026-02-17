@@ -620,16 +620,16 @@ const QuestMaker = ({
                                 Select an NPC to assign this quest:
                               </div>
                               {placedNPCs.length === 0 ? (
-                                <p className="text-[#78716c] text-xs">No NPCs placed in the world. Use F1 World Builder to place Quest Giver NPCs first.</p>
+                                <p className="text-[#78716c] text-xs">No NPCs placed in the world. Use F1 World Builder to place NPCs first.</p>
                               ) : (
                                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                                  {placedNPCs.filter(npc => npc.type === 'npc' || npc.type?.includes('questgiver')).map((npc, idx) => (
+                                  {placedNPCs.map((npc, idx) => (
                                     <button
                                       key={npc.id || idx}
                                       onClick={() => handleAssignToNPC(quest, npc)}
                                       className="px-3 py-1.5 bg-[#0c0a09] border border-[#44403c] hover:border-[#22c55e] hover:bg-[#22c55e]/10 rounded text-xs text-white transition-all"
                                     >
-                                      {npc.customName || npc.name || 'Quest Giver'}
+                                      {npc.customName || npc.name || 'NPC'}
                                     </button>
                                   ))}
                                 </div>
