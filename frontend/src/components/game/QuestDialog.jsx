@@ -52,30 +52,33 @@ const QuestDialog = ({
     return isComplete && isFromThisNPC;
   });
   
-  // Build the list of available quests from database + hardcoded fallbacks
-  // Format database quests to match expected structure
-  const formattedDatabaseQuests = databaseQuests.map(quest => ({
-    id: quest.quest_id,
-    quest_id: quest.quest_id,
-    name: quest.name,
-    giver: quest.giver || 'Quest Giver',
-    description: quest.description,
-    objectives: (quest.objectives || []).map(obj => ({
-      id: obj.id,
-      type: obj.type,
-      description: obj.description,
-      target: obj.target,
-      targetId: obj.targetId,
-      current: 0,
-      required: obj.required || 1
-    })),
-    rewards: quest.rewards || { xp: 50, gold: 10 },
-    difficulty: quest.difficulty || 'medium',
-    level: quest.level || 1,
-    isGlobal: true
-  }));
+  // Build the list of available quests from database
+  // Only show quests that are assigned to THIS specific NPC
+  const formattedDatabaseQuests = databaseQuests
+    .filter(quest => quest.assigned_npc_id === npcId) // Only quests assigned to this NPC
+    .map(quest => ({
+      id: quest.quest_id,
+      quest_id: quest.quest_id,
+      name: quest.name,
+      giver: npcName, // Use this NPC's name
+      description: quest.description,
+      objectives: (quest.objectives || []).map(obj => ({
+        id: obj.id,
+        type: obj.type,
+        description: obj.description,
+        target: obj.target,
+        targetId: obj.targetId,
+        current: 0,
+        required: obj.required || 1
+      })),
+      rewards: quest.rewards || { xp: 50, gold: 10 },
+      difficulty: quest.difficulty || 'medium',
+      level: quest.level || 1,
+      isGlobal: true,
+      assigned_npc_id: quest.assigned_npc_id
+    }));
   
-  // Combine hardcoded quests with database quests
+  // Combine hardcoded quests with assigned database quests
   const allStandardQuests = [
     ...Object.values(HARDCODED_QUESTS),
     ...formattedDatabaseQuests
