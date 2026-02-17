@@ -8695,7 +8695,15 @@ const GameWorld = () => {
         selectedNPC={selectedNPCForQuest}
         placedEnemies={placedEnemies}
         placedNPCs={placedObjects.filter(obj => obj.type === 'npc' || obj.type === 'questgiver' || obj.type === 'vendor' || obj.type === 'guard')}
-        onRefreshWorldObjects={loadWorldObjects}
+        onRefreshWorldObjects={async () => {
+          // Reload world objects from server to get updated quest assignments
+          const savedObjects = await fetchWorldObjects();
+          if (savedObjects && savedObjects.length > 0) {
+            setPlacedObjects(savedObjects);
+            // Update ref as well
+            placedObjectsRef.current = savedObjects;
+          }
+        }}
       />
     </div>
   );
