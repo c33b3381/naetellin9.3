@@ -67,9 +67,36 @@ const QuestDialog = ({
     return isComplete && isFromThisNPC;
   });
   
-  // Build the list of available quests - combine standard quests with custom quest
-  const standardQuests = Object.values(AVAILABLE_QUESTS).filter(
-    quest => !playerQuests.some(pq => pq.id === quest.id || pq.quest_id === quest.id)
+  // Build the list of available quests from database + hardcoded fallbacks
+  // Format database quests to match expected structure
+  const formattedDatabaseQuests = databaseQuests.map(quest => ({
+    id: quest.quest_id,
+    quest_id: quest.quest_id,
+    name: quest.name,
+    giver: quest.giver || 'Quest Giver',
+    description: quest.description,
+    objectives: (quest.objectives || []).map(obj => ({
+      id: obj.id,
+      type: obj.type,
+      description: obj.description,
+      target: obj.target,
+      targetId: obj.targetId,
+      current: 0,
+      required: obj.required || 1
+    })),
+    rewards: quest.rewards || { xp: 50, gold: 10 },
+    difficulty: quest.difficulty || 'medium',
+    level: quest.level || 1,
+    isGlobal: true
+  }));
+  
+  // Combine hardcoded quests with database quests
+  const allStandardQuests = [
+    ...Object.values(HARDCODED_QUESTS),
+    ...formattedDatabaseQuests
+  ].filter(quest => 
+    // Filter out quests the player already has
+    !playerQuests.some(pq => pq.id === quest.id || pq.quest_id === quest.id || pq.id === quest.quest_id)
   );
   
   // Convert custom quest to standard format if present and not already accepted
@@ -83,7 +110,10 @@ const QuestDialog = ({
     description: customQuest.description || 'A custom quest from this NPC.',
     objectives: (customQuest.objectives || []).map(obj => ({
       id: obj.id,
+      type: obj.type,
       description: obj.description || `${obj.type}: ${obj.target}`,
+      target: obj.target,
+      targetId: obj.targetId,
       current: 0,
       required: obj.required || 1
     })),
@@ -94,11 +124,11 @@ const QuestDialog = ({
   } : null;
   
   // Determine what quests are available for this NPC
-  // If it's a standard questgiver, show standard quests
-  // If NPC has a custom quest, show that quest
+  // If NPC has a specific custom quest, show only that
+  // Otherwise show all standard quests from database
   const availableQuests = customQuest 
     ? (formattedCustomQuest ? [formattedCustomQuest] : [])
-    : standardQuests;
+    : allStandardQuests;
   
   const handleAccept = () => {
     if (selectedQuest && onAcceptQuest) {
