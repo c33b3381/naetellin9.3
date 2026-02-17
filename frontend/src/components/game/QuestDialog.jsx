@@ -9,7 +9,7 @@ const AVAILABLE_QUESTS = {
     giver: 'Quest Giver',
     description: 'There has been an incursion into our land by the accursed Goblins, head over to the old ruins and slay three of them.',
     objectives: [
-      { id: 'kill_goblins', description: 'Kill Goblins', target: 'Goblin', current: 0, required: 3 }
+      { id: 'kill_goblins', type: 'kill', description: 'Kill Goblins', target: 'Goblin', current: 0, required: 3 }
     ],
     rewards: {
       xp: 300,
