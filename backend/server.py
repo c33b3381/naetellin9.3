@@ -172,12 +172,12 @@ MONSTERS = {
 
 @api_router.post("/auth/register")
 async def register(player: PlayerCreate):
-    # Check if username exists
-    existing = await db.players.find_one({"username": player.username})
+    # Check if username exists (only fetch _id for efficiency)
+    existing = await db.players.find_one({"username": player.username}, {"_id": 1})
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    existing_email = await db.players.find_one({"email": player.email})
+    existing_email = await db.players.find_one({"email": player.email}, {"_id": 1})
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -805,9 +805,10 @@ async def create_global_quest(quest: Dict[str, Any], auth: dict = Depends(verify
     return {"message": "Global quest created", "quest": quest}
 
 @api_router.get("/quests/global")
-async def list_global_quests():
-    """Get all global quests (available to everyone)"""
-    quests = await db.global_quests.find({}, {"_id": 0}).to_list(100)
+async def list_global_quests(skip: int = 0, limit: int = 50):
+    """Get all global quests (available to everyone) with pagination"""
+    limit = min(limit, 100)  # Cap at 100 max
+    quests = await db.global_quests.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return {"quests": quests}
 
 @api_router.delete("/quests/global/{quest_id}")
@@ -1116,9 +1117,10 @@ async def delete_terrain(terrain_id: str, auth: dict = Depends(verify_token)):
     return {"message": "Terrain deleted - will regenerate on next load"}
 
 @api_router.get("/world/enemies")
-async def get_placed_enemies():
-    """Get all placed enemies in the world"""
-    enemies = await db.placed_enemies.find({}, {"_id": 0}).to_list(1000)
+async def get_placed_enemies(skip: int = 0, limit: int = 200):
+    """Get all placed enemies in the world with pagination"""
+    limit = min(limit, 500)  # Cap at 500 max
+    enemies = await db.placed_enemies.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return {"enemies": enemies}
 
 @api_router.post("/world/enemies")
