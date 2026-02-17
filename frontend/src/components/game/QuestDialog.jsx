@@ -484,20 +484,20 @@ const QuestDialog = ({
                   Rewards
                 </h4>
                 <div className="flex items-center gap-6">
-                  {selectedQuest.rewards?.xp > 0 && (
+                  {(selectedQuest.rewards?.xp > 0 || selectedQuest.xp > 0) && (
                     <div className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-[#a855f7]" />
-                      <span className="text-lg font-bold text-[#a855f7]">+{selectedQuest.rewards.xp} XP</span>
+                      <span className="text-lg font-bold text-[#a855f7]">+{selectedQuest.rewards?.xp || selectedQuest.xp} XP</span>
                     </div>
                   )}
-                  {selectedQuest.rewards?.gold > 0 && (
+                  {(selectedQuest.rewards?.gold > 0 || selectedQuest.gold > 0) && (
                     <div className="flex items-center gap-2">
                       <Coins className="w-5 h-5 text-[#fbbf24]" />
-                      <span className="text-lg font-bold text-[#fbbf24]">+{selectedQuest.rewards.gold} Gold</span>
+                      <span className="text-lg font-bold text-[#fbbf24]">+{selectedQuest.rewards?.gold || selectedQuest.gold} Gold</span>
                     </div>
                   )}
-                  {(!selectedQuest.rewards || ((!selectedQuest.rewards.xp || selectedQuest.rewards.xp <= 0) && (!selectedQuest.rewards.gold || selectedQuest.rewards.gold <= 0))) && (
-                    <span className="text-[#78716c]">No rewards</span>
+                  {(!selectedQuest.rewards?.xp && !selectedQuest.xp && !selectedQuest.rewards?.gold && !selectedQuest.gold) && (
+                    <span className="text-[#78716c]">No rewards specified</span>
                   )}
                 </div>
               </div>
