@@ -91,10 +91,13 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - ✅ Created permanent "Goblins in the Land!" quest
 - ✅ Implemented quest turn-in system with rewards
 - ✅ Added progress tracking for kill quests
-- ✅ Quest completion notifications
+- ✅ **Global Quest Database** - Quests saved are available to ALL players
+- ✅ **Updated Quest Maker (F7)** - Two tabs: Create Quest + Quest Database
+- ✅ **"Save to Database" feature** - Saves quests globally for all accounts
 
 ## Database Collections
 - `players`: Character data, position, level, XP
 - `world_objects`: Placed items, NPCs, props (with rotation)
-- `custom_quests`: Player-created quests
+- `custom_quests`: Player-created quests (per-user)
+- `global_quests`: **NEW** - Quests available to ALL players
 - `placed_enemies`: Spawned monsters for respawning
