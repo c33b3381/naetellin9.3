@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Scroll, Coins, Star, Sword, Check, Gift } from 'lucide-react';
+import { X, Scroll, Coins, Star, Sword, Check, Gift, CheckCircle, Trophy } from 'lucide-react';
 
 // Test quests for the quest giver
 const AVAILABLE_QUESTS = {
