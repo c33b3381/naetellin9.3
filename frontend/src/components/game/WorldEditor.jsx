@@ -10,7 +10,7 @@ import {
   Hammer, Sparkles, Utensils, Lock, Bed,
   Flag, BookOpen, Music, Wand2, Zap, Moon,
   Sun, Star, Heart, Scroll, MapPin, Compass,
-  Shovel, Pickaxe, Key, Door, Target
+  Shovel, Pickaxe, Key, DoorOpen, Target
 } from 'lucide-react';
 
 // Expanded object categories and types for Fantasy MMO
