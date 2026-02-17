@@ -256,27 +256,36 @@ const QuestDialog = ({
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {availableQuests.map(quest => (
                     <button
-                      key={quest.id}
+                      key={quest.id || quest.quest_id}
                       onClick={() => {
                         setSelectedQuest(quest);
                         setDialogState('questDetail');
                       }}
                       className="w-full text-left p-3 bg-[#0c0a09] hover:bg-[#fbbf24]/10 border border-[#44403c] hover:border-[#fbbf24] rounded transition-all"
-                      data-testid={`quest-option-${quest.id}`}
+                      data-testid={`quest-option-${quest.id || quest.quest_id}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-cinzel text-[#fbbf24]">{quest.name}</p>
                           <p className="text-xs text-[#a8a29e] mt-1 line-clamp-2">{quest.description}</p>
+                          {/* Show rewards preview */}
+                          <div className="flex items-center gap-3 mt-2">
+                            {quest.rewards?.xp > 0 && (
+                              <span className="text-xs text-[#a855f7]">+{quest.rewards.xp} XP</span>
+                            )}
+                            {quest.rewards?.gold > 0 && (
+                              <span className="text-xs text-[#fbbf24]">+{quest.rewards.gold} Gold</span>
+                            )}
+                          </div>
                         </div>
                         <span 
-                          className="text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+                          className="text-[10px] font-bold uppercase px-2 py-0.5 rounded ml-2"
                           style={{ 
                             backgroundColor: `${getDifficultyColor(quest.difficulty)}20`,
                             color: getDifficultyColor(quest.difficulty)
                           }}
                         >
-                          {quest.difficulty}
+                          {quest.difficulty || 'medium'}
                         </span>
                       </div>
                     </button>
