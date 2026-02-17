@@ -8695,6 +8695,7 @@ const GameWorld = () => {
         selectedNPC={selectedNPCForQuest}
         placedEnemies={placedEnemies}
         placedNPCs={placedObjects.filter(obj => obj.type === 'npc' || obj.type === 'questgiver' || obj.type === 'vendor' || obj.type === 'guard')}
+        onRefreshWorldObjects={loadWorldObjects}
       />
     </div>
   );
