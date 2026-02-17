@@ -1143,13 +1143,14 @@ async def delete_placed_enemy(enemy_id: str):
     return {"message": "Enemy deleted", "id": enemy_id}
 
 @api_router.get("/world/objects")
-async def get_world_objects(zone: Optional[str] = None):
-    """Get all placed world objects, optionally filtered by zone"""
+async def get_world_objects(zone: Optional[str] = None, skip: int = 0, limit: int = 500):
+    """Get all placed world objects, optionally filtered by zone with pagination"""
     query = {}
     if zone:
         query["zone"] = zone
     
-    objects = await db.world_objects.find(query, {"_id": 0}).to_list(1000)
+    limit = min(limit, 1000)  # Cap at 1000 max
+    objects = await db.world_objects.find(query, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     return {"objects": objects}
 
 @api_router.post("/world/objects")
