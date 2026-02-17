@@ -5694,6 +5694,12 @@ const GameWorld = () => {
               }
               
               editorObjectsRef.current.push(mesh);
+              
+              // Add to selectable objects if it's an interactable type
+              if (obj.type === 'npc' || obj.type === 'vendor' || obj.type === 'questgiver' || obj.type === 'guard') {
+                selectableObjects.current.push(mesh);
+              }
+              
               console.log('World object created successfully:', obj.name, 'at mesh position:', mesh.position);
             } else {
               console.warn('Failed to create mesh for object:', obj);
