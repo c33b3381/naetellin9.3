@@ -1184,12 +1184,14 @@ const GameWorld = () => {
       enemyType?.toLowerCase()
     ].filter(Boolean);
     
-    // Update active quests (predefined quests)
+    // Update active quests (predefined quests like "Goblins in the Land!")
     setActiveQuests(prev => prev.map(quest => {
       if (!quest.objectives) return quest;
       
       const updatedObjectives = quest.objectives.map(obj => {
-        if (obj.type !== 'kill') return obj;
+        // Handle kill objectives (check type === 'kill' OR if target exists for legacy support)
+        const isKillObjective = obj.type === 'kill' || (obj.target && obj.description?.toLowerCase().includes('kill'));
+        if (!isKillObjective) return obj;
         
         const targetLower = obj.target?.toLowerCase() || '';
         const targetIdLower = obj.targetId?.toLowerCase() || '';
@@ -1205,10 +1207,26 @@ const GameWorld = () => {
         if (isMatch && (obj.current || 0) < obj.required) {
           questUpdated = true;
           const newCurrent = (obj.current || 0) + 1;
+          
+          // Notify player of progress
+          addNotification(`Quest Progress: ${obj.target || 'Enemy'} ${newCurrent}/${obj.required}`, 'quest');
+          
+          // Check if objective is now complete
+          if (newCurrent >= obj.required) {
+            addNotification(`Objective Complete: Kill ${obj.required} ${obj.target || 'enemies'}`, 'success');
+          }
+          
           return { ...obj, current: newCurrent };
         }
         return obj;
       });
+      
+      // Check if all objectives are complete
+      const allComplete = updatedObjectives.every(obj => (obj.current || 0) >= obj.required);
+      if (allComplete && !quest.isComplete) {
+        addNotification(`Quest "${quest.name}" is ready to turn in!`, 'success');
+        return { ...quest, objectives: updatedObjectives, isComplete: true };
+      }
       
       return { ...quest, objectives: updatedObjectives };
     }));
