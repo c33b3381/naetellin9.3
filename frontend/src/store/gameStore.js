@@ -731,6 +731,40 @@ export const useGameStore = create(
           throw err;
         }
       },
+      
+      // Global Quest Database Functions
+      createGlobalQuest: async (quest) => {
+        try {
+          const res = await axios.post(`${API}/quests/global`, quest, get().getHeaders());
+          get().addNotification('Quest saved to database!', 'success');
+          return res.data.quest;
+        } catch (err) {
+          console.error('Failed to create global quest:', err);
+          get().addNotification('Failed to save quest', 'error');
+          throw err;
+        }
+      },
+      
+      fetchGlobalQuests: async () => {
+        try {
+          const res = await axios.get(`${API}/quests/global`);
+          return res.data.quests || [];
+        } catch (err) {
+          console.error('Failed to fetch global quests:', err);
+          return [];
+        }
+      },
+      
+      deleteGlobalQuest: async (questId) => {
+        try {
+          await axios.delete(`${API}/quests/global/${questId}`, get().getHeaders());
+          get().addNotification('Quest deleted', 'success');
+        } catch (err) {
+          console.error('Failed to delete quest:', err);
+          get().addNotification('Failed to delete quest', 'error');
+          throw err;
+        }
+      },
     }),
     {
       name: 'quest-of-honor-storage',
