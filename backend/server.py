@@ -842,6 +842,61 @@ async def update_global_quest(quest_id: str, quest_data: Dict[str, Any], auth: d
     )
     return {"message": "Quest updated"}
 
+@api_router.put("/quests/global/{quest_id}/assign")
+async def assign_global_quest_to_npc(quest_id: str, data: Dict[str, Any], auth: dict = Depends(verify_token)):
+    """Assign a global quest to an NPC"""
+    npc_id = data.get("npc_id")
+    npc_name = data.get("npc_name", "Quest Giver")
+    
+    existing = await db.global_quests.find_one({"quest_id": quest_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    # Update the quest with NPC assignment
+    await db.global_quests.update_one(
+        {"quest_id": quest_id},
+        {"$set": {
+            "assigned_npc_id": npc_id,
+            "assigned_npc_name": npc_name
+        }}
+    )
+    
+    # Also update the world object to mark it as a quest giver
+    if npc_id:
+        await db.world_objects.update_one(
+            {"id": npc_id},
+            {"$set": {
+                "quest_giver": True,
+                "global_quest_id": quest_id
+            }}
+        )
+    
+    return {"message": "Quest assigned to NPC"}
+
+@api_router.put("/quests/global/{quest_id}/unassign")
+async def unassign_global_quest(quest_id: str, auth: dict = Depends(verify_token)):
+    """Remove NPC assignment from a global quest"""
+    existing = await db.global_quests.find_one({"quest_id": quest_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    
+    old_npc_id = existing.get("assigned_npc_id")
+    
+    # Remove assignment from quest
+    await db.global_quests.update_one(
+        {"quest_id": quest_id},
+        {"$unset": {"assigned_npc_id": "", "assigned_npc_name": ""}}
+    )
+    
+    # Update the world object if it was assigned
+    if old_npc_id:
+        await db.world_objects.update_one(
+            {"id": old_npc_id},
+            {"$set": {"quest_giver": False, "global_quest_id": None}}
+        )
+    
+    return {"message": "Quest unassigned"}
+
 # ==================== COMBAT ROUTES ====================
 
 @api_router.post("/combat/attack/{monster_type}")
