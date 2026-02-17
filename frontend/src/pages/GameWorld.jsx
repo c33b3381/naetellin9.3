@@ -6831,29 +6831,35 @@ const GameWorld = () => {
         }
       } else if (target && target.userData.type === 'questgiver') {
         // Open quest dialog for quest givers
+        const npcId = target.userData.editorId;
         setQuestGiverName(target.name || 'Quest Giver');
         setQuestGiverType('questgiver');
-        setCurrentNPCQuest(null); // Standard questgiver uses hardcoded quests
+        setQuestGiverId(npcId || null);
+        setCurrentNPCQuest(null); // Standard questgiver uses database quests
         setIsQuestDialogOpen(true);
       } else if (target && (target.userData.type === 'npc' || target.userData.type === 'guard' || target.userData.type === 'vendor')) {
         // Check if this NPC has a custom quest assigned
         const npcId = target.userData.editorId;
         if (npcId) {
           const npcData = placedObjectsRef.current.find(obj => obj.id === npcId);
-          if (npcData && npcData.quest_id) {
-            // This NPC has a custom quest - fetch and show it
-            getQuestByNPC(npcId).then(quest => {
-              if (quest) {
-                setQuestGiverName(target.name || npcData.name || 'NPC');
-                setQuestGiverType(target.userData.type);
+          if (npcData && (npcData.quest_id || npcData.global_quest_id)) {
+            // This NPC has a quest assigned - open dialog
+            setQuestGiverName(target.name || npcData.name || npcData.customName || 'NPC');
+            setQuestGiverType(target.userData.type);
+            setQuestGiverId(npcId);
+            // Check for custom quest if quest_id is set
+            if (npcData.quest_id) {
+              getQuestByNPC(npcId).then(quest => {
                 setCurrentNPCQuest(quest);
                 setIsQuestDialogOpen(true);
-              } else {
-                addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
-              }
-            }).catch(() => {
-              addNotification(`${target.name}: "Hello, adventurer!"`, 'info');
-            });
+              }).catch(() => {
+                setCurrentNPCQuest(null);
+                setIsQuestDialogOpen(true);
+              });
+            } else {
+              setCurrentNPCQuest(null);
+              setIsQuestDialogOpen(true);
+            }
             return;
           }
         }
