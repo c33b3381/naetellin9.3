@@ -202,11 +202,18 @@ const QuestLog = ({
               <div className="space-y-2">
                 {completedQuests.map(quest => (
                   <div 
-                    key={quest.id}
+                    key={getQuestId(quest)}
                     className="bg-[#22c55e]/10 rounded-lg px-4 py-2 border border-[#22c55e]/30 flex items-center gap-3"
                   >
                     <CheckCircle className="w-4 h-4 text-[#22c55e]" />
                     <span className="text-sm text-[#22c55e]">{quest.name}</span>
+                    {quest.rewards && (
+                      <span className="ml-auto text-xs text-[#22c55e]/70">
+                        {quest.rewards.xp > 0 && `+${quest.rewards.xp} XP`}
+                        {quest.rewards.xp > 0 && quest.rewards.gold > 0 && ', '}
+                        {quest.rewards.gold > 0 && `+${quest.rewards.gold} Gold`}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
