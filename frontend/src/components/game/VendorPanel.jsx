@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Coins, Store, Package, Axe, Utensils, Gem, Sword, Shield, Droplets, Sparkles } from 'lucide-react';
+import { X, Coins, Store, Package, Axe, Utensils, Gem, Sword, Shield, Droplets, Sparkles, ShoppingCart } from 'lucide-react';
 
 // Vendor type configurations
 const VENDOR_TYPES = {
@@ -9,7 +9,14 @@ const VENDOR_TYPES = {
     color: '#6b7280',
     buyMultiplier: 0.5, // Pays 50% of item value
     acceptsTypes: ['weapon', 'armor', 'metal', 'ore'],
-    greeting: "Need something repaired or want to sell some metal goods?"
+    greeting: "Need something repaired or want to sell some metal goods?",
+    stock: [
+      { id: 'iron_sword', name: 'Iron Sword', icon: '⚔️', description: 'A sturdy iron sword.', price: 500, type: 'weapon', stats: { attack: 5 } },
+      { id: 'steel_sword', name: 'Steel Sword', icon: '🗡️', description: 'A sharp steel blade.', price: 1500, type: 'weapon', stats: { attack: 10 } },
+      { id: 'iron_shield', name: 'Iron Shield', icon: '🛡️', description: 'Basic iron protection.', price: 400, type: 'armor', stats: { defense: 3 } },
+      { id: 'chainmail', name: 'Chainmail Armor', icon: '🥋', description: 'Linked metal rings for protection.', price: 1200, type: 'armor', stats: { defense: 8 } },
+      { id: 'repair_kit', name: 'Repair Kit', icon: '🔧', description: 'Repairs damaged equipment.', price: 200, type: 'consumable' },
+    ]
   },
   vendor_general: {
     name: 'General Goods',
@@ -17,7 +24,14 @@ const VENDOR_TYPES = {
     color: '#22c55e',
     buyMultiplier: 0.4, // Pays 40% of item value
     acceptsTypes: ['misc', 'junk', 'cloth', 'leather', 'food', 'potion'],
-    greeting: "I buy and sell a little bit of everything!"
+    greeting: "I buy and sell a little bit of everything!",
+    stock: [
+      { id: 'torch', name: 'Torch', icon: '🔦', description: 'Lights your way in dark places.', price: 50, type: 'misc' },
+      { id: 'rope', name: 'Rope', icon: '🪢', description: '50 feet of sturdy rope.', price: 100, type: 'misc' },
+      { id: 'backpack', name: 'Backpack', icon: '🎒', description: 'Carry more items.', price: 500, type: 'misc', stats: { bagSlots: 4 } },
+      { id: 'bandages', name: 'Bandages', icon: '🩹', description: 'Heals minor wounds.', price: 75, type: 'consumable', stats: { heal: 20 } },
+      { id: 'water_flask', name: 'Water Flask', icon: '🫗', description: 'Restores stamina.', price: 25, type: 'consumable' },
+    ]
   },
   vendor_trade: {
     name: 'Trade Goods',
@@ -25,7 +39,14 @@ const VENDOR_TYPES = {
     color: '#fbbf24',
     buyMultiplier: 0.6, // Pays 60% of item value
     acceptsTypes: ['gem', 'ore', 'rare', 'trade', 'crafting'],
-    greeting: "Looking to trade some valuable goods?"
+    greeting: "Looking to trade some valuable goods?",
+    stock: [
+      { id: 'copper_ore', name: 'Copper Ore', icon: '🪨', description: 'Raw copper ore for smithing.', price: 50, type: 'crafting' },
+      { id: 'iron_ore', name: 'Iron Ore', icon: '�ite', description: 'Raw iron ore for smithing.', price: 150, type: 'crafting' },
+      { id: 'leather', name: 'Leather', icon: '🟫', description: 'Tanned leather for crafting.', price: 100, type: 'crafting' },
+      { id: 'cloth', name: 'Linen Cloth', icon: '🧵', description: 'Basic cloth for tailoring.', price: 75, type: 'crafting' },
+      { id: 'ruby', name: 'Ruby', icon: '💎', description: 'A valuable red gem.', price: 2000, type: 'gem' },
+    ]
   },
   vendor_food: {
     name: 'Food & Water',
@@ -33,7 +54,14 @@ const VENDOR_TYPES = {
     color: '#f97316',
     buyMultiplier: 0.3, // Pays 30% of item value
     acceptsTypes: ['food', 'drink', 'fish', 'meat', 'ingredient'],
-    greeting: "Fresh supplies! I'll buy any food you've gathered."
+    greeting: "Fresh supplies! I'll buy any food you've gathered.",
+    stock: [
+      { id: 'bread', name: 'Fresh Bread', icon: '🍞', description: 'Restores health over time.', price: 25, type: 'food', stats: { heal: 15 } },
+      { id: 'cheese', name: 'Cheese Wheel', icon: '🧀', description: 'Tasty and nutritious.', price: 40, type: 'food', stats: { heal: 25 } },
+      { id: 'apple', name: 'Apple', icon: '🍎', description: 'A crisp, fresh apple.', price: 10, type: 'food', stats: { heal: 10 } },
+      { id: 'meat', name: 'Cooked Meat', icon: '🍖', description: 'Hearty cooked meat.', price: 60, type: 'food', stats: { heal: 40 } },
+      { id: 'ale', name: 'Ale', icon: '🍺', description: 'A refreshing drink.', price: 30, type: 'drink', stats: { mana: 20 } },
+    ]
   },
   vendor_weapons: {
     name: 'Weapons Dealer',
@@ -41,7 +69,14 @@ const VENDOR_TYPES = {
     color: '#dc2626',
     buyMultiplier: 0.55,
     acceptsTypes: ['weapon', 'ammo'],
-    greeting: "Looking to sell some weapons, adventurer?"
+    greeting: "Looking to sell some weapons, adventurer?",
+    stock: [
+      { id: 'bronze_sword', name: 'Bronze Sword', icon: '🗡️', description: 'A basic bronze blade.', price: 200, type: 'weapon', stats: { attack: 3 } },
+      { id: 'steel_axe', name: 'Steel Axe', icon: '🪓', description: 'A powerful two-handed axe.', price: 2000, type: 'weapon', stats: { attack: 15 } },
+      { id: 'bow', name: 'Hunting Bow', icon: '🏹', description: 'For ranged combat.', price: 800, type: 'weapon', stats: { attack: 8 } },
+      { id: 'arrows', name: 'Arrows (20)', icon: '➴', description: 'Standard arrows.', price: 100, type: 'ammo', quantity: 20 },
+      { id: 'dagger', name: 'Steel Dagger', icon: '🔪', description: 'Quick and deadly.', price: 600, type: 'weapon', stats: { attack: 6 } },
+    ]
   },
   vendor_armor: {
     name: 'Armor Merchant',
@@ -49,7 +84,14 @@ const VENDOR_TYPES = {
     color: '#3b82f6',
     buyMultiplier: 0.55,
     acceptsTypes: ['armor', 'shield', 'helmet', 'boots', 'gloves'],
-    greeting: "I deal in protective gear of all kinds."
+    greeting: "I deal in protective gear of all kinds.",
+    stock: [
+      { id: 'leather_armor', name: 'Leather Armor', icon: '🥋', description: 'Light but protective.', price: 400, type: 'armor', stats: { defense: 5 } },
+      { id: 'iron_helmet', name: 'Iron Helmet', icon: '⛑️', description: 'Protects your head.', price: 300, type: 'armor', stats: { defense: 3 } },
+      { id: 'plate_armor', name: 'Plate Armor', icon: '🛡️', description: 'Heavy plate protection.', price: 3000, type: 'armor', stats: { defense: 15 } },
+      { id: 'leather_boots', name: 'Leather Boots', icon: '👢', description: 'Comfortable footwear.', price: 200, type: 'armor', stats: { defense: 2 } },
+      { id: 'steel_shield', name: 'Steel Shield', icon: '🛡️', description: 'Blocks enemy attacks.', price: 1000, type: 'armor', stats: { defense: 8 } },
+    ]
   },
   vendor_potions: {
     name: 'Alchemist',
@@ -57,7 +99,14 @@ const VENDOR_TYPES = {
     color: '#a855f7',
     buyMultiplier: 0.45,
     acceptsTypes: ['potion', 'herb', 'reagent', 'ingredient'],
-    greeting: "Potions, herbs, reagents - I buy them all!"
+    greeting: "Potions, herbs, reagents - I buy them all!",
+    stock: [
+      { id: 'health_potion', name: 'Health Potion', icon: '❤️', description: 'Restores 50 health instantly.', price: 100, type: 'potion', stats: { heal: 50 } },
+      { id: 'mana_potion', name: 'Mana Potion', icon: '💙', description: 'Restores 50 mana instantly.', price: 100, type: 'potion', stats: { mana: 50 } },
+      { id: 'greater_health', name: 'Greater Health Potion', icon: '💗', description: 'Restores 150 health.', price: 300, type: 'potion', stats: { heal: 150 } },
+      { id: 'antidote', name: 'Antidote', icon: '💚', description: 'Cures poison effects.', price: 150, type: 'potion' },
+      { id: 'strength_elixir', name: 'Strength Elixir', icon: '💪', description: '+10 Attack for 60 seconds.', price: 500, type: 'potion', stats: { attackBuff: 10 } },
+    ]
   },
   vendor_magic: {
     name: 'Magic Supplies',
@@ -65,7 +114,14 @@ const VENDOR_TYPES = {
     color: '#8b5cf6',
     buyMultiplier: 0.5,
     acceptsTypes: ['magic', 'scroll', 'wand', 'rune', 'enchanted'],
-    greeting: "Arcane items and magical curiosities interest me."
+    greeting: "Arcane items and magical curiosities interest me.",
+    stock: [
+      { id: 'scroll_fireball', name: 'Scroll of Fireball', icon: '📜', description: 'Casts a powerful fireball.', price: 500, type: 'scroll', stats: { damage: 50 } },
+      { id: 'scroll_heal', name: 'Scroll of Healing', icon: '📜', description: 'Heals the caster.', price: 400, type: 'scroll', stats: { heal: 100 } },
+      { id: 'wand_sparks', name: 'Wand of Sparks', icon: '🪄', description: 'Shoots magical sparks.', price: 1500, type: 'weapon', stats: { attack: 12 } },
+      { id: 'rune_protection', name: 'Rune of Protection', icon: '🔮', description: 'Temporary shield.', price: 800, type: 'consumable', stats: { defense: 10 } },
+      { id: 'mana_crystal', name: 'Mana Crystal', icon: '💎', description: 'Restores 100 mana.', price: 250, type: 'consumable', stats: { mana: 100 } },
+    ]
   }
 };
 
