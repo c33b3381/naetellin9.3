@@ -172,14 +172,18 @@ const QuestMaker = ({
   // Assign quest to NPC
   const handleAssignToNPC = async (quest, npc) => {
     try {
-      await assignGlobalQuestToNPC(quest.quest_id, npc.id, npc.name || npc.customName || 'Quest Giver');
+      await assignGlobalQuestToNPC(quest.quest_id, npc.id, npc.customName || npc.name || 'NPC');
       // Update local state
       setGlobalQuests(prev => prev.map(q => 
         q.quest_id === quest.quest_id 
-          ? { ...q, assigned_npc_id: npc.id, assigned_npc_name: npc.name || npc.customName || 'Quest Giver' }
+          ? { ...q, assigned_npc_id: npc.id, assigned_npc_name: npc.customName || npc.name || 'NPC' }
           : q
       ));
       setAssigningQuest(null);
+      // Refresh world objects so the change is visible
+      if (onRefreshWorldObjects) {
+        onRefreshWorldObjects();
+      }
     } catch (err) {
       console.error('Failed to assign quest:', err);
     }
@@ -195,6 +199,10 @@ const QuestMaker = ({
           ? { ...q, assigned_npc_id: null, assigned_npc_name: null }
           : q
       ));
+      // Refresh world objects so the change is visible
+      if (onRefreshWorldObjects) {
+        onRefreshWorldObjects();
+      }
     } catch (err) {
       console.error('Failed to unassign quest:', err);
     }
