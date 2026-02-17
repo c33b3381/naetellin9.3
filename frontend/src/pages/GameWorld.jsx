@@ -6853,15 +6853,17 @@ const GameWorld = () => {
       } else if (target && (target.userData.type === 'npc' || target.userData.type === 'guard' || target.userData.type === 'vendor')) {
         // Check if this NPC has a custom quest assigned
         const npcId = target.userData.editorId || target.userData.id;
-        console.log('NPC Clicked:', { npcId, targetName: target.name, userData: target.userData });
+        const objectData = target.userData.objectData;
+        console.log('NPC Clicked:', { npcId, targetName: target.name, userData: target.userData, objectData });
         
         if (npcId) {
-          const npcData = placedObjectsRef.current.find(obj => obj.id === npcId);
-          console.log('NPC Data from ref:', npcData);
+          // First check userData.objectData (set during loading), then fall back to ref
+          const npcData = objectData || placedObjectsRef.current.find(obj => obj.id === npcId);
+          console.log('NPC Data:', npcData);
           
           if (npcData && (npcData.quest_id || npcData.global_quest_id)) {
             // This NPC has a quest assigned - open dialog
-            console.log('Opening quest dialog for NPC with quest');
+            console.log('Opening quest dialog for NPC with quest, global_quest_id:', npcData.global_quest_id);
             setQuestGiverName(target.name || npcData.name || npcData.customName || 'NPC');
             setQuestGiverType(target.userData.type);
             setQuestGiverId(npcId);
@@ -6880,7 +6882,7 @@ const GameWorld = () => {
             }
             return;
           } else {
-            console.log('NPC has no quest assigned, npcData:', npcData ? { quest_id: npcData.quest_id, global_quest_id: npcData.global_quest_id } : 'not found');
+            console.log('NPC has no quest assigned, checking data:', npcData ? { quest_id: npcData.quest_id, global_quest_id: npcData.global_quest_id } : 'not found');
           }
         }
         // No custom quest - handle by type
