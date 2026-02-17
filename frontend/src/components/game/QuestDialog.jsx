@@ -417,13 +417,13 @@ const QuestDialog = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {quest.rewards?.xp && (
+                        {quest.rewards?.xp > 0 && (
                           <div className="flex items-center gap-1">
                             <Star className="w-3 h-3 text-[#a855f7]" />
                             <span className="text-xs text-[#a855f7]">+{quest.rewards.xp}</span>
                           </div>
                         )}
-                        {quest.rewards?.gold && (
+                        {quest.rewards?.gold > 0 && (
                           <div className="flex items-center gap-1">
                             <Coins className="w-3 h-3 text-[#fbbf24]" />
                             <span className="text-xs text-[#fbbf24]">+{quest.rewards.gold}</span>
