@@ -765,6 +765,28 @@ export const useGameStore = create(
           throw err;
         }
       },
+      
+      assignGlobalQuestToNPC: async (questId, npcId, npcName) => {
+        try {
+          await axios.put(`${API}/quests/global/${questId}/assign`, { npc_id: npcId, npc_name: npcName }, get().getHeaders());
+          get().addNotification(`Quest assigned to ${npcName}!`, 'success');
+        } catch (err) {
+          console.error('Failed to assign quest:', err);
+          get().addNotification('Failed to assign quest', 'error');
+          throw err;
+        }
+      },
+      
+      unassignGlobalQuest: async (questId) => {
+        try {
+          await axios.put(`${API}/quests/global/${questId}/unassign`, {}, get().getHeaders());
+          get().addNotification('Quest unassigned from NPC', 'success');
+        } catch (err) {
+          console.error('Failed to unassign quest:', err);
+          get().addNotification('Failed to unassign quest', 'error');
+          throw err;
+        }
+      },
     }),
     {
       name: 'quest-of-honor-storage',
