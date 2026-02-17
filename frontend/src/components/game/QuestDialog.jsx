@@ -2,30 +2,15 @@ import { useState, useEffect } from 'react';
 import { X, Scroll, Coins, Star, Sword, Check, Gift, CheckCircle, Trophy } from 'lucide-react';
 import { useGameStore } from '../../store/gameStore';
 
-// Hardcoded fallback quests (shown if database is empty)
-const HARDCODED_QUESTS = {
-  'goblins_in_the_land': {
-    id: 'goblins_in_the_land',
-    name: 'Goblins in the Land!',
-    giver: 'Quest Giver',
-    description: 'There has been an incursion into our land by the accursed Goblins, head over to the old ruins and slay three of them.',
-    objectives: [
-      { id: 'kill_goblins', type: 'kill', description: 'Kill Goblins', target: 'Goblin', current: 0, required: 3 }
-    ],
-    rewards: {
-      xp: 300,
-      gold: 1
-    },
-    difficulty: 'medium',
-    level: 1
-  }
-};
+// Empty hardcoded quests - all quests come from database now
+const HARDCODED_QUESTS = {};
 
 const QuestDialog = ({ 
   isOpen, 
   onClose, 
   npcName = 'Quest Giver',
   npcType = 'questgiver',
+  npcId = null, // NPC's unique ID for quest assignment
   playerQuests = [],
   onAcceptQuest,
   onTurnInQuest,
