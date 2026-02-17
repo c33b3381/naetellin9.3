@@ -522,10 +522,10 @@ const QuestDialog = ({
               </div>
               <h3 className="font-cinzel text-2xl text-[#fbbf24] mb-2">Quest Complete!</h3>
               <div className="space-y-2 mt-4">
-                {selectedQuest.rewards?.xp && (
+                {selectedQuest.rewards?.xp > 0 && (
                   <p className="text-[#a855f7] text-lg">+{selectedQuest.rewards.xp} Experience</p>
                 )}
-                {selectedQuest.rewards?.gold && (
+                {selectedQuest.rewards?.gold > 0 && (
                   <p className="text-[#fbbf24] text-lg">+{selectedQuest.rewards.gold} Gold</p>
                 )}
               </div>
