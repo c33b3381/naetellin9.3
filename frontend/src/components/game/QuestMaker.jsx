@@ -12,7 +12,8 @@ const QuestMaker = ({
   existingQuests = [],
   selectedNPC = null,
   placedEnemies = [],
-  placedNPCs = [] // List of all NPCs in the world for assignment
+  placedNPCs = [], // List of all NPCs in the world for assignment
+  onRefreshWorldObjects // Callback to refresh world objects after assignment
 }) => {
   const { createGlobalQuest, fetchGlobalQuests, deleteGlobalQuest, assignGlobalQuestToNPC, unassignGlobalQuest } = useGameStore();
   
