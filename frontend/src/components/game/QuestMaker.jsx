@@ -562,7 +562,7 @@ const QuestMaker = ({
                   <span className="text-white font-bold">Global Quest Database</span>
                 </div>
                 <p className="text-[#78716c] text-sm">
-                  Quests saved here are available to ALL players from any Quest Giver NPC.
+                  Quests saved here can be assigned to any Quest Giver NPC. All players will see the quest!
                 </p>
               </div>
               
@@ -578,7 +578,7 @@ const QuestMaker = ({
                     <div key={quest.quest_id} className="bg-[#0c0a09] rounded-lg p-4 border border-[#44403c] hover:border-[#8b5cf6] transition-all">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="text-white font-bold">{quest.name}</h4>
                             <span className={`text-[10px] px-2 py-0.5 rounded ${
                               quest.difficulty === 'easy' ? 'bg-[#22c55e]/20 text-[#22c55e]' :
@@ -588,6 +588,16 @@ const QuestMaker = ({
                             }`}>
                               {quest.difficulty}
                             </span>
+                            {quest.assigned_npc_id ? (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {quest.assigned_npc_name || 'Assigned'}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-[#dc2626]/20 text-[#dc2626]">
+                                Not Assigned
+                              </span>
+                            )}
                           </div>
                           <p className="text-[#78716c] text-sm mt-1">{quest.description}</p>
                           <div className="flex items-center gap-4 mt-2 text-xs">
@@ -601,8 +611,56 @@ const QuestMaker = ({
                               <span className="text-[#fbbf24]">+{quest.rewards.gold} Gold</span>
                             )}
                           </div>
+                          
+                          {/* NPC Assignment UI */}
+                          {assigningQuest?.quest_id === quest.quest_id && (
+                            <div className="mt-3 p-3 bg-[#1a1a1a] rounded border border-[#8b5cf6]">
+                              <div className="text-xs text-[#c4b5fd] mb-2 flex items-center gap-1">
+                                <UserPlus className="w-3 h-3" />
+                                Select an NPC to assign this quest:
+                              </div>
+                              {placedNPCs.length === 0 ? (
+                                <p className="text-[#78716c] text-xs">No NPCs placed in the world. Use F1 World Builder to place Quest Giver NPCs first.</p>
+                              ) : (
+                                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                                  {placedNPCs.filter(npc => npc.type === 'npc' || npc.type?.includes('questgiver')).map((npc, idx) => (
+                                    <button
+                                      key={npc.id || idx}
+                                      onClick={() => handleAssignToNPC(quest, npc)}
+                                      className="px-3 py-1.5 bg-[#0c0a09] border border-[#44403c] hover:border-[#22c55e] hover:bg-[#22c55e]/10 rounded text-xs text-white transition-all"
+                                    >
+                                      {npc.customName || npc.name || 'Quest Giver'}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              <button
+                                onClick={() => setAssigningQuest(null)}
+                                className="mt-2 text-xs text-[#78716c] hover:text-white"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {quest.assigned_npc_id ? (
+                            <button
+                              onClick={() => handleUnassignQuest(quest)}
+                              className="p-2 text-[#78716c] hover:text-[#f59e0b] transition-colors"
+                              title="Unassign from NPC"
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setAssigningQuest(quest)}
+                              className="p-2 text-[#78716c] hover:text-[#22c55e] transition-colors"
+                              title="Assign to NPC"
+                            >
+                              <UserPlus className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEditQuest(quest)}
                             className="p-2 text-[#78716c] hover:text-[#8b5cf6] transition-colors"
