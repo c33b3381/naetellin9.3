@@ -852,7 +852,17 @@ async def assign_global_quest_to_npc(quest_id: str, data: Dict[str, Any], auth: 
     if not existing:
         raise HTTPException(status_code=404, detail="Quest not found")
     
-    # Update the quest with NPC assignment
+    # Get old NPC assignment to clear it
+    old_npc_id = existing.get("assigned_npc_id")
+    
+    # Clear quest from old NPC if there was one
+    if old_npc_id and old_npc_id != npc_id:
+        await db.world_objects.update_one(
+            {"id": old_npc_id},
+            {"$set": {"quest_giver": False, "global_quest_id": None}}
+        )
+    
+    # Update the quest with new NPC assignment
     await db.global_quests.update_one(
         {"quest_id": quest_id},
         {"$set": {
@@ -861,7 +871,7 @@ async def assign_global_quest_to_npc(quest_id: str, data: Dict[str, Any], auth: 
         }}
     )
     
-    # Also update the world object to mark it as a quest giver
+    # Update the new NPC world object to mark it as a quest giver
     if npc_id:
         await db.world_objects.update_one(
             {"id": npc_id},
