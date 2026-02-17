@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check, ChevronDown, Database, Globe, Edit } from 'lucide-react';
+import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check, ChevronDown, Database, Globe, Edit, UserPlus, UserMinus } from 'lucide-react';
 import { ENEMY_DATABASE } from './EnemyEditor';
 import { useGameStore } from '../../store/gameStore';
 
@@ -11,9 +11,10 @@ const QuestMaker = ({
   onRemoveQuest,
   existingQuests = [],
   selectedNPC = null,
-  placedEnemies = []
+  placedEnemies = [],
+  placedNPCs = [] // List of all NPCs in the world for assignment
 }) => {
-  const { createGlobalQuest, fetchGlobalQuests, deleteGlobalQuest } = useGameStore();
+  const { createGlobalQuest, fetchGlobalQuests, deleteGlobalQuest, assignGlobalQuestToNPC, unassignGlobalQuest } = useGameStore();
   
   const [questName, setQuestName] = useState('');
   const [questDescription, setQuestDescription] = useState('');
@@ -27,6 +28,7 @@ const QuestMaker = ({
   const [globalQuests, setGlobalQuests] = useState([]);
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'database'
   const [editingQuest, setEditingQuest] = useState(null);
+  const [assigningQuest, setAssigningQuest] = useState(null); // Quest being assigned to NPC
   
   // Load global quests on mount
   useEffect(() => {
