@@ -19,21 +19,18 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - Enemy AI with patrol patterns
 - Loot drops from defeated enemies
 
-### Quest System ✅ (Updated Dec 2025)
-- **Predefined Quests**: "Goblins in the Land!" - Kill 3 Goblins for 300 XP + 1 Gold
-- Quest acceptance from Quest Giver NPCs
-- Real-time kill tracking with notifications
-- Quest turn-in system with rewards (XP, Gold)
-- Quest Log (L key) showing active/completed quests
-- Custom quest creation via Quest Maker (F7)
+### Quest System ✅ (COMPLETE - Dec 2025)
+- **Global Quest Database** - Create quests via F7 Quest Maker, save to database
+- **NPC Quest Assignment** - Assign quests to any NPC, visible to ALL players
+- **Yellow Quest Markers** - NPCs with quests show yellow "!" indicator
+- **Quest Acceptance** - Click NPC, view quest details, accept
+- **Kill Tracking** - Real-time progress updates when killing target enemies
+- **Quest Turn-in** - Return to NPC, "I've completed your task!", receive rewards
+- **Quest Log (L)** - View active/completed quests, track progress, abandon quests
+- **Rewards System** - XP and Gold awarded on quest completion
 
 ### World Building
-- World Builder (F1) with extensive object categories:
-  - Nature, Rocks & Minerals, Buildings, Walls & Fences
-  - Props & Decor, Lighting, NPCs, Vendor NPCs
-  - Monsters, Animals, Magical Items, Treasure & Loot
-  - Crafting Stations, Furniture, Market & Trade
-  - Dungeon & Prison, Military & Siege, Agriculture, Maritime
+- World Builder (F1) with extensive object categories
 - Terrain Editor (F2) for landscape modification
 - Enemy Editor (F3) for placing monsters
 - Real-time preview of object scale/rotation
@@ -57,7 +54,7 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── game/     # QuestDialog, QuestLog, WorldEditor, etc.
+│   │   │   ├── game/     # QuestDialog, QuestMaker, QuestLog, WorldEditor
 │   │   │   ├── hud/      # HUD, Minimap, WorldMap
 │   │   │   └── panels/   # Inventory, Skills, Character panels
 │   │   ├── pages/
@@ -70,9 +67,6 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 
 ## Pending Tasks
 
-### P0 - High Priority
-- None currently
-
 ### P1 - Medium Priority
 - **Vendor Buy System**: Implement purchasing items from vendors
 
@@ -80,24 +74,30 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - **GameWorld.jsx Refactoring**: Break down into smaller components
 - **Spirit Healer NPC**: Instant revive at graveyard
 - **Weapon Swing Effects**: Visual attack animations
-- **Mouse Wheel Zoom**: Fix reliability in map editor
-
-## Known Issues
-- Custom quests created via Quest Maker don't persist across user accounts (use predefined quests instead)
-- Objects placed before rotation fix need manual replacement
-
-## Completed This Session (Dec 2025)
-- ✅ Fixed World Builder Door icon error
-- ✅ Created permanent "Goblins in the Land!" quest
-- ✅ Implemented quest turn-in system with rewards
-- ✅ Added progress tracking for kill quests
-- ✅ **Global Quest Database** - Quests saved are available to ALL players
-- ✅ **Updated Quest Maker (F7)** - Two tabs: Create Quest + Quest Database
-- ✅ **"Save to Database" feature** - Saves quests globally for all accounts
+- **Quest Persistence**: Save player's active quests to database
 
 ## Database Collections
 - `players`: Character data, position, level, XP
-- `world_objects`: Placed items, NPCs, props (with rotation)
-- `custom_quests`: Player-created quests (per-user)
-- `global_quests`: **NEW** - Quests available to ALL players
+- `world_objects`: Placed items, NPCs, props (with rotation, global_quest_id)
+- `global_quests`: Quests available to ALL players (with assigned_npc_id)
+- `custom_quests`: Player-created quests (per-user, legacy)
 - `placed_enemies`: Spawned monsters for respawning
+
+## API Endpoints
+
+### Quest System
+- `GET /api/quests/global` - List all global quests
+- `POST /api/quests/global` - Create global quest
+- `PUT /api/quests/global/{id}/assign` - Assign quest to NPC
+- `PUT /api/quests/global/{id}/unassign` - Remove NPC assignment
+- `DELETE /api/quests/global/{id}` - Delete quest
+
+## Completed This Session (Dec 2025)
+- ✅ Global Quest Database system
+- ✅ Quest Maker F7 UI with database tab
+- ✅ NPC quest assignment with yellow markers
+- ✅ Quest acceptance from NPCs
+- ✅ Kill tracking with notifications
+- ✅ Quest turn-in with XP/Gold rewards
+- ✅ Quest Log with abandon functionality
+- ✅ Cross-account quest visibility
