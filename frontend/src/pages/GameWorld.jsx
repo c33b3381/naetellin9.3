@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { useGameStore } from '../store/gameStore';
 import { Save } from 'lucide-react';
 import axios from 'axios';
@@ -157,13 +156,10 @@ const GameWorld = () => {
   const editorObjectsRef = useRef([]);
   
   // Player animation state
-  const playerModelRef = useRef(null); // Reference to the loaded GLTF model
-  const playerAnimationMixer = useRef(null); // Animation mixer for GLTF animations
-  const playerAnimations = useRef({}); // Store animation actions
+  const playerModelRef = useRef(null); // Reference to the player model parts
   const playerAnimationState = useRef({
     isMoving: false,
-    animationTime: 0,
-    currentAction: null
+    animationTime: 0
   });
   
   // WoW-style camera controls - using centralized system
@@ -2854,116 +2850,203 @@ const GameWorld = () => {
     scene.add(playerGroup);
     playerRef.current = playerGroup;
     
-    // Load GLTF model asynchronously
-    const loader = new GLTFLoader();
-    loader.load(
-      '/models/player.gltf',
-      (gltf) => {
-        const model = gltf.scene;
-        
-        // Scale the model (model is ~3 units tall, we want ~1.8)
-        model.scale.set(0.6, 0.6, 0.6);
-        
-        // Position model so feet are at ground level
-        model.position.y = 0;
-        
-        // Rotate model to face forward
-        model.rotation.y = 0;
-        
-        // Fix materials and enable shadows
-        model.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            if (child.material) {
-              child.material.side = THREE.DoubleSide;
-            }
-          }
-        });
-        
-        // Set up animation mixer if model has animations
-        if (gltf.animations && gltf.animations.length > 0) {
-          const mixer = new THREE.AnimationMixer(model);
-          playerAnimationMixer.current = mixer;
-          
-          // Store all animations
-          gltf.animations.forEach((clip) => {
-            const action = mixer.clipAction(clip);
-            playerAnimations.current[clip.name.toLowerCase()] = action;
-            console.log('Found animation:', clip.name);
-          });
-          
-          // Start with idle (paused walk at frame 0) or first animation paused
-          const walkAction = playerAnimations.current['walking'] || playerAnimations.current[Object.keys(playerAnimations.current)[0]];
-          if (walkAction) {
-            walkAction.play();
-            walkAction.paused = true; // Start paused (idle)
-            playerAnimationState.current.currentAction = walkAction;
-          }
-        }
-        
-        // Add the loaded model to the player group
-        model.name = 'playerModel';
-        playerGroup.add(model);
-        
-        // Store reference to the model for animations
-        playerModelRef.current = model;
-        
-        console.log('Player GLTF model loaded with', gltf.animations?.length || 0, 'animations');
-      },
-      (progress) => {
-        const percent = (progress.loaded / progress.total) * 100;
-        console.log(`Loading player model: ${percent.toFixed(1)}%`);
-      },
-      (error) => {
-        console.error('Error loading player GLTF model:', error);
-        // Fallback to primitive player if model fails to load
-        createFallbackPlayer(playerGroup);
-      }
-    );
-    
-    // Fallback function to create primitive player if GLTF fails
-    function createFallbackPlayer(group) {
-      const skinColor = character?.skin_tone || '#D2B48C';
-      const hairColor = character?.hair_color || '#4a3728';
+    // Create custom animated humanoid character
+    const createAnimatedHumanoid = () => {
+      const skinColor = character?.skin_tone || '#E8BEAC';
+      const shirtColor = '#2E5090'; // Blue shirt
+      const pantsColor = '#3D2314'; // Brown pants
+      const hairColor = character?.hair_color || '#2C1810';
+      const shoeColor = '#1a1a1a';
       
-      // Legs
-      const legMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
-      const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), legMaterial);
-      leftLeg.position.set(-0.15, 0.35, 0);
-      leftLeg.castShadow = true;
-      group.add(leftLeg);
+      // Materials
+      const skinMaterial = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.8 });
+      const shirtMaterial = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.7 });
+      const pantsMaterial = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.8 });
+      const hairMaterial = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.9 });
+      const shoeMaterial = new THREE.MeshStandardMaterial({ color: shoeColor, roughness: 0.6 });
       
-      const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), legMaterial);
-      rightLeg.position.set(0.15, 0.35, 0);
-      rightLeg.castShadow = true;
-      group.add(rightLeg);
+      // Body container
+      const bodyGroup = new THREE.Group();
+      bodyGroup.name = 'bodyGroup';
       
-      // Torso
-      const torsoMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.25), torsoMaterial);
-      torso.position.y = 1;
+      // === TORSO ===
+      const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(0.45, 0.55, 0.22),
+        shirtMaterial
+      );
+      torso.position.y = 1.05;
       torso.castShadow = true;
-      group.add(torso);
+      bodyGroup.add(torso);
       
-      // Head
-      const headMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), headMaterial);
-      head.position.y = 1.52;
+      // === HEAD ===
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 16, 16),
+        skinMaterial
+      );
+      head.position.y = 1.55;
       head.castShadow = true;
-      group.add(head);
+      bodyGroup.add(head);
+      
+      // Face details
+      const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMaterial);
+      leftEye.position.set(-0.06, 1.57, 0.15);
+      bodyGroup.add(leftEye);
+      
+      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMaterial);
+      rightEye.position.set(0.06, 1.57, 0.15);
+      bodyGroup.add(rightEye);
       
       // Hair
-      const hairMaterial = new THREE.MeshStandardMaterial({ color: hairColor });
       const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.24, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.SphereGeometry(0.2, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.55),
         hairMaterial
       );
-      hair.position.y = 1.65;
-      group.add(hair);
+      hair.position.y = 1.62;
+      hair.castShadow = true;
+      bodyGroup.add(hair);
       
-      console.log('Using fallback primitive player model');
-    }
+      // === ARMS ===
+      // Left arm pivot (at shoulder)
+      const leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.28, 1.25, 0);
+      
+      const leftUpperArm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.05, 0.28, 8),
+        shirtMaterial
+      );
+      leftUpperArm.position.y = -0.14;
+      leftUpperArm.castShadow = true;
+      leftArmPivot.add(leftUpperArm);
+      
+      const leftForearm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.04, 0.25, 8),
+        skinMaterial
+      );
+      leftForearm.position.y = -0.38;
+      leftForearm.castShadow = true;
+      leftArmPivot.add(leftForearm);
+      
+      bodyGroup.add(leftArmPivot);
+      
+      // Right arm pivot
+      const rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.28, 1.25, 0);
+      
+      const rightUpperArm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.05, 0.28, 8),
+        shirtMaterial
+      );
+      rightUpperArm.position.y = -0.14;
+      rightUpperArm.castShadow = true;
+      rightArmPivot.add(rightUpperArm);
+      
+      const rightForearm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.04, 0.25, 8),
+        skinMaterial
+      );
+      rightForearm.position.y = -0.38;
+      rightForearm.castShadow = true;
+      rightArmPivot.add(rightForearm);
+      
+      bodyGroup.add(rightArmPivot);
+      
+      // === LEGS (with pivots for animation) ===
+      // Left leg pivot (at hip)
+      const leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(-0.1, 0.75, 0);
+      leftLegPivot.name = 'leftLegPivot';
+      
+      // Upper leg (thigh)
+      const leftThigh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.07, 0.38, 8),
+        pantsMaterial
+      );
+      leftThigh.position.y = -0.19;
+      leftThigh.castShadow = true;
+      leftLegPivot.add(leftThigh);
+      
+      // Lower leg pivot (at knee)
+      const leftKneePivot = new THREE.Group();
+      leftKneePivot.position.y = -0.38;
+      leftKneePivot.name = 'leftKneePivot';
+      
+      const leftShin = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.055, 0.35, 8),
+        pantsMaterial
+      );
+      leftShin.position.y = -0.175;
+      leftShin.castShadow = true;
+      leftKneePivot.add(leftShin);
+      
+      // Foot
+      const leftFoot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.08, 0.18),
+        shoeMaterial
+      );
+      leftFoot.position.set(0, -0.39, 0.04);
+      leftFoot.castShadow = true;
+      leftKneePivot.add(leftFoot);
+      
+      leftLegPivot.add(leftKneePivot);
+      bodyGroup.add(leftLegPivot);
+      
+      // Right leg pivot
+      const rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(0.1, 0.75, 0);
+      rightLegPivot.name = 'rightLegPivot';
+      
+      const rightThigh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.07, 0.38, 8),
+        pantsMaterial
+      );
+      rightThigh.position.y = -0.19;
+      rightThigh.castShadow = true;
+      rightLegPivot.add(rightThigh);
+      
+      // Lower leg pivot (at knee)
+      const rightKneePivot = new THREE.Group();
+      rightKneePivot.position.y = -0.38;
+      rightKneePivot.name = 'rightKneePivot';
+      
+      const rightShin = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.055, 0.35, 8),
+        pantsMaterial
+      );
+      rightShin.position.y = -0.175;
+      rightShin.castShadow = true;
+      rightKneePivot.add(rightShin);
+      
+      const rightFoot = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.08, 0.18),
+        shoeMaterial
+      );
+      rightFoot.position.set(0, -0.39, 0.04);
+      rightFoot.castShadow = true;
+      rightKneePivot.add(rightFoot);
+      
+      rightLegPivot.add(rightKneePivot);
+      bodyGroup.add(rightLegPivot);
+      
+      // Store references for animation
+      bodyGroup.userData = {
+        leftLegPivot,
+        rightLegPivot,
+        leftKneePivot,
+        rightKneePivot,
+        leftArmPivot,
+        rightArmPivot
+      };
+      
+      return bodyGroup;
+    };
+    
+    // Create and add the humanoid
+    const humanoid = createAnimatedHumanoid();
+    playerGroup.add(humanoid);
+    playerModelRef.current = humanoid;
+    
+    console.log('Custom animated humanoid created');
     
     // Restore player position from saved game state
     const startX = savedPosition.x || 0;
@@ -5072,31 +5155,74 @@ const GameWorld = () => {
         // ==================== PLAYER ANIMATION ====================
         // Update player animation based on movement state
         const animState = playerAnimationState.current;
-        const mixer = playerAnimationMixer.current;
-        const walkAction = playerAnimations.current['walking'];
         const playerModel = playerModelRef.current;
         
-        if (mixer && playerModel) {
+        if (playerModel && playerModel.userData) {
           const isMoving = movementResult.moved;
+          const { leftLegPivot, rightLegPivot, leftKneePivot, rightKneePivot, leftArmPivot, rightArmPivot } = playerModel.userData;
           
-          // Play/pause walk animation based on movement
-          if (walkAction) {
-            if (isMoving && walkAction.paused) {
-              // Start walking
-              walkAction.paused = false;
-              walkAction.setEffectiveTimeScale(1.0);
-            } else if (!isMoving && !walkAction.paused) {
-              // Stop walking - pause the animation
-              walkAction.paused = true;
+          // Update animation time
+          animState.animationTime += delta;
+          
+          if (isMoving) {
+            // WALK ANIMATION
+            const walkSpeed = 8; // Animation cycles per second
+            const walkPhase = animState.animationTime * walkSpeed;
+            
+            // Leg swing amplitude (radians)
+            const legSwing = 0.5;
+            const kneeSwing = 0.7;
+            const armSwing = 0.4;
+            
+            // Calculate phase for each leg (opposite phases)
+            const leftPhase = Math.sin(walkPhase);
+            const rightPhase = Math.sin(walkPhase + Math.PI);
+            
+            // Animate leg pivots (hip rotation)
+            if (leftLegPivot) {
+              leftLegPivot.rotation.x = leftPhase * legSwing;
             }
+            if (rightLegPivot) {
+              rightLegPivot.rotation.x = rightPhase * legSwing;
+            }
+            
+            // Animate knee pivots (bend when leg swings back)
+            if (leftKneePivot) {
+              // Knee bends more when leg is swinging back
+              const leftKneeBend = Math.max(0, -leftPhase) * kneeSwing;
+              leftKneePivot.rotation.x = leftKneeBend;
+            }
+            if (rightKneePivot) {
+              const rightKneeBend = Math.max(0, -rightPhase) * kneeSwing;
+              rightKneePivot.rotation.x = rightKneeBend;
+            }
+            
+            // Animate arms (opposite to legs for natural walk)
+            if (leftArmPivot) {
+              leftArmPivot.rotation.x = rightPhase * armSwing;
+            }
+            if (rightArmPivot) {
+              rightArmPivot.rotation.x = leftPhase * armSwing;
+            }
+            
+            // Subtle body bob
+            playerModel.position.y = Math.abs(Math.sin(walkPhase * 2)) * 0.03;
+            
+          } else {
+            // IDLE - smoothly return to standing position
+            const returnSpeed = 0.15;
+            
+            if (leftLegPivot) leftLegPivot.rotation.x *= (1 - returnSpeed);
+            if (rightLegPivot) rightLegPivot.rotation.x *= (1 - returnSpeed);
+            if (leftKneePivot) leftKneePivot.rotation.x *= (1 - returnSpeed);
+            if (rightKneePivot) rightKneePivot.rotation.x *= (1 - returnSpeed);
+            if (leftArmPivot) leftArmPivot.rotation.x *= (1 - returnSpeed);
+            if (rightArmPivot) rightArmPivot.rotation.x *= (1 - returnSpeed);
+            
+            // Subtle idle breathing
+            const breathPhase = animState.animationTime * 1.5;
+            playerModel.position.y = Math.sin(breathPhase) * 0.01;
           }
-          
-          // Update the animation mixer
-          mixer.update(delta);
-          
-          // Reset model local position to prevent root motion from moving the character
-          // The game movement system handles actual position, animation should be in-place
-          playerModel.position.set(0, 0, 0);
         }
         // ==================== END PLAYER ANIMATION ====================
       }
