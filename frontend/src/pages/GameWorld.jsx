@@ -2857,12 +2857,12 @@ const GameWorld = () => {
     // Load GLTF model asynchronously
     const loader = new GLTFLoader();
     loader.load(
-      '/models/scene.gltf',
+      '/models/player.gltf',
       (gltf) => {
         const model = gltf.scene;
         
-        // Scale the model to match player size (model is ~97 units tall, we want ~1.8)
-        model.scale.set(0.05, 0.05, 0.05);
+        // Scale the model to match player size
+        model.scale.set(1.0, 1.0, 1.0);
         
         // Position model so feet are at ground level
         model.position.y = 0;
