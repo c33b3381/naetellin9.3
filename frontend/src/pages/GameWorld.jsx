@@ -3812,11 +3812,11 @@ const GameWorld = () => {
       return buildingGroup;
     };
     
-    createBuilding(0, -12, 8, 6, 7, 0x8B0000, 'Town Hall', 'building');
-    createBuilding(-10, 5, 5, 4, 5, 0x654321, 'Blacksmith', 'shop');
-    createBuilding(10, 5, 5, 4, 5, 0x654321, 'General Store', 'shop');
-    createBuilding(-15, -8, 6, 5, 5, 0x4a4a4a, 'Armory', 'shop');
-    createBuilding(15, -8, 5, 4, 5, 0x8B4513, 'Inn', 'building');
+    createBuilding(0, -25, 8, 6, 7, 0x8B0000, 'Town Hall', 'building');
+    createBuilding(-25, 0, 5, 4, 5, 0x654321, 'Blacksmith', 'shop');
+    createBuilding(25, 0, 5, 4, 5, 0x654321, 'General Store', 'shop');
+    createBuilding(-22, -15, 6, 5, 5, 0x4a4a4a, 'Armory', 'shop');
+    createBuilding(22, -15, 5, 4, 5, 0x8B4513, 'Inn', 'building');
     
     // ==================== GRAVEYARD AREA ====================
     const GRAVEYARD_CENTER = { x: -40, z: -40 };
