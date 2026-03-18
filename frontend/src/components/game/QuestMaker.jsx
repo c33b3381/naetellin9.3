@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, Save, Target, Gift, Scroll, User, Check, ChevronDown, Database, Globe, Edit, UserPlus, UserMinus } from 'lucide-react';
-import { ENEMY_DATABASE } from './EnemyEditor';
+import { ENEMY_DATABASE } from '../../data/enemies';
 import { useGameStore } from '../../store/gameStore';
 
 const QuestMaker = ({ 
