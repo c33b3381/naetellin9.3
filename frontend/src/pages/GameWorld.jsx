@@ -3267,13 +3267,13 @@ const GameWorld = () => {
     trainingGround.position.set(-18, 0.01, -12);
     scene.add(trainingGround);
     
-    // Small houses/huts around the town
-    createSmallHouse(-22, 14, Math.PI * 0.1, 0x8B4513);
-    createSmallHouse(-26, 8, Math.PI * 0.15, 0x9B7653);
-    createSmallHouse(22, 16, -Math.PI * 0.1, 0x8B4513);
-    createSmallHouse(26, 10, -Math.PI * 0.2, 0xA0522D);
-    createSmallHouse(26, -6, Math.PI * 0.9, 0x9B7653);
-    createSmallHouse(-26, -4, -Math.PI * 0.8, 0x8B4513);
+    // Small houses/huts around the town (moved away from market areas)
+    createSmallHouse(-28, 20, Math.PI * 0.1, 0x8B4513);
+    createSmallHouse(-30, 6, Math.PI * 0.15, 0x9B7653);
+    createSmallHouse(28, 20, -Math.PI * 0.1, 0x8B4513);
+    createSmallHouse(30, 6, -Math.PI * 0.2, 0xA0522D);
+    createSmallHouse(28, -10, Math.PI * 0.9, 0x9B7653);
+    createSmallHouse(-28, -10, -Math.PI * 0.8, 0x8B4513);
     
     // Benches around fountain
     const createBench = (x, z, rotation = 0) => {
