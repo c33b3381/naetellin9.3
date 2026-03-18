@@ -17,7 +17,7 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 │   │   ├── items.js           # LOOT_ITEMS + generateLoot
 │   │   ├── spells.js          # WARRIOR_SPELLS
 │   │   └── objects.js         # OBJECT_CATEGORIES
-│   ├── systems/               # Extracted game systems (4,896 lines total)
+│   ├── systems/               # Extracted game systems (5,164 lines total)
 │   │   ├── PlayerMovementSystem.js  # WASD movement, jump, terrain follow (300 lines)
 │   │   ├── CameraSystem.js          # WoW-style orbit camera (226 lines)
 │   │   ├── EnemyAISystem.js         # Patrol, aggro, chase, leash, spread (443 lines)
@@ -25,9 +25,9 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 │   │   ├── WorldAssetFactory.js     # Procedural mesh generator (2,444 lines)
 │   │   ├── WorldObjectSystem.js     # Object persistence: load/save/normalize (205 lines)
 │   │   ├── InputSystem.js           # Keyboard input handling, F1-F7 toggles (690 lines)
-│   │   └── TerrainSystem.js         # Terrain generation, water detection (353 lines)
+│   │   └── TerrainSystem.js         # Terrain generation, water detection, coloring (621 lines)
 │   ├── pages/
-│   │   └── GameWorld.jsx      # Main game (~6,031 lines, down from 9,208)
+│   │   └── GameWorld.jsx      # Main game (~6,020 lines, down from 9,208)
 │   ├── components/
 │   │   ├── game/              # Game UI components
 │   │   │   └── _unused/       # Archived unused components
