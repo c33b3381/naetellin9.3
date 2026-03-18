@@ -371,17 +371,8 @@ const GameWorld = () => {
     lastMouseY: 0
   });
   
-  // Movement state
-  const movementState = useRef({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-    jump: false,
-    isJumping: false,
-    velocityY: 0,
-    autoRun: false
-  });
+  // Movement state - using centralized system
+  const movementState = useRef(createMovementState());
   
   // Selection state
   const [selectedTarget, setSelectedTarget] = useState(null);
