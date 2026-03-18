@@ -165,6 +165,51 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Market NPCs - Quest Giver (Elder Theron)"
+    implemented: true
+    working: false
+    file: "frontend/src/pages/GameWorld.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Testing Elder Theron Quest Giver NPC at coordinates (4, 2) with yellow quest marker. Will verify: (1) NPC is visible and clickable, (2) Quest Dialog opens on double-click, (3) Dialog can be closed without errors."
+        - working: false
+        - agent: "testing"
+        - comment: "NPC VISIBILITY: ✅ CONFIRMED - Elder Theron is clearly visible in screenshots as purple robed figure with YELLOW cone quest marker and blue orb staff, positioned near fountain. INTERACTION: ❌ FAILED - Unable to interact with NPC through multiple automated click attempts (tried 15+ different positions, single-click, double-click, Tab key targeting). Issue may be with NPC click detection/raycasting or automated testing limitation. REQUIRES MANUAL VERIFICATION."
+
+  - task: "Market NPCs - Vendor (Marcus the Merchant)"
+    implemented: true
+    working: false
+    file: "frontend/src/pages/GameWorld.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Testing Marcus the Merchant Vendor NPC at coordinates (10, 6) with gold coin indicator. Will verify: (1) NPC is visible and clickable, (2) Vendor Panel opens on double-click, (3) Panel can be closed without errors."
+        - working: false
+        - agent: "testing"
+        - comment: "NPC VISIBILITY: ✅ Market stalls with multiple NPCs are visible in screenshots. INTERACTION: ❌ FAILED - Unable to interact with vendor NPC through multiple automated click attempts. Tried various positions around market stalls with both single and double-click methods. REQUIRES MANUAL VERIFICATION."
+
+  - task: "Market NPCs - Warrior Trainer"
+    implemented: true
+    working: false
+    file: "frontend/src/pages/GameWorld.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Testing Warrior Trainer NPC at coordinates (-18, -8) with orange book indicator. Will verify: (1) NPC is visible and clickable, (2) Trainer Panel opens on double-click, (3) Panel can be closed without errors."
+        - working: false
+        - agent: "testing"
+        - comment: "INTERACTION: ❌ FAILED - Unable to interact with Warrior Trainer through automated testing after moving to southwest training area. Tried 6+ different click positions. REQUIRES MANUAL VERIFICATION."
+
 agent_communication:
     - agent: "main"
     - message: "Implemented lighting improvements: (1) ACES filmic tone mapping, (2) Warm golden sun light at higher angle, (3) Fill light from opposite side, (4) Enhanced hemisphere light, (5) 4K shadow maps with soft edges, (6) Objects receive shadows, (7) Better fog range. Test: Verify buildings/trees cast shadows, scene has better depth, warmer atmosphere."
@@ -172,3 +217,5 @@ agent_communication:
     - message: "Testing complete - ALL TESTS PASSED. World lighting improvements verified and working excellently. Key findings: (1) Shadow Quality: ✓ Buildings cast visible soft-edged shadows, implementation correct with 4K maps and PCFSoftShadowMap. (2) Scene Depth: ✓ Excellent 3D definition with multi-light setup creating natural contrast. Buildings show proper shading gradients on different faces. (3) Atmosphere: ✓ Warm pleasant blue sky, subtle fog on distant terrain, golden warm lighting creates intended stylized fantasy look. ACES tone mapping delivers natural colors. (4) Gameplay: ✓ NO REGRESSIONS - WASD movement and camera rotation fully functional. (5) Errors: ✓ Zero JavaScript errors. The improved lighting system achieves all success criteria: visible shadows, good depth/contrast, warm atmosphere, clear object definition, no errors, no regressions. Visual quality is appropriate for stylized fantasy aesthetic. Ready for user acceptance. Main agent can summarize and finish."
     - agent: "testing"
     - message: "NEW TASK TESTED: Player character GLTF model implementation. CRITICAL BUG FOUND & FIXED: Game was crashing on load due to variable name error on line 2941 (GameWorld.jsx) - 'player.position.set()' should be 'playerGroup.position.set()'. After fixing, all tests PASSED: (1) GLTF model loads successfully from /models/player.gltf (2) Player appears as humanoid 3D model (not primitive shapes) (3) Green selection circle visible beneath player (4) WASD movement working correctly (5) Camera rotation functional (6) No JavaScript errors. Player character model implementation is complete and working as intended."
+    - agent: "testing"
+    - message: "NPC TESTING COMPLETE - Oakvale Village Town Center. RESULTS: (1) TOWN LAYOUT: ✅ EXCELLENT - Central fountain with blue orb, 8+ market stalls with colorful canopies (red/yellow/green), houses/huts around perimeter, training area props visible, ambient NPCs present. (2) NPC VISIBILITY: ✅ CONFIRMED - Elder Theron clearly visible as purple robed figure with YELLOW cone quest marker near fountain. Multiple NPCs visible at market stalls. (3) GAME FUNCTIONALITY: ✅ WORKING - Login successful, game loads without errors, WASD movement functional, camera rotation working. (4) ❌ CRITICAL ISSUE: NPC INTERACTION FAILED - Unable to interact with ANY NPCs (Elder Theron, Marcus, Warrior Trainer) through automated testing despite trying 30+ click attempts with single-click, double-click, and Tab key methods. Code analysis shows NPCs require double-click to interact. POSSIBLE CAUSES: (a) NPC raycasting/click detection may not be working (b) Automated testing unable to target 3D objects accurately (c) NPCs may need player to be closer before interaction. RECOMMENDATION: Main agent MUST manually verify NPC interactions work by loading game and double-clicking on NPCs. If manual test also fails, debug NPC click handler in GameWorld.jsx line 5509-5664."

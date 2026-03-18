@@ -2799,28 +2799,537 @@ const GameWorld = () => {
     createZonePortal(0, 95, 'crystal_caves', 'Crystal Caves');
     createZonePortal(0, -95, 'frozen_peaks', 'Frozen Peaks');
     
-    // Village center
-    const centerGeometry = new THREE.CircleGeometry(15, 32);
-    const centerMaterial = new THREE.MeshStandardMaterial({ color: 0x32CD32 });
-    const center = new THREE.Mesh(centerGeometry, centerMaterial);
-    center.rotation.x = -Math.PI / 2;
-    center.position.y = 0.02;
-    scene.add(center);
+    // ==================== OAKVALE TOWN CENTER ====================
+    // A lively starter town with central square, market, and functional NPCs
     
-    // Cobblestone paths - extended
-    const pathMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355 });
+    // === GROUND & TOWN SQUARE ===
+    // Central town square - cobblestone ground
+    const townSquareGeometry = new THREE.CircleGeometry(18, 32);
+    const townSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
+    const townSquare = new THREE.Mesh(townSquareGeometry, townSquareMaterial);
+    townSquare.rotation.x = -Math.PI / 2;
+    townSquare.position.y = 0.015;
+    scene.add(townSquare);
+    
+    // Inner decorative ring
+    const innerRingGeometry = new THREE.RingGeometry(8, 9, 32);
+    const innerRingMaterial = new THREE.MeshStandardMaterial({ color: 0x696969, roughness: 0.8 });
+    const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
+    innerRing.rotation.x = -Math.PI / 2;
+    innerRing.position.y = 0.02;
+    scene.add(innerRing);
+    
+    // Grass areas around the square
+    const grassMaterial = new THREE.MeshStandardMaterial({ color: 0x32CD32 });
+    const grassPatches = [
+      { x: -22, z: 0, r: 8 },
+      { x: 22, z: 0, r: 8 },
+      { x: 0, z: -22, r: 8 },
+      { x: 0, z: 22, r: 8 },
+    ];
+    grassPatches.forEach(patch => {
+      const grass = new THREE.Mesh(new THREE.CircleGeometry(patch.r, 16), grassMaterial);
+      grass.rotation.x = -Math.PI / 2;
+      grass.position.set(patch.x, 0.01, patch.z);
+      scene.add(grass);
+    });
+    
+    // === PATHS ===
+    const pathMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
     
     // Main north-south path
-    const path1 = new THREE.Mesh(new THREE.PlaneGeometry(3, 180), pathMaterial);
+    const path1 = new THREE.Mesh(new THREE.PlaneGeometry(4, 180), pathMaterial);
     path1.rotation.x = -Math.PI / 2;
-    path1.position.y = 0.03;
+    path1.position.y = 0.025;
     scene.add(path1);
     
     // Main east-west path
-    const path2 = new THREE.Mesh(new THREE.PlaneGeometry(180, 3), pathMaterial);
+    const path2 = new THREE.Mesh(new THREE.PlaneGeometry(180, 4), pathMaterial);
     path2.rotation.x = -Math.PI / 2;
-    path2.position.y = 0.03;
+    path2.position.y = 0.025;
     scene.add(path2);
+    
+    // Diagonal paths for natural feel
+    const createDiagonalPath = (x1, z1, x2, z2, width = 2.5) => {
+      const length = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
+      const angle = Math.atan2(z2-z1, x2-x1);
+      const path = new THREE.Mesh(new THREE.PlaneGeometry(length, width), pathMaterial);
+      path.rotation.x = -Math.PI / 2;
+      path.rotation.z = -angle;
+      path.position.set((x1+x2)/2, 0.022, (z1+z2)/2);
+      scene.add(path);
+    };
+    
+    // Connect market areas with diagonal paths
+    createDiagonalPath(0, 0, 15, 12);
+    createDiagonalPath(0, 0, -15, -12);
+    createDiagonalPath(0, 0, -18, 8);
+    createDiagonalPath(0, 0, 18, -8);
+    
+    // === CENTRAL FOUNTAIN (Focal Point) ===
+    const createFountain = (x, z) => {
+      const fountainGroup = new THREE.Group();
+      
+      // Base pool
+      const poolMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.7 });
+      const poolBase = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.5, 0.5, 24), poolMaterial);
+      poolBase.position.y = 0.25;
+      poolBase.castShadow = true;
+      fountainGroup.add(poolBase);
+      
+      // Water surface
+      const waterMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4169E1, 
+        transparent: true, 
+        opacity: 0.7,
+        roughness: 0.1
+      });
+      const water = new THREE.Mesh(new THREE.CircleGeometry(2.8, 24), waterMaterial);
+      water.rotation.x = -Math.PI / 2;
+      water.position.y = 0.48;
+      fountainGroup.add(water);
+      
+      // Center pillar
+      const pillarMaterial = new THREE.MeshStandardMaterial({ color: 0x708090, roughness: 0.5 });
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 2.5, 16), pillarMaterial);
+      pillar.position.y = 1.5;
+      pillar.castShadow = true;
+      fountainGroup.add(pillar);
+      
+      // Top basin
+      const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 0.3, 16), pillarMaterial);
+      basin.position.y = 2.8;
+      basin.castShadow = true;
+      fountainGroup.add(basin);
+      
+      // Decorative spout
+      const spoutMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x87CEEB, 
+        emissive: 0x4169E1,
+        emissiveIntensity: 0.3
+      });
+      const spout = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), spoutMaterial);
+      spout.position.y = 3.1;
+      fountainGroup.add(spout);
+      
+      // Corner pillars for decoration
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const cornerPillar = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.15, 0.2, 1, 8),
+          pillarMaterial
+        );
+        cornerPillar.position.set(Math.cos(angle) * 2.5, 0.5, Math.sin(angle) * 2.5);
+        cornerPillar.castShadow = true;
+        fountainGroup.add(cornerPillar);
+      }
+      
+      fountainGroup.position.set(x, 0, z);
+      scene.add(fountainGroup);
+      return fountainGroup;
+    };
+    
+    createFountain(0, 0); // Central fountain
+    
+    // === MARKET STALLS ===
+    const createMarketStall = (x, z, rotation = 0, canopyColor = 0xDC143C, goods = true) => {
+      const stallGroup = new THREE.Group();
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 });
+      
+      // Counter
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.15, 1.4), woodMaterial);
+      counter.position.y = 1;
+      counter.castShadow = true;
+      stallGroup.add(counter);
+      
+      // Legs
+      const legGeometry = new THREE.BoxGeometry(0.12, 1, 0.12);
+      [[-1.2, 0.55], [1.2, 0.55], [-1.2, -0.55], [1.2, -0.55]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(legGeometry, woodMaterial);
+        leg.position.set(lx, 0.5, lz);
+        stallGroup.add(leg);
+      });
+      
+      // Back panel
+      const backPanel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.5, 0.08), woodMaterial);
+      backPanel.position.set(0, 1.75, -0.65);
+      stallGroup.add(backPanel);
+      
+      // Canopy
+      const canopyMaterial = new THREE.MeshStandardMaterial({ 
+        color: canopyColor, 
+        roughness: 0.8,
+        side: THREE.DoubleSide 
+      });
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 2.2), canopyMaterial);
+      canopy.position.set(0, 2.5, 0.3);
+      canopy.rotation.x = 0.12;
+      canopy.castShadow = true;
+      stallGroup.add(canopy);
+      
+      // Support poles
+      const poleGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.6, 8);
+      const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      [[-1.3, -0.55], [1.3, -0.55]].forEach(([px, pz]) => {
+        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+        pole.position.set(px, 1.8, pz);
+        stallGroup.add(pole);
+      });
+      
+      // Goods on display
+      if (goods) {
+        const itemColors = [0xFFD700, 0xFF6347, 0x32CD32, 0x9370DB, 0xFFA500];
+        for (let i = 0; i < 5; i++) {
+          const item = new THREE.Mesh(
+            new THREE.BoxGeometry(0.35 + Math.random() * 0.15, 0.3 + Math.random() * 0.2, 0.35),
+            new THREE.MeshStandardMaterial({ color: itemColors[i % itemColors.length] })
+          );
+          item.position.set(-1 + i * 0.5 + (Math.random() - 0.5) * 0.2, 1.25, 0.3);
+          item.rotation.y = Math.random() * 0.3;
+          item.castShadow = true;
+          stallGroup.add(item);
+        }
+      }
+      
+      stallGroup.position.set(x, 0, z);
+      stallGroup.rotation.y = rotation;
+      scene.add(stallGroup);
+      return stallGroup;
+    };
+    
+    // === PROPS (Crates, Barrels, Sacks) ===
+    const createCrate = (x, z, scale = 1, rotation = 0) => {
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 });
+      const crate = new THREE.Mesh(new THREE.BoxGeometry(0.8 * scale, 0.7 * scale, 0.8 * scale), woodMaterial);
+      crate.position.set(x, 0.35 * scale, z);
+      crate.rotation.y = rotation;
+      crate.castShadow = true;
+      scene.add(crate);
+      return crate;
+    };
+    
+    const createBarrel = (x, z, scale = 1) => {
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8 });
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * scale, 0.4 * scale, 1 * scale, 12), woodMaterial);
+      barrel.position.set(x, 0.5 * scale, z);
+      barrel.castShadow = true;
+      scene.add(barrel);
+      
+      // Metal bands
+      const bandMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, metalness: 0.6 });
+      [0.3, 0.7].forEach(h => {
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.38 * scale, 0.03, 8, 16), bandMaterial);
+        band.rotation.x = Math.PI / 2;
+        band.position.set(x, h * scale, z);
+        scene.add(band);
+      });
+      return barrel;
+    };
+    
+    const createSack = (x, z, scale = 1) => {
+      const sackMaterial = new THREE.MeshStandardMaterial({ color: 0xDAA520, roughness: 0.95 });
+      const sack = new THREE.Mesh(new THREE.SphereGeometry(0.35 * scale, 8, 8), sackMaterial);
+      sack.scale.set(1, 0.8, 1);
+      sack.position.set(x, 0.28 * scale, z);
+      sack.castShadow = true;
+      scene.add(sack);
+      return sack;
+    };
+    
+    const createCart = (x, z, rotation = 0) => {
+      const cartGroup = new THREE.Group();
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 });
+      
+      // Body
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 1.2), woodMaterial);
+      body.position.y = 0.85;
+      body.castShadow = true;
+      cartGroup.add(body);
+      
+      // Wheels
+      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
+      const wheelGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.12, 16);
+      [[-0.9, 0.65], [-0.9, -0.65], [0.9, 0.65], [0.9, -0.65]].forEach(([wx, wz]) => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(wx, 0.35, wz);
+        cartGroup.add(wheel);
+      });
+      
+      // Handle
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), woodMaterial);
+      handle.rotation.z = Math.PI / 4;
+      handle.position.set(-1.4, 1, 0);
+      cartGroup.add(handle);
+      
+      // Goods
+      const hay = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 0.5, 0.9),
+        new THREE.MeshStandardMaterial({ color: 0xDAA520 })
+      );
+      hay.position.y = 1.35;
+      cartGroup.add(hay);
+      
+      cartGroup.position.set(x, 0, z);
+      cartGroup.rotation.y = rotation;
+      scene.add(cartGroup);
+      return cartGroup;
+    };
+    
+    // === TRAINING AREA ===
+    const createTrainingDummy = (x, z, rotation = 0) => {
+      const dummyGroup = new THREE.Group();
+      
+      // Post
+      const postMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 2.2, 8), postMaterial);
+      post.position.y = 1.1;
+      post.castShadow = true;
+      dummyGroup.add(post);
+      
+      // Body (straw)
+      const strawMaterial = new THREE.MeshStandardMaterial({ color: 0xDAA520 });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.3, 0.9, 8), strawMaterial);
+      body.position.y = 1.55;
+      body.castShadow = true;
+      dummyGroup.add(body);
+      
+      // Head
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), strawMaterial);
+      head.position.y = 2.2;
+      head.castShadow = true;
+      dummyGroup.add(head);
+      
+      // Arms
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.2, 8), strawMaterial);
+      arm.rotation.z = Math.PI / 2;
+      arm.position.y = 1.6;
+      dummyGroup.add(arm);
+      
+      // Target (red circle on chest)
+      const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+      const target = new THREE.Mesh(new THREE.CircleGeometry(0.15, 16), targetMaterial);
+      target.position.set(0, 1.5, 0.31);
+      dummyGroup.add(target);
+      
+      dummyGroup.position.set(x, 0, z);
+      dummyGroup.rotation.y = rotation;
+      scene.add(dummyGroup);
+      return dummyGroup;
+    };
+    
+    const createWeaponRack = (x, z, rotation = 0) => {
+      const rackGroup = new THREE.Group();
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      
+      // Frame
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 0.3), woodMaterial);
+      frame.position.y = 1.5;
+      rackGroup.add(frame);
+      
+      // Posts
+      const postGeometry = new THREE.BoxGeometry(0.1, 1.8, 0.1);
+      [[-0.9, 0], [0.9, 0]].forEach(([px, pz]) => {
+        const post = new THREE.Mesh(postGeometry, woodMaterial);
+        post.position.set(px, 0.9, pz);
+        rackGroup.add(post);
+      });
+      
+      // Weapons (swords)
+      const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x9CA3AF, metalness: 0.8 });
+      for (let i = 0; i < 3; i++) {
+        const sword = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1, 0.03), metalMaterial);
+        sword.position.set(-0.5 + i * 0.5, 1.2, 0.1);
+        sword.rotation.z = 0.1 - i * 0.1;
+        rackGroup.add(sword);
+      }
+      
+      rackGroup.position.set(x, 0, z);
+      rackGroup.rotation.y = rotation;
+      scene.add(rackGroup);
+      return rackGroup;
+    };
+    
+    // === SMALL HOUSES/HUTS ===
+    const createSmallHouse = (x, z, rotation = 0, color = 0x8B4513) => {
+      const houseGroup = new THREE.Group();
+      
+      // Walls
+      const wallMaterial = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9 });
+      const walls = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 3.5), wallMaterial);
+      walls.position.y = 1.25;
+      walls.castShadow = true;
+      houseGroup.add(walls);
+      
+      // Roof
+      const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      const roofGeometry = new THREE.ConeGeometry(3.5, 1.5, 4);
+      const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+      roof.position.y = 3.25;
+      roof.rotation.y = Math.PI / 4;
+      roof.castShadow = true;
+      houseGroup.add(roof);
+      
+      // Door
+      const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.1), doorMaterial);
+      door.position.set(0, 0.9, 1.76);
+      houseGroup.add(door);
+      
+      // Window
+      const windowMaterial = new THREE.MeshStandardMaterial({ color: 0x87CEEB, emissive: 0x4169E1, emissiveIntensity: 0.2 });
+      const window1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.1), windowMaterial);
+      window1.position.set(1.2, 1.5, 1.76);
+      houseGroup.add(window1);
+      
+      houseGroup.position.set(x, 0, z);
+      houseGroup.rotation.y = rotation;
+      scene.add(houseGroup);
+      return houseGroup;
+    };
+    
+    // === AMBIENT NPC (Non-interactive villagers) ===
+    const createAmbientNPC = (x, z, color = 0x8B4513, name = 'Villager') => {
+      const npcGroup = new THREE.Group();
+      npcGroup.name = name;
+      npcGroup.userData = { type: 'ambient', name, interactable: false };
+      
+      // Body
+      const bodyMaterial = new THREE.MeshStandardMaterial({ color: color });
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.45, 8, 16), bodyMaterial);
+      body.position.y = 0.75;
+      body.castShadow = true;
+      npcGroup.add(body);
+      
+      // Head
+      const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), skinMaterial);
+      head.position.y = 1.35;
+      head.castShadow = true;
+      npcGroup.add(head);
+      
+      // Hair
+      const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2314 });
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        hairMaterial
+      );
+      hair.position.y = 1.45;
+      npcGroup.add(hair);
+      
+      const terrainY = getTerrainHeight(x, z);
+      npcGroup.position.set(x, terrainY, z);
+      npcGroup.rotation.y = Math.random() * Math.PI * 2;
+      scene.add(npcGroup);
+      return npcGroup;
+    };
+    
+    // === PLACE ALL TOWN ELEMENTS ===
+    
+    // Market stalls (8 stalls in market area - east side)
+    createMarketStall(12, 8, Math.PI * 0.5, 0xDC143C);      // Red canopy
+    createMarketStall(12, 4, Math.PI * 0.5, 0x228B22);      // Green canopy
+    createMarketStall(12, 0, Math.PI * 0.5, 0x4169E1);      // Blue canopy
+    createMarketStall(12, -4, Math.PI * 0.5, 0xFFD700);     // Gold canopy
+    createMarketStall(-12, 6, -Math.PI * 0.5, 0x9370DB);    // Purple canopy (west)
+    createMarketStall(-12, 2, -Math.PI * 0.5, 0xFF8C00);    // Orange canopy
+    createMarketStall(6, 14, Math.PI, 0xDC143C);            // North market
+    createMarketStall(-6, 14, Math.PI, 0x228B22);           // North market
+    
+    // Props scattered around market
+    // East market props
+    createCrate(14, 10, 1, 0.2);
+    createCrate(14.5, 9.5, 0.8, -0.3);
+    createBarrel(15, 8);
+    createBarrel(14, 6, 0.9);
+    createSack(13.5, 5);
+    createSack(14, 4.5, 0.8);
+    createCrate(14, 2, 1.1, 0.4);
+    createBarrel(15, 0);
+    createSack(14.5, -2);
+    createCrate(14, -3, 0.9, -0.2);
+    createBarrel(15, -4);
+    
+    // West market props  
+    createBarrel(-14, 7);
+    createCrate(-15, 6, 1, 0.3);
+    createSack(-14, 4);
+    createCrate(-14.5, 3, 0.8, -0.1);
+    createBarrel(-15, 1);
+    
+    // North market props
+    createCrate(8, 16, 1, 0.2);
+    createBarrel(5, 16);
+    createSack(-5, 15.5);
+    createCrate(-8, 16, 0.9, -0.2);
+    
+    // Carts around town
+    createCart(8, -6, 0.3);
+    createCart(-10, 10, -0.4);
+    createCart(16, 12, Math.PI * 0.25);
+    createCart(-8, -8, Math.PI * 0.7);
+    
+    // Training area (southwest)
+    createTrainingDummy(-18, -10, 0.2);
+    createTrainingDummy(-20, -12, -0.1);
+    createTrainingDummy(-16, -12, 0.3);
+    createTrainingDummy(-18, -14, 0);
+    createWeaponRack(-22, -10, Math.PI * 0.5);
+    createWeaponRack(-22, -14, Math.PI * 0.5);
+    
+    // Training area ground (dirt)
+    const trainingGround = new THREE.Mesh(
+      new THREE.CircleGeometry(8, 16),
+      new THREE.MeshStandardMaterial({ color: 0x9B7653, roughness: 0.95 })
+    );
+    trainingGround.rotation.x = -Math.PI / 2;
+    trainingGround.position.set(-18, 0.01, -12);
+    scene.add(trainingGround);
+    
+    // Small houses/huts around the town
+    createSmallHouse(-22, 14, Math.PI * 0.1, 0x8B4513);
+    createSmallHouse(-26, 8, Math.PI * 0.15, 0x9B7653);
+    createSmallHouse(22, 16, -Math.PI * 0.1, 0x8B4513);
+    createSmallHouse(26, 10, -Math.PI * 0.2, 0xA0522D);
+    createSmallHouse(26, -6, Math.PI * 0.9, 0x9B7653);
+    createSmallHouse(-26, -4, -Math.PI * 0.8, 0x8B4513);
+    
+    // Benches around fountain
+    const createBench = (x, z, rotation = 0) => {
+      const benchGroup = new THREE.Group();
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.5), woodMaterial);
+      seat.position.y = 0.5;
+      benchGroup.add(seat);
+      
+      const legGeometry = new THREE.BoxGeometry(0.1, 0.5, 0.4);
+      [[-0.6, 0], [0.6, 0]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(legGeometry, woodMaterial);
+        leg.position.set(lx, 0.25, lz);
+        benchGroup.add(leg);
+      });
+      
+      benchGroup.position.set(x, 0, z);
+      benchGroup.rotation.y = rotation;
+      scene.add(benchGroup);
+      return benchGroup;
+    };
+    
+    createBench(5, 5, Math.PI * 0.25);
+    createBench(-5, 5, -Math.PI * 0.25);
+    createBench(5, -5, -Math.PI * 0.25);
+    createBench(-5, -5, Math.PI * 0.25);
+    
+    // Ambient NPCs (non-interactive villagers for atmosphere)
+    createAmbientNPC(6, 10, 0x4169E1, 'Farmer');
+    createAmbientNPC(-4, 8, 0x8B0000, 'Townsperson');
+    createAmbientNPC(10, -2, 0x228B22, 'Merchant Helper');
+    createAmbientNPC(-8, 12, 0x9370DB, 'Elder');
+    createAmbientNPC(15, 14, 0xDAA520, 'Worker');
+    createAmbientNPC(-15, -6, 0x4a5568, 'Guard');
+    
+    // ==================== END TOWN CENTER ====================
     
     // Create Player Character (more detailed)
     // Create player group container (model will be loaded into this)
@@ -3640,6 +4149,169 @@ const GameWorld = () => {
     
     // NOTE: Legacy hardcoded Warrior Trainer removed - use F1 World Builder to place trainers
     // createTrainer(-8, -12, 'warrior');
+    
+    // ==================== MARKET NPCs CREATION ====================
+    
+    // VENDOR NPC Creator
+    const createVendorNPC = (x, z, name = 'Merchant') => {
+      const npcGroup = new THREE.Group();
+      npcGroup.name = name;
+      npcGroup.userData = { 
+        type: 'vendor', 
+        name, 
+        interactable: true,
+        vendorType: 'general'
+      };
+      
+      // Invisible hitbox
+      const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 2.5, 1.2),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      hitbox.position.y = 1.2;
+      npcGroup.add(hitbox);
+      
+      // Body - merchant clothing (green/brown)
+      const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 8, 16), bodyMaterial);
+      body.position.y = 0.85;
+      body.castShadow = true;
+      npcGroup.add(body);
+      
+      // Apron
+      const apronMaterial = new THREE.MeshStandardMaterial({ color: 0xF5DEB3 });
+      const apron = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.15), apronMaterial);
+      apron.position.set(0, 0.7, 0.2);
+      npcGroup.add(apron);
+      
+      // Head
+      const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), skinMaterial);
+      head.position.y = 1.5;
+      head.castShadow = true;
+      npcGroup.add(head);
+      
+      // Hat (merchant cap)
+      const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+      const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, 0.15, 16), hatMaterial);
+      hat.position.y = 1.72;
+      npcGroup.add(hat);
+      
+      // Vendor indicator - gold coin icon
+      const indicatorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFFD700, 
+        emissive: 0xFFD700, 
+        emissiveIntensity: 0.6 
+      });
+      const indicator = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16), indicatorMaterial);
+      indicator.position.y = 2.1;
+      indicator.rotation.x = Math.PI / 2;
+      npcGroup.add(indicator);
+      
+      const terrainY = getTerrainHeight(x, z);
+      npcGroup.position.set(x, terrainY, z);
+      scene.add(npcGroup);
+      selectableObjects.current.push(npcGroup);
+      return npcGroup;
+    };
+    
+    // QUEST GIVER NPC Creator
+    const createQuestGiverNPC = (x, z, name = 'Quest Giver', npcId = null) => {
+      const npcGroup = new THREE.Group();
+      npcGroup.name = name;
+      npcGroup.userData = { 
+        type: 'questgiver', 
+        name, 
+        interactable: true,
+        npcId: npcId || `questgiver_${Date.now()}`
+      };
+      
+      // Invisible hitbox
+      const hitbox = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 2.5, 1.2),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      hitbox.position.y = 1.2;
+      npcGroup.add(hitbox);
+      
+      // Body - robed appearance (blue/purple)
+      const robeMaterial = new THREE.MeshStandardMaterial({ color: 0x4B0082 });
+      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 8, 16), robeMaterial);
+      body.position.y = 0.9;
+      body.castShadow = true;
+      npcGroup.add(body);
+      
+      // Robe bottom (wider skirt)
+      const robeBottom = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.4, 0.5, 16),
+        robeMaterial
+      );
+      robeBottom.position.y = 0.35;
+      npcGroup.add(robeBottom);
+      
+      // Head
+      const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), skinMaterial);
+      head.position.y = 1.55;
+      head.castShadow = true;
+      npcGroup.add(head);
+      
+      // Hood
+      const hoodMaterial = new THREE.MeshStandardMaterial({ color: 0x2F0B5E });
+      const hood = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        hoodMaterial
+      );
+      hood.position.y = 1.6;
+      hood.rotation.x = 0.3;
+      npcGroup.add(hood);
+      
+      // Staff
+      const staffMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+      const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2, 8), staffMaterial);
+      staff.position.set(0.4, 1, 0);
+      staff.rotation.z = 0.1;
+      npcGroup.add(staff);
+      
+      // Staff orb
+      const orbMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x00BFFF, 
+        emissive: 0x00BFFF, 
+        emissiveIntensity: 0.5 
+      });
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), orbMaterial);
+      orb.position.set(0.45, 2.1, 0);
+      npcGroup.add(orb);
+      
+      // Quest marker - yellow exclamation mark style cone
+      const markerMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFFFF00, 
+        emissive: 0xFFFF00, 
+        emissiveIntensity: 0.8 
+      });
+      const questMarker = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 8), markerMaterial);
+      questMarker.position.y = 2.3;
+      questMarker.userData.questMarker = true;
+      npcGroup.add(questMarker);
+      
+      const terrainY = getTerrainHeight(x, z);
+      npcGroup.position.set(x, terrainY, z);
+      scene.add(npcGroup);
+      selectableObjects.current.push(npcGroup);
+      return npcGroup;
+    };
+    
+    // Place Market NPCs
+    // 1. WARRIOR TRAINER - Near training area (southwest)
+    createTrainer(-18, -8, 'warrior');
+    
+    // 2. VENDOR NPC - At the main market stall area (east side)
+    createVendorNPC(10, 6, 'Marcus the Merchant');
+    
+    // 3. QUEST GIVER NPC - Central location near fountain (easy to find)
+    createQuestGiverNPC(4, 2, 'Elder Theron', 'elder_theron_1');
+    
+    // ==================== END MARKET NPCs ====================
     
     // Monsters with health bars
     const createMonster = (x, z, color, name, type = 'goblin', level = 1, id = null, maxHealth = null, damage = null) => {
