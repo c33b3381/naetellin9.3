@@ -4,6 +4,14 @@ import { useGameStore } from '../store/gameStore';
 import { Save } from 'lucide-react';
 import axios from 'axios';
 
+// Systems
+import { 
+  updatePlayerMovement, 
+  handleMovementKeyDown, 
+  handleMovementKeyUp,
+  createMovementState 
+} from '../systems/PlayerMovementSystem';
+
 // HUD Components
 import HUD from '../components/hud/HUD';
 import InventoryPanel from '../components/panels/InventoryPanel';
