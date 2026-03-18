@@ -2878,31 +2878,31 @@ const GameWorld = () => {
       torso.castShadow = true;
       bodyGroup.add(torso);
       
-      // === HEAD ===
+      // === HEAD (Square/Box shape like Minecraft) ===
       const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 16, 16),
+        new THREE.BoxGeometry(0.32, 0.32, 0.32),
         skinMaterial
       );
-      head.position.y = 1.55;
+      head.position.y = 1.5;
       head.castShadow = true;
       bodyGroup.add(head);
       
-      // Face details
+      // Face details - eyes on the front of the box head
       const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMaterial);
-      leftEye.position.set(-0.06, 1.57, 0.15);
+      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), eyeMaterial);
+      leftEye.position.set(-0.08, 1.52, 0.17);
       bodyGroup.add(leftEye);
       
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMaterial);
-      rightEye.position.set(0.06, 1.57, 0.15);
+      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.02), eyeMaterial);
+      rightEye.position.set(0.08, 1.52, 0.17);
       bodyGroup.add(rightEye);
       
-      // Hair
+      // Hair (flat on top of head)
       const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.BoxGeometry(0.34, 0.1, 0.34),
         hairMaterial
       );
-      hair.position.y = 1.62;
+      hair.position.y = 1.7;
       hair.castShadow = true;
       bodyGroup.add(hair);
       
@@ -5157,14 +5157,29 @@ const GameWorld = () => {
         const animState = playerAnimationState.current;
         const playerModel = playerModelRef.current;
         
-        if (playerModel && playerModel.userData) {
+        if (animState && playerModel && playerModel.userData) {
           const isMoving = movementResult.moved;
-          const { leftLegPivot, rightLegPivot, leftKneePivot, rightKneePivot, leftArmPivot, rightArmPivot } = playerModel.userData;
+          const isJumping = movement.isJumping || false;
+          const { leftLegPivot, rightLegPivot, leftKneePivot, rightKneePivot, leftArmPivot, rightArmPivot, bodyGroup } = playerModel.userData;
           
           // Update animation time
           animState.animationTime += delta;
           
-          if (isMoving) {
+          if (isJumping) {
+            // JUMP ANIMATION - legs tucked, arms up
+            const targetLegAngle = -0.5; // Legs tucked back
+            const targetKneeAngle = 1.2; // Knees bent
+            const targetArmAngle = -1.5; // Arms raised
+            const jumpBlend = 0.3;
+            
+            if (leftLegPivot) leftLegPivot.rotation.x += (targetLegAngle - leftLegPivot.rotation.x) * jumpBlend;
+            if (rightLegPivot) rightLegPivot.rotation.x += (targetLegAngle - rightLegPivot.rotation.x) * jumpBlend;
+            if (leftKneePivot) leftKneePivot.rotation.x += (targetKneeAngle - leftKneePivot.rotation.x) * jumpBlend;
+            if (rightKneePivot) rightKneePivot.rotation.x += (targetKneeAngle - rightKneePivot.rotation.x) * jumpBlend;
+            if (leftArmPivot) leftArmPivot.rotation.x += (targetArmAngle - leftArmPivot.rotation.x) * jumpBlend;
+            if (rightArmPivot) rightArmPivot.rotation.x += (targetArmAngle - rightArmPivot.rotation.x) * jumpBlend;
+            
+          } else if (isMoving) {
             // WALK ANIMATION
             const walkSpeed = 8; // Animation cycles per second
             const walkPhase = animState.animationTime * walkSpeed;
