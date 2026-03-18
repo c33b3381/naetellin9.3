@@ -102,63 +102,56 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Improve ground visuals - replace flat single-color ground with stylized fantasy terrain coloring based on height, slope, and water proximity."
+user_problem_statement: "Improve world lighting - better depth, atmosphere, and readability with stylized fantasy look."
 
 frontend:
-  - task: "InputSystem extraction - keyboard handlers"
+  - task: "InputSystem extraction"
     implemented: true
     working: true
     file: "frontend/src/systems/InputSystem.js"
-    stuck_count: 0
-    priority: "high"
     needs_retesting: false
-    status_history:
-        - working: true
-        - agent: "testing"
-        - comment: "All 13/13 keyboard shortcuts working."
 
-  - task: "TerrainSystem extraction - terrain generation and queries"
+  - task: "TerrainSystem extraction"
     implemented: true
     working: true
     file: "frontend/src/systems/TerrainSystem.js"
-    stuck_count: 0
-    priority: "high"
     needs_retesting: false
-    status_history:
-        - working: true
-        - agent: "testing"
-        - comment: "Terrain functions working, no regression."
 
-  - task: "Improved ground visuals - terrain coloring system"
+  - task: "Improved ground visuals"
     implemented: true
     working: true
     file: "frontend/src/systems/TerrainSystem.js"
+    needs_retesting: false
+
+  - task: "Improved world lighting"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GameWorld.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
-        - comment: "Added terrain coloring to TerrainSystem.js: TERRAIN_COLORS palette (5 zones), getTerrainSlope(), getWaterProximity(), getTerrainColor(). Updated generateTerrainData() in GameWorld.jsx. TERRAIN_VERSION=2 forces regeneration."
+        - comment: "Added: ACES tone mapping, warm sun light (0xfff4e6), fill light, enhanced hemisphere light, 4K shadow maps, soft shadow edges, objects receive shadows, improved fog (80-250)."
         - working: true
         - agent: "testing"
-        - comment: "✅ TERRAIN COLORING SYSTEM VERIFIED AND WORKING. Test Results: (1) Terrain version system active - logs confirm v1->v2 regeneration with new coloring. (2) Visual variation CONFIRMED - ground shows multiple color shades (bright green, dark green, brown/dirt, grayish-green), NOT flat single color. (3) Height-based coloring works - hills show lighter shades, valleys darker. (4) Path coloring works - brown/dirt paths visible, different from grass. (5) Zone system active - forest and scorched zones tested. (6) No regressions - WASD movement works, terrain following works, 0 JavaScript errors. (7) Captured 10 screenshots showing clear visual improvements. SUCCESS CRITERIA MET: Ground has visual variation, different terrain features have different colors, no blocking errors, movement works."
+        - comment: "PASSED - Comprehensive lighting tests completed. Implementation verified: (1) Shadow Quality: Buildings and terrain show visible soft-edged shadows from 4K shadow maps with PCFSoftShadowMap. (2) Scene Depth: Excellent contrast and object definition from multi-light setup (directional sun 1.2, fill light 0.3, hemisphere 0.5). Buildings show clear 3D form with proper shading on different faces. (3) Atmosphere: Pleasant warm blue sky (0x87CEEB), subtle fog effect on distant hills (80-250 range), warm golden lighting (0xfff4e6) creates natural feel. ACES tone mapping (exposure 1.1) provides natural colors without washout. (4) No Regressions: All movement (WASD) and camera rotation working perfectly. (5) No JavaScript errors detected. Visual quality matches stylized fantasy aesthetic as intended. Screenshots captured: 03_shadow_quality.png, 04_depth_angle1.png, 05_depth_angle2.png, 06_atmosphere_sky.png, 07_atmosphere_fog.png, 08_movement_test.png, 09_final_overview.png"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 7
+  test_sequence: 9
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Improved ground visuals - verify terrain has visual variation"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-    - message: "Implemented terrain coloring system. Features: (1) Zone-specific palettes (starter=lush green, forest=dark green, caves=purple, scorched=desert, frozen=snow), (2) Height-based variation (lighter hilltops, darker valleys), (3) Slope-based coloring (dirt/rock on steep areas), (4) Water proximity darkening, (5) Noise variation for organic look, (6) Zone transition blending. Please test: Enter game and verify ground has visual variety. Hills should look different from flat areas. Areas near water should be darker. Different zones should have distinct colors."
+    - message: "Implemented lighting improvements: (1) ACES filmic tone mapping, (2) Warm golden sun light at higher angle, (3) Fill light from opposite side, (4) Enhanced hemisphere light, (5) 4K shadow maps with soft edges, (6) Objects receive shadows, (7) Better fog range. Test: Verify buildings/trees cast shadows, scene has better depth, warmer atmosphere."
     - agent: "testing"
-    - message: "✅ Testing complete - terrain coloring system working perfectly. Confirmed terrain regenerated with v2 coloring (TERRAIN_VERSION=2). Visual tests show clear color variation across all tested areas: starter village (multiple green shades + brown paths), water-adjacent areas, forest zone (darker tones), and scorched zone. No regressions - all movement controls work, terrain following works, 0 errors. The ground is NO LONGER a flat single color - success! Ready for main agent to finish."
+    - message: "Testing complete - ALL TESTS PASSED. World lighting improvements verified and working excellently. Key findings: (1) Shadow Quality: ✓ Buildings cast visible soft-edged shadows, implementation correct with 4K maps and PCFSoftShadowMap. (2) Scene Depth: ✓ Excellent 3D definition with multi-light setup creating natural contrast. Buildings show proper shading gradients on different faces. (3) Atmosphere: ✓ Warm pleasant blue sky, subtle fog on distant terrain, golden warm lighting creates intended stylized fantasy look. ACES tone mapping delivers natural colors. (4) Gameplay: ✓ NO REGRESSIONS - WASD movement and camera rotation fully functional. (5) Errors: ✓ Zero JavaScript errors. The improved lighting system achieves all success criteria: visible shadows, good depth/contrast, warm atmosphere, clear object definition, no errors, no regressions. Visual quality is appropriate for stylized fantasy aesthetic. Ready for user acceptance. Main agent can summarize and finish."
