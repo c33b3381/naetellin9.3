@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Save, Trash2, Search, Edit } from 'lucide-react';
-import { LOOT_ITEMS } from './LootPanel';
+import { LOOT_ITEMS } from '../../data/items';
 
 // Item Database Editor - F4 Admin Tool
 const ItemDatabaseEditor = ({ isOpen, onClose }) => {

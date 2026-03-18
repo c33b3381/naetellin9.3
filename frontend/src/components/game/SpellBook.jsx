@@ -3,7 +3,7 @@ import {
   Sword, Zap, Shield, Heart, Flame, Snowflake, 
   Wind, Skull, Star, BookOpen, X, Lock, Axe, Target
 } from 'lucide-react';
-import { WARRIOR_SPELLS } from './TrainerPanel';
+import { WARRIOR_SPELLS } from '../../data/spells';
 
 // Convert warrior spells to spell book format
 const convertWarriorSpells = () => {
