@@ -7989,115 +7989,33 @@ const GameWorld = () => {
       const cam = cameraState.current;
       const movement = movementState.current;
       
+      // Use centralized movement system
+      let rotatedDirection = new THREE.Vector3();
       if (player) {
-        // Check for sudden position change (teleportation detection)
-        // If player moved more than 50 units in one frame, it's a bug - REVERT to last known position
-        // UNLESS the player just intentionally teleported (death/respawn)
-        const posDiff = player.position.distanceTo(lastPlayerPos);
-        if (posDiff > 50 && (lastPlayerPos.x !== 0 || lastPlayerPos.z !== 0) && !justTeleportedRef.current) {
-          // Large position change detected - REVERT player to last known good position
-          player.position.x = lastPlayerPos.x;
-          player.position.z = lastPlayerPos.z;
+        const movementResult = updatePlayerMovement(
+          player,
+          movement,
+          cam,
+          sceneRef.current,
+          delta,
+          lastPlayerPos,
+          {
+            getTerrainHeight,
+            isInWater,
+            getWaterDepth,
+            justTeleported: justTeleportedRef.current
+          }
+        );
+        
+        rotatedDirection = movementResult.rotatedDirection;
+        
+        // If position was reverted due to teleport detection, skip this frame
+        if (movementResult.reverted) {
           return;
         }
-        
-        // Update last known position BEFORE any movement
-        lastPlayerPos.copy(player.position);
-        
-        // Calculate movement direction based on camera orientation
-        // Fixed speed of 8 units per second
-        const moveSpeed = 8 * delta;
-        const direction = new THREE.Vector3();
-        
-        // Both mouse buttons = move forward
-        if (cam.isLeftMouseDown && cam.isRightMouseDown) {
-          direction.z = -1;
-        } else {
-          if (movement.forward || movement.autoRun) direction.z -= 1;
-          if (movement.backward) direction.z += 1;
-        }
-        if (movement.left) direction.x -= 1;
-        if (movement.right) direction.x += 1;
-        
-        let rotatedDirection = new THREE.Vector3();
-        if (direction.length() > 0) {
-          direction.normalize();
-          
-          // Rotate direction based on camera yaw
-          rotatedDirection = direction.clone();
-          rotatedDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), cam.rotationY);
-          
-          // Move player
-          player.position.x += rotatedDirection.x * moveSpeed;
-          player.position.z += rotatedDirection.z * moveSpeed;
-          
-          // Rotate player to face movement direction
-          const targetRotation = Math.atan2(rotatedDirection.x, rotatedDirection.z);
-          player.rotation.y = targetRotation;
-        }
-        
-        // Get terrain height using RAYCASTING to the actual mesh
-        // This ensures player walks exactly on the mesh surface
-        const terrainMesh = sceneRef.current?.getObjectByName('terrain');
-        let terrainHeight = 0;
-        
-        if (terrainMesh) {
-          // Create raycast from above player down to terrain
-          const rayOrigin = new THREE.Vector3(player.position.x, 100, player.position.z);
-          const rayDirection = new THREE.Vector3(0, -1, 0);
-          const terrainRaycaster = new THREE.Raycaster(rayOrigin, rayDirection);
-          
-          const intersects = terrainRaycaster.intersectObject(terrainMesh);
-          if (intersects.length > 0) {
-            terrainHeight = intersects[0].point.y;
-          } else {
-            // Fallback to function if raycast fails
-            terrainHeight = getTerrainHeight(player.position.x, player.position.z);
-          }
-        } else {
-          terrainHeight = getTerrainHeight(player.position.x, player.position.z);
-        }
-        
-        const inWater = isInWater(player.position.x, player.position.z);
-        const waterDepth = inWater ? getWaterDepth(player.position.x, player.position.z) : 0;
-        
-        // Target height (terrain minus water if in water)
-        const targetY = inWater ? Math.max(terrainHeight, 0.3 - waterDepth * 0.5) : terrainHeight;
-        
-        // Jump physics - relative to terrain
-        if (movement.isJumping) {
-          movement.velocityY -= 0.01; // Gravity
-          player.position.y += movement.velocityY;
-          
-          if (player.position.y <= targetY) {
-            player.position.y = targetY;
-            movement.isJumping = false;
-            movement.velocityY = 0;
-          }
-        } else {
-          // Smooth terrain following when not jumping
-          const heightDiff = targetY - player.position.y;
-          if (Math.abs(heightDiff) > 0.01) {
-            // Smooth interpolation for going up/down hills
-            player.position.y += heightDiff * Math.min(1, delta * 10);
-          } else {
-            player.position.y = targetY;
-          }
-        }
-        
-        // Slow down in water
-        if (inWater && rotatedDirection.length() > 0) {
-          player.position.x -= rotatedDirection.x * moveSpeed * 0.3; // 30% slower in water
-          player.position.z -= rotatedDirection.z * moveSpeed * 0.3;
-        }
-        
-        // Clamp position to expanded world bounds (600x600 world)
-        // Use soft clamping - just prevent going further, don't teleport
-        const maxBound = 290;
-        if (player.position.x > maxBound) player.position.x = maxBound;
-        if (player.position.x < -maxBound) player.position.x = -maxBound;
-        if (player.position.z > maxBound) player.position.z = maxBound;
-        if (player.position.z < -maxBound) player.position.z = -maxBound;
+      }
+      
+      if (player) {
         
         // Detect current zone based on player position
         const px = player.position.x;
