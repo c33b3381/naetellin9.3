@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
   Plus, Trash2, Eye, EyeOff, ChevronDown, ChevronUp,
-  Sword
+  Sword, Skull
 } from 'lucide-react';
 // Import enemy database from centralized data file
 import { ENEMY_DATABASE } from '../../data/enemies';
