@@ -45,6 +45,14 @@ import {
   calculateNpcAttackDamage
 } from '../systems/CombatSystem';
 import { createWorldAsset } from '../systems/WorldAssetFactory';
+import {
+  SELECTABLE_TYPES,
+  normalizeObjectForSave,
+  normalizeEnemyForSave,
+  extractTerrainData,
+  disposeMeshTree,
+  processLoadedWorldObject
+} from '../systems/WorldObjectSystem';
 
 // HUD Components
 import HUD from '../components/hud/HUD';
@@ -1703,32 +1711,13 @@ const GameWorld = () => {
   }, [addNotification]);
 
   const handleDeleteObject = useCallback(async (objectId) => {
-    console.log('Deleting object:', objectId);
-    console.log('Editor objects:', editorObjectsRef.current.map(o => ({ id: o.userData.editorId, name: o.name })));
-    
     // Remove from scene
     const obj = editorObjectsRef.current.find(o => o.userData.editorId === objectId);
     if (obj && sceneRef.current) {
-      console.log('Found object to remove:', obj.name, obj.userData);
-      
-      // Properly dispose of geometry and materials
-      obj.traverse((child) => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => m.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
-      
+      disposeMeshTree(obj);
       sceneRef.current.remove(obj);
       editorObjectsRef.current = editorObjectsRef.current.filter(o => o.userData.editorId !== objectId);
       selectableObjects.current = selectableObjects.current.filter(o => o.userData.editorId !== objectId);
-      console.log('Object removed from scene');
-    } else {
-      console.warn('Object not found in editorObjectsRef or scene not available');
     }
     
     setPlacedObjects(prev => prev.filter(o => o.id !== objectId));
@@ -1877,21 +1866,10 @@ const GameWorld = () => {
     // Use ref to get latest placed objects (handles closure issues)
     const currentPlacedObjects = placedObjectsRef.current;
     
-    // Gather world objects with proper position object
-    const worldObjects = currentPlacedObjects.map(obj => {
-      const position = obj.position || { x: obj.x || 0, y: obj.y || 0, z: obj.z || 0 };
-      return {
-        id: obj.id,
-        type: obj.type,
-        fullType: obj.fullType || obj.subType || obj.type,
-        position: position,
-        rotation: obj.rotation || 0,
-        scale: obj.scale || 1,
-        name: obj.name
-      };
-    });
+    // Gather world objects (using WorldObjectSystem normalization)
+    const worldObjects = currentPlacedObjects.map(obj => normalizeObjectForSave(obj, currentZone));
     
-    // Gather placed enemies
+    // Gather placed enemies (using WorldObjectSystem normalization)
     const enemies = placedEnemies.map(enemy => ({
       id: enemy.id,
       enemyType: enemy.enemyType,
@@ -3812,9 +3790,7 @@ const GameWorld = () => {
       group.position.set(x, terrainY, z);
       scene.add(group);
       
-      // Add to selectableObjects if it's an interactable entity
-      const selectableTypes = ['monster', 'npc', 'trainer', 'questgiver', 'vendor', 'guard'];
-      if (group.userData.interactable || selectableTypes.includes(group.userData.type)) {
+      if (group.userData.interactable || SELECTABLE_TYPES.includes(group.userData.type)) {
         selectableObjects.current.push(group);
       }
       
@@ -3828,83 +3804,18 @@ const GameWorld = () => {
     
     const loadSavedWorldObjects = async () => {
       try {
-        console.log('Fetching saved world objects...');
         const savedObjects = await fetchWorldObjects();
-        console.log('Fetched world objects:', savedObjects?.length || 0, savedObjects);
         
         if (savedObjects && savedObjects.length > 0) {
-          console.log(`Loading ${savedObjects.length} saved world objects...`);
-          
           savedObjects.forEach(obj => {
-            let mesh;
-            const pos = obj.position || { x: 0, y: 0, z: 0 };
-            const scale = obj.scale || 1;
-            
-            console.log('RAW OBJECT DATA:', JSON.stringify(obj, null, 2));
-            console.log('EXTRACTED POSITION:', pos);
-            
-            // Use fullType if available, otherwise construct from type/subType
-            let fullType = obj.fullType;
-            if (!fullType && obj.subType) {
-              // Construct fullType from type + subType for backward compatibility
-              if (obj.type === 'npc' || obj.type === 'monster' || obj.type === 'animal') {
-                fullType = `${obj.type}_${obj.subType}`;
-              } else {
-                fullType = obj.subType;
-              }
-            } else if (!fullType) {
-              fullType = obj.type;
-            }
-            
-            console.log('Creating world object:', fullType, 'at position:', pos, 'x:', pos.x, 'z:', pos.z);
-            
-            // Use createAndPlaceWorldAsset for all object types
-            mesh = createAndPlaceWorldAsset(
-              pos.x,
-              pos.z,
-              fullType,
-              scale,
-              obj.name,
-              obj.level || 1
-            );
-            
+            const mesh = processLoadedWorldObject(obj, createAndPlaceWorldAsset);
             if (mesh) {
-              // Set editorId FIRST before any other operations
-              mesh.userData.editorId = obj.id;
-              mesh.userData.objectData = obj; // Store full object data for quest checking
-              
-              // Apply rotation if saved (rotation is stored in degrees)
-              if (obj.rotation !== undefined && obj.rotation !== 0) {
-                mesh.rotation.y = (obj.rotation * Math.PI) / 180; // Convert degrees to radians
-              }
-              
-              // Add quest marker if NPC has a quest assigned (check all quest assignment fields)
-              if (obj.quest_id || obj.quest_giver || obj.global_quest_id) {
-                const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
-                const markerMaterial = new THREE.MeshStandardMaterial({ 
-                  color: 0xffff00,
-                  emissive: 0xffff00,
-                  emissiveIntensity: 0.8
-                });
-                const questMarker = new THREE.Mesh(markerGeometry, markerMaterial);
-                questMarker.position.y = 2.5;
-                questMarker.userData.questMarker = true;
-                mesh.add(questMarker);
-              }
-              
               editorObjectsRef.current.push(mesh);
-              
-              console.log('World object created successfully:', obj.name, 'at mesh position:', mesh.position);
-            } else {
-              console.warn('Failed to create mesh for object:', obj);
             }
           });
           
           setPlacedObjects(savedObjects);
-          placedObjectsRef.current = savedObjects; // Update ref immediately
-          console.log('World objects loaded successfully');
-        } else {
-          console.log('No saved world objects found');
+          placedObjectsRef.current = savedObjects;
         }
       } catch (err) {
         console.error('Failed to load world objects:', err);
@@ -5903,93 +5814,15 @@ const GameWorld = () => {
   const handleSaveWorld = async () => {
     setIsSavingWorld(true);
     try {
-      console.log('Starting world save...');
+      // Prepare terrain data (using WorldObjectSystem)
+      const terrainData = extractTerrainData(terrainGeometryRef.current);
       
-      // Prepare terrain data
-      let terrainData = null;
-      if (terrainGeometryRef.current) {
-        const geometry = terrainGeometryRef.current;
-        const positionAttr = geometry.getAttribute('position');
-        const colorAttr = geometry.getAttribute('color');
-        
-        const heightmap = [];
-        const colors = [];
-        
-        for (let i = 0; i < positionAttr.count; i++) {
-          heightmap.push(positionAttr.getZ(i));
-          colors.push(colorAttr.getX(i), colorAttr.getY(i), colorAttr.getZ(i));
-        }
-        
-        terrainData = {
-          terrain_id: 'main_terrain',
-          world_size: 600,
-          segments: 200,
-          seed: 42,
-          heightmap,
-          colors,
-          version: 1
-        };
-        
-        console.log('Terrain data prepared:', {
-          heightmap_length: heightmap.length,
-          colors_length: colors.length,
-          has_colors: colors.length > 0
-        });
-      }
-      
-      // Prepare placed objects (buildings, NPCs, decorations)
-      // Use placedObjectsRef.current to get the latest state (fixes closure issue with Ctrl+S)
+      // Prepare placed objects (using WorldObjectSystem normalization)
       const currentPlacedObjects = placedObjectsRef.current;
-      console.log('[SAVE] Using placedObjectsRef.current, count:', currentPlacedObjects.length);
+      const worldObjects = currentPlacedObjects.map(obj => normalizeObjectForSave(obj, currentZone));
       
-      const worldObjects = currentPlacedObjects.map(obj => {
-        // Ensure position is properly formatted
-        const position = obj.position || { x: obj.x || 0, y: obj.y || 0, z: obj.z || 0 };
-        
-        console.log('[SAVE] Processing object:', obj.name, 'Original obj:', obj, 'Extracted position:', position);
-        
-        return {
-          id: obj.id,
-          type: obj.type,
-          subType: obj.subType,
-          fullType: obj.fullType || obj.subType || obj.type,
-          position: position,
-          name: obj.name,
-          level: obj.level || 1,
-          scale: obj.scale || 1,
-          rotation: obj.rotation || 0,
-          color: obj.color,
-          category: obj.category,
-          zone: obj.zone || currentZone,
-          quest_id: obj.quest_id,
-          quest_giver: obj.quest_giver,
-          global_quest_id: obj.global_quest_id,
-          isVendor: obj.isVendor,
-          hasQuest: obj.hasQuest
-        };
-      });
-      
-      console.log('Saving world objects:', worldObjects.length, 'Full data:', JSON.stringify(worldObjects, null, 2));
-      
-      // Prepare placed enemies
-      const placedEnemiesData = placedEnemies.map(enemy => ({
-        id: enemy.id,
-        enemyType: enemy.enemyType,
-        name: enemy.name,
-        level: enemy.level,
-        x: enemy.position?.x || enemy.x || 0,
-        y: enemy.position?.y || enemy.y || 0,
-        z: enemy.position?.z || enemy.z || 0,
-        maxHealth: enemy.maxHealth,
-        currentHealth: enemy.currentHealth,
-        damage: enemy.damage,
-        color: enemy.color,
-        patrolRadius: enemy.patrolRadius || 5,
-        respawnTime: enemy.respawnTime || 60,
-        tier: enemy.tier,
-        xpReward: enemy.xpReward,
-        goldDrop: enemy.goldDrop
-      }));
+      // Prepare placed enemies (using WorldObjectSystem normalization)
+      const placedEnemiesData = placedEnemies.map(enemy => normalizeEnemyForSave(enemy));
       
       // Prepare path nodes
       const pathData = {
@@ -6013,7 +5846,6 @@ const GameWorld = () => {
       };
       
       // Save everything
-      console.log('Sending save request with terrain data...');
       await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/player/save-all`, {
         ...playerData,
         terrain: terrainData,
@@ -6025,13 +5857,9 @@ const GameWorld = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log('World saved successfully!');
       addNotification('World saved successfully! Changes visible to all players.', 'success');
     } catch (err) {
       console.error('Failed to save world:', err);
-      console.error('Error details:', err.response?.data);
-      console.error('Error status:', err.response?.status);
-      console.error('Full error:', err);
       
       // Handle token expiration
       if (err.response?.status === 401 || err.response?.data?.detail === 'Invalid token') {
