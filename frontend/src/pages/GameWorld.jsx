@@ -5166,16 +5166,21 @@ const GameWorld = () => {
           animState.animationTime += delta;
           
           if (isJumping) {
-            // JUMP ANIMATION - legs tucked, arms up
-            const targetLegAngle = -0.5; // Legs tucked back
-            const targetKneeAngle = 1.2; // Knees bent
-            const targetArmAngle = -1.5; // Arms raised
-            const jumpBlend = 0.3;
+            // JUMP ANIMATION - legs tucked up with bent knees
+            const targetThighAngle = -0.8; // Thighs rotate up (tucked)
+            const targetKneeAngle = 1.8; // Knees bend sharply
+            const targetArmAngle = -1.2; // Arms slightly raised
+            const jumpBlend = 0.25;
             
-            if (leftLegPivot) leftLegPivot.rotation.x += (targetLegAngle - leftLegPivot.rotation.x) * jumpBlend;
-            if (rightLegPivot) rightLegPivot.rotation.x += (targetLegAngle - rightLegPivot.rotation.x) * jumpBlend;
+            // Thighs tuck up
+            if (leftLegPivot) leftLegPivot.rotation.x += (targetThighAngle - leftLegPivot.rotation.x) * jumpBlend;
+            if (rightLegPivot) rightLegPivot.rotation.x += (targetThighAngle - rightLegPivot.rotation.x) * jumpBlend;
+            
+            // Knees bend sharply (like crouching in air)
             if (leftKneePivot) leftKneePivot.rotation.x += (targetKneeAngle - leftKneePivot.rotation.x) * jumpBlend;
             if (rightKneePivot) rightKneePivot.rotation.x += (targetKneeAngle - rightKneePivot.rotation.x) * jumpBlend;
+            
+            // Arms go out slightly
             if (leftArmPivot) leftArmPivot.rotation.x += (targetArmAngle - leftArmPivot.rotation.x) * jumpBlend;
             if (rightArmPivot) rightArmPivot.rotation.x += (targetArmAngle - rightArmPivot.rotation.x) * jumpBlend;
             
