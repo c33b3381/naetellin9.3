@@ -37,7 +37,8 @@ import {
 } from 'lucide-react';
 
 // Expanded object categories and types for Fantasy MMO
-const OBJECT_CATEGORIES = {
+// Expanded object categories and types for Fantasy MMO
+export const OBJECT_CATEGORIES = {
   nature: {
     label: 'Nature',
     icon: TreePine,
