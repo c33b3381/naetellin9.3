@@ -5074,8 +5074,9 @@ const GameWorld = () => {
         const animState = playerAnimationState.current;
         const mixer = playerAnimationMixer.current;
         const walkAction = playerAnimations.current['walking'];
+        const playerModel = playerModelRef.current;
         
-        if (mixer) {
+        if (mixer && playerModel) {
           const isMoving = movementResult.moved;
           
           // Play/pause walk animation based on movement
@@ -5092,6 +5093,10 @@ const GameWorld = () => {
           
           // Update the animation mixer
           mixer.update(delta);
+          
+          // Reset model local position to prevent root motion from moving the character
+          // The game movement system handles actual position, animation should be in-place
+          playerModel.position.set(0, 0, 0);
         }
         // ==================== END PLAYER ANIMATION ====================
       }
