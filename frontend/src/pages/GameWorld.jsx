@@ -53,6 +53,12 @@ import {
   disposeMeshTree,
   processLoadedWorldObject
 } from '../systems/WorldObjectSystem';
+import {
+  createKeyDownHandler,
+  createKeyUpHandler,
+  registerKeyboardHandlers,
+  unregisterKeyboardHandlers
+} from '../systems/InputSystem';
 
 // HUD Components
 import HUD from '../components/hud/HUD';
@@ -4966,312 +4972,84 @@ const GameWorld = () => {
       }
     };
     
-    // Keyboard controls
-    const handleKeyDown = (e) => {
-      // Ctrl+S to save world
-      if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') {
-        e.preventDefault();
-        handleSaveWorld();
-        return;
-      }
-      
-      // Don't process keys if a dialog is open (except M and Escape)
-      if (isQuestDialogOpen || isQuestLogOpen || isTrainerOpen || isSpellBookOpen || isCharacterPanelOpen || isItemEditorOpen || isWorldMapOpen) {
-        if (e.code === 'Escape' || e.code === 'KeyM') {
-          setIsQuestDialogOpen(false);
-          setIsQuestLogOpen(false);
-          setIsTrainerOpen(false);
-          setIsSpellBookOpen(false);
-          setIsCharacterPanelOpen(false);
-          setIsItemEditorOpen(false);
-          setIsWorldMapOpen(false);
-        }
-        return;
-      }
-      
-      switch(e.code) {
-        // Movement keys - handled by PlayerMovementSystem
-        case 'KeyW': case 'ArrowUp': 
-        case 'KeyS': case 'ArrowDown': 
-        case 'KeyA': case 'ArrowLeft': 
-        case 'KeyD': case 'ArrowRight':
-          handleMovementKeyDown(e, movementState.current);
-          break;
-        case 'KeyL':
-          // Toggle Quest Log
-          setIsQuestLogOpen(prev => !prev);
-          break;
-        case 'Space': 
-          handleMovementKeyDown(e, movementState.current);
-          break;
-        case 'KeyR':
-          if (isMapEditorModeRef.current) {
-            // Map Editor: Increase tilt (more top-down)
-            mapEditorCameraState.current.tilt = Math.min(
-              mapEditorCameraState.current.maxTilt,
-              mapEditorCameraState.current.tilt + 0.1
-            );
-          } else {
-            // Game Mode: Toggle auto-run (handled by system with NumLock, but R is custom)
-            movementState.current.autoRun = !movementState.current.autoRun;
-          }
-          break;
-        case 'KeyF':
-          if (isMapEditorModeRef.current) {
-            // Map Editor: Decrease tilt (more angled)
-            mapEditorCameraState.current.tilt = Math.max(
-              mapEditorCameraState.current.minTilt,
-              mapEditorCameraState.current.tilt - 0.1
-            );
-          }
-          break;
-        case 'KeyQ':
-          if (isMapEditorModeRef.current) {
-            // Map Editor: Rotate camera left
-            mapEditorCameraState.current.rotationY += 0.1;
-          }
-          break;
-        case 'KeyE':
-          if (isMapEditorModeRef.current) {
-            // Map Editor: Rotate camera right
-            mapEditorCameraState.current.rotationY -= 0.1;
-          }
-          break;
-        case 'Tab':
-          e.preventDefault();
-          // Target nearest enemy
-          let nearestEnemy = null;
-          let nearestDist = Infinity;
-          selectableObjects.current.forEach(obj => {
-            if (obj.userData.hostile) {
-              const dist = playerRef.current.position.distanceTo(obj.position);
-              if (dist < nearestDist) {
-                nearestDist = dist;
-                nearestEnemy = obj;
-              }
-            }
-          });
-          if (nearestEnemy) {
-            setSelectedTarget(nearestEnemy);
-            targetIndicatorRef.current.visible = true;
-            targetIndicatorRef.current.position.copy(nearestEnemy.position);
-            targetIndicatorRef.current.position.y = 0.05;
-            targetIndicatorRef.current.material.color.setHex(0xff0000);
-          }
-          break;
-        case 'Digit1':
-        case 'Numpad1':
-          // Attack hotkey - press 1 to attack selected target
-          const attackTarget = selectedTargetRef.current;
-          if (attackTarget && attackTarget.userData.hostile) {
-            const monsterType = attackTarget.userData.monsterType || 'goblin';
-            const monsterId = attackTarget.userData.monsterId;
-            const targetPosition = attackTarget.position.clone();
-            
-            attackMonster(monsterType).then(result => {
-              if (result.damage_dealt > 0) {
-                const damageSprite = createDamageText(scene, targetPosition, result.damage_dealt, false);
-                damageTextsRef.current.push(damageSprite);
-              }
-              if (result.damage_taken > 0 && playerRef.current) {
-                const playerDamageSprite = createDamageText(scene, playerRef.current.position.clone(), result.damage_taken, true);
-                damageTextsRef.current.push(playerDamageSprite);
-              }
-              const healthBarData = monsterHealthBarsRef.current[monsterId];
-              if (healthBarData && healthBarData.healthBar) {
-                const hpPercent = Math.max(0, result.monster_hp / attackTarget.userData.maxHealth);
-                healthBarData.healthBar.scale.x = hpPercent;
-                healthBarData.healthBar.position.x = -(healthBarData.maxWidth * (1 - hpPercent)) / 2;
-                attackTarget.userData.currentHealth = result.monster_hp;
-              }
-              setCombatLog(prev => [...prev.slice(-9), {
-                time: Date.now(),
-                text: `You hit ${attackTarget.name} for ${result.damage_dealt} damage!`
-              }]);
-              if (result.damage_taken > 0) {
-                setCombatLog(prev => [...prev.slice(-9), {
-                  time: Date.now(),
-                  text: `${attackTarget.name} hits you for ${result.damage_taken} damage!`
-                }]);
-              }
-              if (result.monster_defeated) {
-                addNotification(`Defeated ${attackTarget.name}! +${result.xp_gained} XP`, 'success');
-                setTimeout(() => {
-                  scene.remove(attackTarget);
-                  selectableObjects.current = selectableObjects.current.filter(obj => obj !== attackTarget);
-                  delete monsterHealthBarsRef.current[monsterId];
-                  setSelectedTarget(null);
-                  targetIndicatorRef.current.visible = false;
-                }, 500);
-                if (result.drop) {
-                  setCombatLog(prev => [...prev.slice(-9), { time: Date.now(), text: `Loot: ${result.drop}` }]);
-                }
-              }
-            }).catch(err => {
-              console.error('Attack failed:', err);
-              addNotification('Attack failed!', 'error');
-            });
-          } else {
-            // Use spell from action bar slot 1
-            handleCastSpell(actionBarSpells[0]);
-          }
-          break;
-        case 'Digit2':
-        case 'Numpad2':
-          handleCastSpell(actionBarSpells[1]);
-          break;
-        case 'Digit3':
-        case 'Numpad3':
-          handleCastSpell(actionBarSpells[2]);
-          break;
-        case 'Digit4':
-        case 'Numpad4':
-          handleCastSpell(actionBarSpells[3]);
-          break;
-        case 'Digit5':
-        case 'Numpad5':
-          handleCastSpell(actionBarSpells[4]);
-          break;
-        case 'Digit6':
-        case 'Numpad6':
-          handleCastSpell(actionBarSpells[5]);
-          break;
-        case 'KeyP':
-          e.preventDefault();
-          setIsSpellBookOpen(prev => !prev);
-          break;
-        case 'KeyM':
-          e.preventDefault();
-          // Toggle World Map
-          setIsWorldMapOpen(prev => !prev);
-          break;
-        case 'KeyB':
-          e.preventDefault();
-          // Toggle backpack (bag 0)
-          setOpenBagIndex(prev => prev === 0 ? null : 0);
-          break;
-        case 'KeyC':
-          e.preventDefault();
-          // Toggle character panel
-          setIsCharacterPanelOpen(prev => !prev);
-          break;
-        case 'Escape':
-          setSelectedTarget(null);
-          setIsAutoAttacking(false);
-          targetIndicatorRef.current.visible = false;
-          // Also close panels if open
-          if (isWorldMapOpen) setIsWorldMapOpen(false);
-          if (isEditorOpen) setIsEditorOpen(false);
-          if (isSpellBookOpen) setIsSpellBookOpen(false);
-          if (isTerrainEditorOpen) setIsTerrainEditorOpen(false);
-          if (isEnemyEditorOpen) setIsEnemyEditorOpen(false);
-          if (openBagIndex !== null) setOpenBagIndex(null);
-          if (isCharacterPanelOpen) setIsCharacterPanelOpen(false);
-          if (isItemEditorOpen) setIsItemEditorOpen(false);
-          break;
-        case 'F1':
-          e.preventDefault();
-          setIsEditorOpen(prev => !prev);
-          if (isTerrainEditorOpen) setIsTerrainEditorOpen(false);
-          if (isEnemyEditorOpen) setIsEnemyEditorOpen(false);
-          break;
-        case 'F2':
-          e.preventDefault();
-          setIsTerrainEditorOpen(prev => !prev);
-          if (isEditorOpen) setIsEditorOpen(false);
-          if (isEnemyEditorOpen) setIsEnemyEditorOpen(false);
-          break;
-        case 'F3':
-          e.preventDefault();
-          setIsEnemyEditorOpen(prev => !prev);
-          if (isEditorOpen) setIsEditorOpen(false);
-          if (isTerrainEditorOpen) setIsTerrainEditorOpen(false);
-          break;
-        case 'F4':
-          e.preventDefault();
-          setIsItemEditorOpen(prev => !prev);
-          break;
-        case 'F5':
-          e.preventDefault();
-          setIsMapEditorMode(prev => {
-            const newMode = !prev;
-            if (newMode && playerRef.current) {
-              // Store player position when entering map editor mode
-              mapEditorCameraState.current.x = playerRef.current.position.x;
-              mapEditorCameraState.current.z = playerRef.current.position.z;
-            }
-            // Exit flight mode when leaving map editor mode (use ref for current value)
-            if (!newMode && isFlightModeRef.current) {
-              setIsFlightMode(false);
-            }
-            return newMode;
-          });
-          break;
-        case 'F6':
-          e.preventDefault();
-          e.stopPropagation();
-          // F6 only works in map editor mode (use ref for current value)
-          if (isMapEditorModeRef.current) {
-            setIsFlightMode(prev => {
-              const newFlightMode = !prev;
-              if (newFlightMode) {
-                // Entering flight mode - set to player height * 4
-                if (playerRef.current) {
-                  const terrainHeight = getTerrainHeight(
-                    mapEditorCameraState.current.x,
-                    mapEditorCameraState.current.z
-                  );
-                  mapEditorCameraState.current.height = terrainHeight + 8; // ~4x player height (player is ~2 units tall)
-                }
-              }
-              return newFlightMode;
-            });
-          }
-          break;
-        case 'F7':
-          e.preventDefault();
-          setIsQuestMakerOpen(prev => !prev);
-          break;
-        case 'Delete':
-        case 'Backspace':
-          // Delete selected edit object
-          if (selectedEditObject && isEditorOpen) {
-            e.preventDefault();
-            handleDeleteObject(selectedEditObject.id);
-          }
-          // Delete selected enemy
-          if (selectedEditEnemy && isEnemyEditorOpen) {
-            e.preventDefault();
-            handleDeleteEnemy(selectedEditEnemy.id);
-          }
-          break;
-        case 'KeyC':
-          // Ctrl+C to copy selected enemy
-          if (e.ctrlKey && selectedEditEnemy && isEnemyEditorOpen) {
-            e.preventDefault();
-            // Duplicate the enemy with offset
-            const offsetX = (Math.random() - 0.5) * 10;
-            const offsetZ = (Math.random() - 0.5) * 10;
-            handlePlaceEnemy({
-              ...selectedEditEnemy,
-              name: selectedEditEnemy.name + ' (Copy)',
-              position: {
-                x: (selectedEditEnemy.position?.x || 0) + offsetX,
-                y: 0,
-                z: (selectedEditEnemy.position?.z || 0) + offsetZ
-              },
-              currentHealth: selectedEditEnemy.maxHealth
-            });
-          }
-          break;
-        default: break;
-      }
-    };
+    // Keyboard controls - using InputSystem
+    const handleKeyDown = createKeyDownHandler({
+      refs: {
+        playerRef,
+        targetIndicatorRef,
+        selectableObjects,
+        selectedTargetRef,
+        movementState,
+        isMapEditorModeRef,
+        isFlightModeRef,
+        mapEditorCameraState,
+        damageTextsRef,
+        monsterHealthBarsRef,
+        scene,
+      },
+      states: {
+        isQuestDialogOpen,
+        isQuestLogOpen,
+        isTrainerOpen,
+        isSpellBookOpen,
+        isCharacterPanelOpen,
+        isItemEditorOpen,
+        isWorldMapOpen,
+        isEditorOpen,
+        isTerrainEditorOpen,
+        isEnemyEditorOpen,
+        openBagIndex,
+        selectedEditObject,
+        selectedEditEnemy,
+        actionBarSpells,
+        selectedTarget,
+      },
+      callbacks: {
+        onSaveWorld: handleSaveWorld,
+        setIsQuestDialogOpen,
+        setIsQuestLogOpen,
+        setIsTrainerOpen,
+        setIsSpellBookOpen,
+        setIsCharacterPanelOpen,
+        setIsItemEditorOpen,
+        setIsWorldMapOpen,
+        setIsEditorOpen,
+        setIsTerrainEditorOpen,
+        setIsEnemyEditorOpen,
+        setIsMapEditorMode,
+        setIsFlightMode,
+        setIsQuestMakerOpen,
+        setOpenBagIndex,
+        setSelectedTarget,
+        setIsAutoAttacking,
+        handleCastSpell,
+        handleDeleteObject,
+        handleDeleteEnemy,
+        handlePlaceEnemy,
+        attackMonster,
+        createDamageText,
+        setCombatLog,
+        addNotification,
+        targetIndicatorRef,
+        selectableObjects,
+      },
+      systems: {
+        handleMovementKeyDown,
+        handleMovementKeyUp,
+      },
+      helpers: {
+        getTerrainHeight,
+      },
+    });
     
-    const handleKeyUp = (e) => {
-      // Movement keys - handled by PlayerMovementSystem
-      handleMovementKeyUp(e, movementState.current);
-    };
+    const handleKeyUp = createKeyUpHandler({
+      refs: {
+        movementState,
+      },
+      systems: {
+        handleMovementKeyUp,
+      },
+    });
     
     // Add event listeners
     renderer.domElement.addEventListener('mousedown', handleMouseDown);
