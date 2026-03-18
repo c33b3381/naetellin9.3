@@ -34,11 +34,11 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - ✅ Created `/data/enemies.js` - Extracted ENEMY_DATABASE (344 lines saved from EnemyEditor)
 - ✅ Created `/data/items.js` - Extracted LOOT_ITEMS + generateLoot (812 lines saved from LootPanel)
 - ✅ Created `/data/spells.js` - Extracted WARRIOR_SPELLS (173 lines saved from TrainerPanel)
+- ✅ Created `/data/objects.js` - Extracted OBJECT_CATEGORIES (794 lines saved from WorldEditor)
 - ✅ Moved 7 unused components to `_unused/` folder
 - ✅ Created `CODEBASE_INDEX.md` - Full documentation
 - ✅ Updated all imports to use new data files
-- 🔄 Pending: Extract OBJECT_CATEGORIES from WorldEditor.jsx
-- 🔄 Pending: Split GameWorld.jsx into hooks
+- 🔄 Pending: Split GameWorld.jsx into custom hooks
 
 ## Core Features Implemented
 
