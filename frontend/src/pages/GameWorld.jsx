@@ -7650,20 +7650,19 @@ const GameWorld = () => {
       }
       
       switch(e.code) {
-        case 'KeyW': case 'ArrowUp': movementState.current.forward = true; break;
-        case 'KeyS': case 'ArrowDown': movementState.current.backward = true; break;
-        case 'KeyA': case 'ArrowLeft': movementState.current.left = true; break;
-        case 'KeyD': case 'ArrowRight': movementState.current.right = true; break;
+        // Movement keys - handled by PlayerMovementSystem
+        case 'KeyW': case 'ArrowUp': 
+        case 'KeyS': case 'ArrowDown': 
+        case 'KeyA': case 'ArrowLeft': 
+        case 'KeyD': case 'ArrowRight':
+          handleMovementKeyDown(e, movementState.current);
+          break;
         case 'KeyL':
           // Toggle Quest Log
           setIsQuestLogOpen(prev => !prev);
           break;
         case 'Space': 
-          if (!movementState.current.isJumping) {
-            movementState.current.jump = true;
-            movementState.current.isJumping = true;
-            movementState.current.velocityY = 0.2;
-          }
+          handleMovementKeyDown(e, movementState.current);
           break;
         case 'KeyR':
           if (isMapEditorModeRef.current) {
@@ -7673,7 +7672,7 @@ const GameWorld = () => {
               mapEditorCameraState.current.tilt + 0.1
             );
           } else {
-            // Game Mode: Toggle auto-run
+            // Game Mode: Toggle auto-run (handled by system with NumLock, but R is custom)
             movementState.current.autoRun = !movementState.current.autoRun;
           }
           break;
