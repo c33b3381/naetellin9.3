@@ -2851,9 +2851,8 @@ const GameWorld = () => {
       (gltf) => {
         const model = gltf.scene;
         
-        // Scale the model to match player size (original is ~5.5 units tall, we want ~1.75)
-        const scaleFactor = 0.32;
-        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        // Scale the model to match player size
+        model.scale.set(0.5, 0.5, 0.5);
         
         // Position model so feet are at ground level
         model.position.y = 0;
