@@ -8113,65 +8113,8 @@ const GameWorld = () => {
           }
         });
         
-        // ==================== ENEMY PATROL SYSTEM ====================
-        const patrolSpeed = 2 * delta; // Movement speed for patrolling
+        // ==================== ENEMY PATROL SYSTEM (using EnemyAISystem) ====================
         const patrolNow = Date.now();
-        
-        // Define different patrol pattern generators
-        const getPatrolPattern = (patternType, radius) => {
-          switch (patternType) {
-            case 'circle': // Circular patrol - 8 points around a circle
-              return Array.from({ length: 8 }, (_, i) => {
-                const angle = (i / 8) * Math.PI * 2;
-                return { x: Math.cos(angle) * radius, z: Math.sin(angle) * radius };
-              });
-            case 'figure8': // Figure-8 pattern
-              return Array.from({ length: 16 }, (_, i) => {
-                const t = (i / 16) * Math.PI * 2;
-                return { x: Math.sin(t) * radius, z: Math.sin(t * 2) * radius * 0.5 };
-              });
-            case 'triangle': // Triangle patrol
-              return [
-                { x: 0, z: radius },
-                { x: radius * 0.866, z: -radius * 0.5 },
-                { x: -radius * 0.866, z: -radius * 0.5 }
-              ];
-            case 'line': // Back and forth line patrol
-              return [
-                { x: radius, z: 0 },
-                { x: -radius, z: 0 }
-              ];
-            case 'diamond': // Diamond/rhombus patrol
-              return [
-                { x: 0, z: radius },
-                { x: radius, z: 0 },
-                { x: 0, z: -radius },
-                { x: -radius, z: 0 }
-              ];
-            case 'zigzag': // Zigzag patrol pattern
-              return [
-                { x: radius, z: radius },
-                { x: -radius * 0.5, z: radius * 0.3 },
-                { x: radius * 0.5, z: -radius * 0.3 },
-                { x: -radius, z: -radius }
-              ];
-            case 'square': // Original square pattern
-            default:
-              return [
-                { x: radius, z: 0 },
-                { x: radius, z: radius },
-                { x: 0, z: radius },
-                { x: -radius, z: radius },
-                { x: -radius, z: 0 },
-                { x: -radius, z: -radius },
-                { x: 0, z: -radius },
-                { x: radius, z: -radius }
-              ];
-          }
-        };
-        
-        // Available patrol patterns
-        const patrolPatterns = ['circle', 'figure8', 'triangle', 'line', 'diamond', 'zigzag', 'square'];
         
         enemyMeshesRef.current.forEach(enemyMesh => {
           if (!enemyMesh || !enemyMesh.userData) return;
@@ -8181,103 +8124,22 @@ const GameWorld = () => {
           
           const enemyId = enemyMesh.userData.enemyId;
           const isInCombat = combatEngagedEnemiesRef.current.has(enemyId);
-          const patrolRadius = enemyMesh.userData.patrolRadius || 5; // Default to 5 if not set
-          const spawnX = enemyMesh.userData.spawnX;
-          const spawnZ = enemyMesh.userData.spawnZ;
           
-          // Initialize patrol data if not exists
+          // Initialize patrol data if not exists (using EnemyAISystem)
           if (!enemyPatrolDataRef.current[enemyId]) {
-            // Randomly assign a patrol pattern to each enemy
-            const randomPatternIndex = Math.floor(Math.random() * patrolPatterns.length);
-            enemyPatrolDataRef.current[enemyId] = {
-              patrolState: 0,
-              lastStateChange: patrolNow,
-              patrolWaitTime: 2000 + Math.random() * 2000,
-              patternType: patrolPatterns[randomPatternIndex], // Random patrol pattern
-              patternOffset: Math.random() * Math.PI * 2 // Random starting offset for variety
-            };
+            enemyPatrolDataRef.current[enemyId] = createPatrolData(patrolNow);
           }
           
           const patrolData = enemyPatrolDataRef.current[enemyId];
           
-          // If in combat - face player and stop patrol
+          // If in combat - face player and stop patrol (using EnemyAISystem)
           if (isInCombat && player) {
-            const dx = player.position.x - enemyMesh.position.x;
-            const dz = player.position.z - enemyMesh.position.z;
-            const angle = Math.atan2(dx, dz);
-            enemyMesh.rotation.y = angle;
-            
-            // Make health bar face camera
-            const healthBarBg = enemyMesh.getObjectByName('healthBarBg');
-            const healthBarFill = enemyMesh.getObjectByName('healthBarFill');
-            if (healthBarBg && camera) {
-              healthBarBg.lookAt(camera.position);
-              healthBarFill.lookAt(camera.position);
-            }
+            updateCombatFacing(enemyMesh, player, camera);
             return;
           }
           
-          // If no patrol radius or it's 0, stay stationary (though we now default to 5)
-          if (patrolRadius <= 0) {
-            // Make health bar face camera even when stationary
-            const healthBarBg = enemyMesh.getObjectByName('healthBarBg');
-            const healthBarFill = enemyMesh.getObjectByName('healthBarFill');
-            if (healthBarBg && camera) {
-              healthBarBg.lookAt(camera.position);
-              healthBarFill.lookAt(camera.position);
-            }
-            return;
-          }
-          
-          // Check spawn position is valid
-          if (spawnX === undefined || spawnZ === undefined) {
-            console.warn('[Patrol] Enemy missing spawn position:', enemyId);
-            return;
-          }
-          
-          // Get patrol points based on enemy's assigned pattern
-          const patrolOffsets = getPatrolPattern(patrolData.patternType, patrolRadius);
-          
-          const currentPatrolState = patrolData.patrolState % patrolOffsets.length;
-          const targetX = spawnX + patrolOffsets[currentPatrolState].x;
-          const targetZ = spawnZ + patrolOffsets[currentPatrolState].z;
-          
-          // Calculate distance to target
-          const dx = targetX - enemyMesh.position.x;
-          const dz = targetZ - enemyMesh.position.z;
-          const distance = Math.sqrt(dx * dx + dz * dz);
-          
-          if (distance > 0.3) {
-            // Move towards target
-            const moveX = (dx / distance) * patrolSpeed;
-            const moveZ = (dz / distance) * patrolSpeed;
-            
-            enemyMesh.position.x += moveX;
-            enemyMesh.position.z += moveZ;
-            
-            // Update Y position based on terrain
-            const terrainY = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-            enemyMesh.position.y = terrainY;
-            
-            // Face movement direction
-            const angle = Math.atan2(dx, dz);
-            enemyMesh.rotation.y = angle;
-          } else {
-            // Reached target, wait then move to next patrol point
-            if (patrolNow - patrolData.lastStateChange > patrolData.patrolWaitTime) {
-              patrolData.patrolState = (patrolData.patrolState + 1) % patrolOffsets.length;
-              patrolData.lastStateChange = patrolNow;
-              patrolData.patrolWaitTime = 2000 + Math.random() * 2000;
-            }
-          }
-          
-          // Make health bar face camera
-          const healthBarBg = enemyMesh.getObjectByName('healthBarBg');
-          const healthBarFill = enemyMesh.getObjectByName('healthBarFill');
-          if (healthBarBg && camera) {
-            healthBarBg.lookAt(camera.position);
-            healthBarFill.lookAt(camera.position);
-          }
+          // Update patrol movement (using EnemyAISystem)
+          updatePatrol(enemyMesh, patrolData, delta, patrolNow, getTerrainHeight, camera);
         });
         
         // Update target indicator position to follow selected target
