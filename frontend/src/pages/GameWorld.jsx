@@ -158,12 +158,12 @@ const GameWorld = () => {
   
   // Player animation state
   const playerModelRef = useRef(null); // Reference to the loaded GLTF model
+  const playerAnimationMixer = useRef(null); // Animation mixer for GLTF animations
+  const playerAnimations = useRef({}); // Store animation actions
   const playerAnimationState = useRef({
     isMoving: false,
     animationTime: 0,
-    bobOffset: 0,
-    legSwing: 0,
-    armSwing: 0
+    currentAction: null
   });
   
   // WoW-style camera controls - using centralized system
@@ -2861,9 +2861,8 @@ const GameWorld = () => {
       (gltf) => {
         const model = gltf.scene;
         
-        // The GLTF has internal transformations that make it very small (~0.12 units)
-        // Scale to get a player height of about 1.8 units
-        model.scale.set(1.5, 1.5, 1.5);
+        // Scale the model (model is ~3 units tall, we want ~1.8)
+        model.scale.set(0.6, 0.6, 0.6);
         
         // Position model so feet are at ground level
         model.position.y = 0;
@@ -2876,16 +2875,32 @@ const GameWorld = () => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            
-            // Replace with visible material (original uses unsupported extension)
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xD2B48C,
-              roughness: 0.6,
-              metalness: 0.1,
-              side: THREE.DoubleSide
-            });
+            if (child.material) {
+              child.material.side = THREE.DoubleSide;
+            }
           }
         });
+        
+        // Set up animation mixer if model has animations
+        if (gltf.animations && gltf.animations.length > 0) {
+          const mixer = new THREE.AnimationMixer(model);
+          playerAnimationMixer.current = mixer;
+          
+          // Store all animations
+          gltf.animations.forEach((clip) => {
+            const action = mixer.clipAction(clip);
+            playerAnimations.current[clip.name.toLowerCase()] = action;
+            console.log('Found animation:', clip.name);
+          });
+          
+          // Start with idle (paused walk at frame 0) or first animation paused
+          const walkAction = playerAnimations.current['walking'] || playerAnimations.current[Object.keys(playerAnimations.current)[0]];
+          if (walkAction) {
+            walkAction.play();
+            walkAction.paused = true; // Start paused (idle)
+            playerAnimationState.current.currentAction = walkAction;
+          }
+        }
         
         // Add the loaded model to the player group
         model.name = 'playerModel';
@@ -2894,7 +2909,7 @@ const GameWorld = () => {
         // Store reference to the model for animations
         playerModelRef.current = model;
         
-        console.log('Player GLTF model loaded successfully');
+        console.log('Player GLTF model loaded with', gltf.animations?.length || 0, 'animations');
       },
       (progress) => {
         const percent = (progress.loaded / progress.total) * 100;
@@ -5057,55 +5072,26 @@ const GameWorld = () => {
         // ==================== PLAYER ANIMATION ====================
         // Update player animation based on movement state
         const animState = playerAnimationState.current;
-        const playerModel = playerModelRef.current;
+        const mixer = playerAnimationMixer.current;
+        const walkAction = playerAnimations.current['walking'];
         
-        if (playerModel) {
+        if (mixer) {
           const isMoving = movementResult.moved;
-          animState.isMoving = isMoving;
           
-          // Update animation time
-          animState.animationTime += delta;
-          
-          if (isMoving) {
-            // WALK ANIMATION - faster bobbing and more pronounced movement
-            const walkSpeed = 8; // Animation cycles per second
-            const walkPhase = animState.animationTime * walkSpeed;
-            
-            // Vertical bobbing (subtle up/down motion while walking)
-            const bobAmount = 0.05;
-            animState.bobOffset = Math.sin(walkPhase * 2) * bobAmount;
-            playerModel.position.y = animState.bobOffset;
-            
-            // Side-to-side sway
-            const swayAmount = 0.02;
-            playerModel.position.x = Math.sin(walkPhase) * swayAmount;
-            
-            // Forward/back lean while walking
-            const leanAmount = 0.03;
-            playerModel.rotation.x = Math.sin(walkPhase * 2) * leanAmount;
-            
-            // Slight rotation sway
-            const rotSway = 0.02;
-            playerModel.rotation.z = Math.sin(walkPhase) * rotSway;
-            
-          } else {
-            // IDLE ANIMATION - subtle breathing motion
-            const idleSpeed = 1.5; // Slow, relaxed breathing
-            const idlePhase = animState.animationTime * idleSpeed;
-            
-            // Gentle vertical breathing motion
-            const breathAmount = 0.015;
-            animState.bobOffset = Math.sin(idlePhase) * breathAmount;
-            playerModel.position.y = animState.bobOffset;
-            
-            // Very subtle horizontal sway
-            const idleSway = 0.005;
-            playerModel.position.x = Math.sin(idlePhase * 0.7) * idleSway;
-            
-            // Minimal rotation (reset any walk rotation)
-            playerModel.rotation.x = playerModel.rotation.x * 0.9; // Smoothly return to 0
-            playerModel.rotation.z = playerModel.rotation.z * 0.9; // Smoothly return to 0
+          // Play/pause walk animation based on movement
+          if (walkAction) {
+            if (isMoving && walkAction.paused) {
+              // Start walking
+              walkAction.paused = false;
+              walkAction.setEffectiveTimeScale(1.0);
+            } else if (!isMoving && !walkAction.paused) {
+              // Stop walking - pause the animation
+              walkAction.paused = true;
+            }
           }
+          
+          // Update the animation mixer
+          mixer.update(delta);
         }
         // ==================== END PLAYER ANIMATION ====================
       }
