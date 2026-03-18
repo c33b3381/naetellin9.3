@@ -7929,13 +7929,8 @@ const GameWorld = () => {
     };
     
     const handleKeyUp = (e) => {
-      switch(e.code) {
-        case 'KeyW': case 'ArrowUp': movementState.current.forward = false; break;
-        case 'KeyS': case 'ArrowDown': movementState.current.backward = false; break;
-        case 'KeyA': case 'ArrowLeft': movementState.current.left = false; break;
-        case 'KeyD': case 'ArrowRight': movementState.current.right = false; break;
-        default: break;
-      }
+      // Movement keys - handled by PlayerMovementSystem
+      handleMovementKeyUp(e, movementState.current);
     };
     
     // Add event listeners
