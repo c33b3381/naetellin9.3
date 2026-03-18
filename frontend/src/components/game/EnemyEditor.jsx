@@ -9,10 +9,7 @@ import { ENEMY_DATABASE } from '../../data/enemies';
 // Re-export for backwards compatibility
 export { ENEMY_DATABASE };
 
-// Legacy inline database removed - now using ../../data/enemies.js
-const _LEGACY_ENEMY_DATABASE = {
-  // Tier 1 - Starter Enemies (Level 1-5)
-  tier1: {
+const EnemyEditor = ({
     label: 'Starter (Lv 1-5)',
     enemies: {
       goblin: { 
