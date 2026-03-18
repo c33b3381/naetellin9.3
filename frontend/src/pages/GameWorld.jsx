@@ -7334,10 +7334,11 @@ const GameWorld = () => {
     };
     
     const handleMouseUp = (e) => {
-      if (e.button === 2) {
-        cameraState.current.isRightMouseDown = false;
-      } else if (e.button === 0) {
-        cameraState.current.isLeftMouseDown = false;
+      // Camera mouse button handling (using CameraSystem)
+      handleCameraMouseUp(e, cameraState.current);
+      
+      // Terrain editing state
+      if (e.button === 0) {
         isTerrainEditingRef.current = false;
       }
     };
