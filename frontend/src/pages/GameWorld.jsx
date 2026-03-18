@@ -7055,13 +7055,11 @@ const GameWorld = () => {
           }
         }
         
-        // No target found - start camera rotation mode
-        cameraState.current.isRightMouseDown = true;
-        cameraState.current.lastMouseX = e.clientX;
-        cameraState.current.lastMouseY = e.clientY;
+        // No target found - start camera rotation mode (using CameraSystem)
+        handleCameraMouseDown(e, cameraState.current);
         
       } else if (e.button === 0) { // Left click - Editor placement or deselect
-        cameraState.current.isLeftMouseDown = true;
+        handleCameraMouseDown(e, cameraState.current);
         
         // TERRAIN EDITOR - Handle terrain editing
         if (terrainEditorActiveRef.current && terrainMeshRef.current) {
