@@ -349,5 +349,273 @@ export const getTerrainY = (x, z, offset = 0) => {
   return getTerrainHeight(x, z) + offset;
 };
 
+// ==================== TERRAIN COLORING SYSTEM ====================
+
+/**
+ * Color palette for stylized fantasy terrain
+ * Each zone has primary colors that blend based on terrain features
+ */
+export const TERRAIN_COLORS = {
+  // Starter Village (Oakvale) - Lush green meadows
+  starter: {
+    grassLow: { r: 0.22, g: 0.55, b: 0.22 },      // #38A038 - Lush grass
+    grassHigh: { r: 0.35, g: 0.65, b: 0.30 },     // #59A64D - Lighter hilltop grass
+    dirt: { r: 0.45, g: 0.35, b: 0.20 },          // #735933 - Brown dirt/paths
+    rock: { r: 0.50, g: 0.48, b: 0.45 },          // #807A73 - Rocky slopes
+    wet: { r: 0.12, g: 0.35, b: 0.18 },           // #1F592E - Damp grass
+  },
+  // Darkwood Forest - Deep greens and shadows
+  forest: {
+    grassLow: { r: 0.10, g: 0.30, b: 0.10 },      // #1A4D1A - Dark forest floor
+    grassHigh: { r: 0.15, g: 0.40, b: 0.15 },     // #266626 - Mossy areas
+    dirt: { r: 0.25, g: 0.20, b: 0.12 },          // #40331F - Dark soil
+    rock: { r: 0.30, g: 0.28, b: 0.25 },          // #4D4740 - Dark stone
+    wet: { r: 0.08, g: 0.22, b: 0.10 },           // #14381A - Boggy areas
+  },
+  // Crystal Caves - Purple/blue mystical tones
+  caves: {
+    grassLow: { r: 0.29, g: 0.29, b: 0.42 },      // #4A4A6A - Purple-gray ground
+    grassHigh: { r: 0.38, g: 0.38, b: 0.55 },     // #61618C - Lighter crystal areas
+    dirt: { r: 0.35, g: 0.32, b: 0.45 },          // #595273 - Purple soil
+    rock: { r: 0.45, g: 0.42, b: 0.55 },          // #736B8C - Crystal-infused rock
+    wet: { r: 0.22, g: 0.22, b: 0.35 },           // #383859 - Damp cave floor
+  },
+  // Scorched Plains - Desert/burnt orange tones
+  scorched: {
+    grassLow: { r: 0.55, g: 0.41, b: 0.08 },      // #8C6914 - Sandy grass
+    grassHigh: { r: 0.65, g: 0.50, b: 0.15 },     // #A68026 - Lighter dunes
+    dirt: { r: 0.60, g: 0.45, b: 0.20 },          // #997333 - Scorched earth
+    rock: { r: 0.55, g: 0.40, b: 0.25 },          // #8C6640 - Red rock
+    wet: { r: 0.40, g: 0.35, b: 0.15 },           // #665926 - Oasis mud
+  },
+  // Frozen Peaks - Snow and ice
+  frozen: {
+    grassLow: { r: 0.85, g: 0.88, b: 0.90 },      // #D9E0E6 - Snow
+    grassHigh: { r: 0.95, g: 0.97, b: 1.00 },     // #F2F8FF - Fresh snow
+    dirt: { r: 0.65, g: 0.68, b: 0.72 },          // #A6ADB8 - Frozen dirt
+    rock: { r: 0.50, g: 0.55, b: 0.60 },          // #808C99 - Icy rock
+    wet: { r: 0.70, g: 0.78, b: 0.85 },           // #B3C7D9 - Frozen puddles
+  },
+};
+
+/**
+ * Get the zone type for a world position
+ * @param {number} x - World X coordinate
+ * @param {number} z - World Z coordinate
+ * @returns {string} Zone key ('starter', 'forest', 'caves', 'scorched', 'frozen')
+ */
+export const getZoneType = (x, z) => {
+  if (x > 100) return 'forest';
+  if (x < -100) return 'scorched';
+  if (z > 100) return 'caves';
+  if (z < -100) return 'frozen';
+  return 'starter';
+};
+
+/**
+ * Calculate slope at a position (0 = flat, 1 = very steep)
+ * Uses terrain height samples around the point
+ * 
+ * @param {number} x - World X coordinate
+ * @param {number} z - World Z coordinate
+ * @param {number} sampleDist - Distance for sampling (default 2)
+ * @returns {number} Slope value 0-1
+ */
+export const getTerrainSlope = (x, z, sampleDist = 2) => {
+  const heightCenter = getTerrainHeight(x, z);
+  const heightN = getTerrainHeight(x, z - sampleDist);
+  const heightS = getTerrainHeight(x, z + sampleDist);
+  const heightE = getTerrainHeight(x + sampleDist, z);
+  const heightW = getTerrainHeight(x - sampleDist, z);
+  
+  // Calculate gradient
+  const gradX = (heightE - heightW) / (2 * sampleDist);
+  const gradZ = (heightS - heightN) / (2 * sampleDist);
+  
+  // Slope magnitude (normalized to 0-1 range, capped)
+  const slope = Math.sqrt(gradX * gradX + gradZ * gradZ);
+  return Math.min(1, slope / 2); // Divide by 2 to normalize typical terrain slopes
+};
+
+/**
+ * Get distance to nearest water body (normalized)
+ * @param {number} x - World X coordinate
+ * @param {number} z - World Z coordinate
+ * @returns {number} Proximity value 0-1 (1 = at water edge, 0 = far from water)
+ */
+export const getWaterProximity = (x, z) => {
+  const { mainLake, river, frozenPond, oasis } = WATER_BODIES;
+  
+  let minDist = Infinity;
+  const maxProximityDist = 15; // Max distance to consider "near water"
+  
+  // Check main lake
+  const distToLake = Math.sqrt((x - mainLake.x) ** 2 + (z - mainLake.z) ** 2) - mainLake.radius;
+  if (distToLake < minDist) minDist = distToLake;
+  
+  // Check river (approximate)
+  if (x > river.startX - 20 && x < river.endX + 20) {
+    const riverZ = river.baseZ + Math.sin(x * river.frequency) * river.amplitude;
+    const distToRiver = Math.abs(z - riverZ) - river.width;
+    if (distToRiver < minDist) minDist = distToRiver;
+  }
+  
+  // Check frozen pond
+  const distToPond = Math.sqrt((x - frozenPond.x) ** 2 + (z - frozenPond.z) ** 2) - frozenPond.radius;
+  if (distToPond < minDist) minDist = distToPond;
+  
+  // Check oasis
+  const distToOasis = Math.sqrt((x - oasis.x) ** 2 + (z - oasis.z) ** 2) - oasis.radius;
+  if (distToOasis < minDist) minDist = distToOasis;
+  
+  // Convert to proximity (0-1, where 1 is at water edge)
+  if (minDist <= 0) return 1; // In or at water
+  if (minDist >= maxProximityDist) return 0; // Far from water
+  return 1 - (minDist / maxProximityDist);
+};
+
+/**
+ * Linear interpolation between two colors
+ * @param {Object} c1 - First color {r, g, b}
+ * @param {Object} c2 - Second color {r, g, b}
+ * @param {number} t - Interpolation factor 0-1
+ * @returns {Object} Interpolated color {r, g, b}
+ */
+const lerpColor = (c1, c2, t) => {
+  return {
+    r: c1.r + (c2.r - c1.r) * t,
+    g: c1.g + (c2.g - c1.g) * t,
+    b: c1.b + (c2.b - c1.b) * t,
+  };
+};
+
+/**
+ * Add subtle noise variation to a color
+ * @param {Object} color - Base color {r, g, b}
+ * @param {number} x - World X coordinate
+ * @param {number} z - World Z coordinate
+ * @param {number} intensity - Noise intensity (default 0.08)
+ * @returns {Object} Color with noise {r, g, b}
+ */
+const addColorNoise = (color, x, z, intensity = 0.08) => {
+  // Use simplex noise for smooth color variation
+  const noise = terrainNoise.noise2D(x * 0.1, z * 0.1) * intensity;
+  const detailNoise = terrainNoise.noise2D(x * 0.3, z * 0.3) * (intensity * 0.5);
+  
+  return {
+    r: Math.max(0, Math.min(1, color.r + noise + detailNoise)),
+    g: Math.max(0, Math.min(1, color.g + noise + detailNoise)),
+    b: Math.max(0, Math.min(1, color.b + noise + detailNoise)),
+  };
+};
+
+/**
+ * Calculate terrain color at a world position
+ * Takes into account: zone, height, slope, water proximity, and adds noise variation
+ * 
+ * @param {number} x - World X coordinate
+ * @param {number} z - World Z coordinate
+ * @param {number} height - Pre-calculated terrain height (optional, will be calculated if not provided)
+ * @returns {Object} Color {r, g, b} with values 0-1
+ */
+export const getTerrainColor = (x, z, height = null) => {
+  // Get height if not provided
+  if (height === null) {
+    height = getTerrainHeight(x, z);
+  }
+  
+  // Get zone-specific color palette
+  const zone = getZoneType(x, z);
+  const palette = TERRAIN_COLORS[zone];
+  
+  // Calculate terrain features
+  const slope = getTerrainSlope(x, z);
+  const waterProximity = getWaterProximity(x, z);
+  const inWater = isInWater(x, z);
+  
+  // Start with base grass color
+  let baseColor;
+  
+  // Height-based color (low grass vs high grass)
+  const heightFactor = Math.min(1, Math.max(0, height / 15)); // 0-1 based on height 0-15
+  baseColor = lerpColor(palette.grassLow, palette.grassHigh, heightFactor * 0.6);
+  
+  // Slope-based blending (steep = more rock/dirt)
+  if (slope > 0.2) {
+    const slopeFactor = Math.min(1, (slope - 0.2) / 0.5); // 0-1 for slopes 0.2-0.7
+    // Blend toward dirt first, then rock for steeper slopes
+    if (slope > 0.5) {
+      const rockFactor = (slope - 0.5) / 0.5;
+      baseColor = lerpColor(baseColor, palette.rock, rockFactor * 0.7);
+    } else {
+      baseColor = lerpColor(baseColor, palette.dirt, slopeFactor * 0.5);
+    }
+  }
+  
+  // Water proximity (wet/damp areas near water)
+  if (waterProximity > 0 && !inWater) {
+    baseColor = lerpColor(baseColor, palette.wet, waterProximity * 0.6);
+  }
+  
+  // In-water coloring (underwater ground)
+  if (inWater) {
+    baseColor = lerpColor(baseColor, palette.wet, 0.8);
+    // Darken slightly for submerged effect
+    baseColor.r *= 0.7;
+    baseColor.g *= 0.75;
+    baseColor.b *= 0.8;
+  }
+  
+  // Add path flattening color (near center paths)
+  if (Math.abs(x) < PATH_WIDTH || Math.abs(z) < PATH_WIDTH) {
+    const pathFactor = 1 - (Math.min(Math.abs(x), Math.abs(z)) / PATH_WIDTH);
+    baseColor = lerpColor(baseColor, palette.dirt, pathFactor * 0.6);
+  }
+  
+  // Add noise variation for more organic look
+  const finalColor = addColorNoise(baseColor, x, z, 0.06);
+  
+  // Zone transition blending (smooth edges between zones)
+  const transitionWidth = 20;
+  
+  // Check for zone transitions and blend
+  if (x > 80 && x < 120) {
+    // Starter to Forest transition
+    const t = (x - 80) / transitionWidth;
+    const forestColor = getZoneBaseColor(x + 50, z, height); // Sample from forest zone
+    return lerpColor(finalColor, { r: forestColor.r, g: forestColor.g, b: forestColor.b }, t * 0.5);
+  }
+  if (x < -80 && x > -120) {
+    // Starter to Scorched transition
+    const t = (-80 - x) / transitionWidth;
+    const scorchedColor = getZoneBaseColor(x - 50, z, height);
+    return lerpColor(finalColor, { r: scorchedColor.r, g: scorchedColor.g, b: scorchedColor.b }, t * 0.5);
+  }
+  if (z > 80 && z < 120) {
+    // Starter to Caves transition
+    const t = (z - 80) / transitionWidth;
+    const cavesColor = getZoneBaseColor(x, z + 50, height);
+    return lerpColor(finalColor, { r: cavesColor.r, g: cavesColor.g, b: cavesColor.b }, t * 0.5);
+  }
+  if (z < -80 && z > -120) {
+    // Starter to Frozen transition
+    const t = (-80 - z) / transitionWidth;
+    const frozenColor = getZoneBaseColor(x, z - 50, height);
+    return lerpColor(finalColor, { r: frozenColor.r, g: frozenColor.g, b: frozenColor.b }, t * 0.5);
+  }
+  
+  return finalColor;
+};
+
+/**
+ * Get base zone color (without transitions) - helper for zone blending
+ */
+const getZoneBaseColor = (x, z, height) => {
+  const zone = getZoneType(x, z);
+  const palette = TERRAIN_COLORS[zone];
+  const heightFactor = Math.min(1, Math.max(0, height / 15));
+  return lerpColor(palette.grassLow, palette.grassHigh, heightFactor * 0.6);
+};
+
 // Export SimplexNoise class for advanced use cases
 export { SimplexNoise };

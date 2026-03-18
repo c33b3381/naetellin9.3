@@ -62,7 +62,8 @@ import {
 import {
   getTerrainHeight,
   isInWater,
-  getWaterDepth
+  getWaterDepth,
+  getTerrainColor
 } from '../systems/TerrainSystem';
 
 // HUD Components
@@ -2456,29 +2457,8 @@ const GameWorld = () => {
         const height = getTerrainHeight(worldX, worldZ);
         heightmap.push(height);
         
-        // Determine color
-        let color = new THREE.Color(0x228B22);
-        
-        if (worldX > 100) {
-          color = new THREE.Color(0x1a4d1a);
-        } else if (worldX < -100) {
-          color = new THREE.Color(0x8b6914);
-        } else if (worldZ > 100) {
-          color = new THREE.Color(0x4a4a6a);
-        } else if (worldZ < -100) {
-          color = new THREE.Color(0xe8e8e8);
-        }
-        
-        if (height > 10) {
-          color.lerp(new THREE.Color(0x808080), Math.min(1, (height - 10) / 15));
-        } else if (height < 1) {
-          color.lerp(new THREE.Color(0x1a3d1a), 0.3);
-        }
-        
-        if (isInWater(worldX, worldZ)) {
-          color = new THREE.Color(0x3d5c3d);
-        }
-        
+        // Get terrain color using the new coloring system
+        const color = getTerrainColor(worldX, worldZ, height);
         colors.push(color.r, color.g, color.b);
       }
       
@@ -2486,6 +2466,7 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
+    const TERRAIN_VERSION = 2; // Increment when terrain generation changes
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();
@@ -2495,15 +2476,24 @@ const GameWorld = () => {
           has_heightmap: result.terrain?.heightmap?.length > 0,
           has_colors: result.terrain?.colors?.length > 0,
           heightmap_length: result.terrain?.heightmap?.length,
-          colors_length: result.terrain?.colors?.length
+          colors_length: result.terrain?.colors?.length,
+          saved_version: result.terrain?.version
         });
         
-        if (result.exists && result.terrain && result.terrain.heightmap && result.terrain.heightmap.length > 0) {
+        // Check if terrain exists AND version matches (regenerate if version outdated)
+        const savedVersion = result.terrain?.version || 1;
+        const needsRegeneration = savedVersion < TERRAIN_VERSION;
+        
+        if (result.exists && result.terrain && result.terrain.heightmap && result.terrain.heightmap.length > 0 && !needsRegeneration) {
           console.log('Loading saved terrain from database...');
           applyTerrainData(result.terrain.heightmap, result.terrain.colors);
           console.log('Terrain loaded successfully!');
         } else {
-          console.log('Generating new terrain...');
+          if (needsRegeneration) {
+            console.log(`Terrain version outdated (v${savedVersion} -> v${TERRAIN_VERSION}), regenerating with new coloring...`);
+          } else {
+            console.log('Generating new terrain...');
+          }
           const { heightmap, colors } = generateTerrainData();
           applyTerrainData(heightmap, colors);
           
@@ -2518,7 +2508,7 @@ const GameWorld = () => {
                 seed: 42,
                 heightmap,
                 colors,
-                version: 1
+                version: TERRAIN_VERSION
               });
               console.log('Terrain saved to database!');
             } catch (saveErr) {
