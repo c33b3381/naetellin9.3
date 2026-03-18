@@ -2852,13 +2852,13 @@ const GameWorld = () => {
         const model = gltf.scene;
         
         // Scale the model to match player size
-        model.scale.set(0.5, 0.5, 0.5);
+        model.scale.set(1.0, 1.0, 1.0);
         
         // Position model so feet are at ground level
         model.position.y = 0;
         
         // Rotate model to face forward (Z+ direction)
-        model.rotation.y = Math.PI;
+        model.rotation.y = 0;
         
         // Enable shadows for all meshes in the model
         model.traverse((child) => {
