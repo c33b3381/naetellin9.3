@@ -3,6 +3,40 @@
 ## Original Problem Statement
 Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-based MMORPG with features including combat, quests, skills, world building, and character progression.
 
+## Codebase Organization (Updated Feb 2026)
+
+### Directory Structure
+```
+/app/
+├── CODEBASE_INDEX.md          # Comprehensive codebase documentation
+├── backend/
+│   └── server.py              # FastAPI backend (1,234 lines)
+├── frontend/src/
+│   ├── data/                  # 🆕 Centralized data files
+│   │   └── enemies.js         # ENEMY_DATABASE (extracted)
+│   ├── hooks/game/            # 🆕 Game-specific hooks (planned)
+│   ├── utils/                 # 🆕 Utility functions (planned)
+│   ├── pages/
+│   │   └── GameWorld.jsx      # Main game (9,456 lines - needs splitting)
+│   ├── components/
+│   │   ├── game/              # Game components
+│   │   │   └── _unused/       # 🆕 Archived unused components
+│   │   ├── hud/               # HUD components
+│   │   ├── panels/            # Character panels
+│   │   └── ui/                # Shadcn components
+│   └── store/
+│       └── gameStore.js       # Zustand state
+└── memory/
+    └── PRD.md                 # This file
+```
+
+### Refactoring Progress
+- ✅ Created `/data/enemies.js` - Extracted ENEMY_DATABASE (345 lines saved)
+- ✅ Moved 7 unused components to `_unused/` folder
+- ✅ Created `CODEBASE_INDEX.md` - Full documentation
+- 🔄 Pending: Extract LOOT_ITEMS, WARRIOR_SPELLS, OBJECT_CATEGORIES
+- 🔄 Pending: Split GameWorld.jsx into hooks
+
 ## Core Features Implemented
 
 ### Character System
