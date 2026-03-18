@@ -7407,56 +7407,25 @@ const GameWorld = () => {
       }
       
       if (cameraState.current.isRightMouseDown) {
-        const deltaX = e.clientX - cameraState.current.lastMouseX;
-        const deltaY = e.clientY - cameraState.current.lastMouseY;
-        
-        if (isMapEditorModeRef.current && e.ctrlKey) {
-          // Map Editor Mode: Ctrl+RMB Drag to pan camera
-          const panSpeed = 0.5;
-          mapEditorCameraState.current.x -= deltaX * panSpeed;
-          mapEditorCameraState.current.z -= deltaY * panSpeed;
-          
-          // Clamp to world bounds
-          mapEditorCameraState.current.x = Math.max(-280, Math.min(280, mapEditorCameraState.current.x));
-          mapEditorCameraState.current.z = Math.max(-280, Math.min(280, mapEditorCameraState.current.z));
-        } else if (!isMapEditorModeRef.current) {
-          // Game Mode: Rotate camera horizontally
-          cameraState.current.rotationY -= deltaX * 0.005;
-          
-          // Rotate camera vertically (with limits)
-          cameraState.current.rotationX += deltaY * 0.005;
-          cameraState.current.rotationX = Math.max(
-            cameraState.current.minPitch,
-            Math.min(cameraState.current.maxPitch, cameraState.current.rotationX)
-          );
-        }
-        
-        cameraState.current.lastMouseX = e.clientX;
-        cameraState.current.lastMouseY = e.clientY;
+        // Camera rotation (using CameraSystem)
+        handleCameraMouseMove(
+          e, 
+          cameraState.current, 
+          isMapEditorModeRef.current, 
+          mapEditorCameraState.current
+        );
       }
     };
     
     const handleWheel = (e) => {
-      e.preventDefault(); // Prevent browser default scroll behavior
-      
-      const inMapEditor = isMapEditorModeRef.current;
-      const inFlight = isFlightModeRef.current;
-      
-      if (inMapEditor && !inFlight) {
-        // Map Editor Mode (not in flight): Adjust camera height
-        mapEditorCameraState.current.height -= e.deltaY * 0.1;
-        mapEditorCameraState.current.height = Math.max(
-          mapEditorCameraState.current.minHeight,
-          Math.min(mapEditorCameraState.current.maxHeight, mapEditorCameraState.current.height)
-        );
-      } else if (!inMapEditor) {
-        // Game Mode: Zoom in/out
-        cameraState.current.distance += e.deltaY * 0.01;
-        cameraState.current.distance = Math.max(
-          cameraState.current.minDistance,
-          Math.min(cameraState.current.maxDistance, cameraState.current.distance)
-        );
-      }
+      // Camera zoom (using CameraSystem)
+      handleCameraWheel(
+        e,
+        cameraState.current,
+        isMapEditorModeRef.current,
+        isFlightModeRef.current,
+        mapEditorCameraState.current
+      );
       // In flight mode, mouse wheel is disabled (height auto-follows terrain)
     };
     
