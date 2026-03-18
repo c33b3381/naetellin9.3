@@ -154,6 +154,7 @@ const GameWorld = () => {
   const damageTextsRef = useRef([]);
   const monsterHealthBarsRef = useRef({});
   const editorObjectsRef = useRef([]);
+  const castleEnemiesRef = useRef([]);
   
   // Player animation state
   const playerModelRef = useRef(null); // Reference to the player model parts
@@ -2803,21 +2804,13 @@ const GameWorld = () => {
     // A lively starter town with central square, market, and functional NPCs
     
     // === GROUND & TOWN SQUARE ===
-    // Central town square - cobblestone ground
+    // Town square ground - cobblestone
     const townSquareGeometry = new THREE.CircleGeometry(18, 32);
     const townSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
     const townSquare = new THREE.Mesh(townSquareGeometry, townSquareMaterial);
     townSquare.rotation.x = -Math.PI / 2;
     townSquare.position.y = 0.015;
     scene.add(townSquare);
-    
-    // Inner decorative ring
-    const innerRingGeometry = new THREE.RingGeometry(8, 9, 32);
-    const innerRingMaterial = new THREE.MeshStandardMaterial({ color: 0x696969, roughness: 0.8 });
-    const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
-    innerRing.rotation.x = -Math.PI / 2;
-    innerRing.position.y = 0.02;
-    scene.add(innerRing);
     
     // Grass areas around the square
     const grassMaterial = new THREE.MeshStandardMaterial({ color: 0x32CD32 });
@@ -2870,9 +2863,9 @@ const GameWorld = () => {
     const createFountain = (x, z) => {
       const fountainGroup = new THREE.Group();
       
-      // Base pool
+      // Base pool (smaller, no circle)
       const poolMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.7 });
-      const poolBase = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.5, 0.5, 24), poolMaterial);
+      const poolBase = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 5), poolMaterial);
       poolBase.position.y = 0.25;
       poolBase.castShadow = true;
       fountainGroup.add(poolBase);
@@ -2884,7 +2877,7 @@ const GameWorld = () => {
         opacity: 0.7,
         roughness: 0.1
       });
-      const water = new THREE.Mesh(new THREE.CircleGeometry(2.8, 24), waterMaterial);
+      const water = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 4.5), waterMaterial);
       water.rotation.x = -Math.PI / 2;
       water.position.y = 0.48;
       fountainGroup.add(water);
@@ -2911,18 +2904,6 @@ const GameWorld = () => {
       const spout = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), spoutMaterial);
       spout.position.y = 3.1;
       fountainGroup.add(spout);
-      
-      // Corner pillars for decoration
-      for (let i = 0; i < 4; i++) {
-        const angle = (i / 4) * Math.PI * 2;
-        const cornerPillar = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.15, 0.2, 1, 8),
-          pillarMaterial
-        );
-        cornerPillar.position.set(Math.cos(angle) * 2.5, 0.5, Math.sin(angle) * 2.5);
-        cornerPillar.castShadow = true;
-        fountainGroup.add(cornerPillar);
-      }
       
       fountainGroup.position.set(x, 0, z);
       scene.add(fountainGroup);
@@ -3328,6 +3309,207 @@ const GameWorld = () => {
     createAmbientNPC(-8, 12, 0x9370DB, 'Elder');
     createAmbientNPC(15, 14, 0xDAA520, 'Worker');
     createAmbientNPC(-15, -6, 0x4a5568, 'Guard');
+    
+    // ==================== DARK CASTLE (Enemy Area) ====================
+    // A castle far from the village with enemies inside
+    
+    const CASTLE_X = 80;
+    const CASTLE_Z = -60;
+    
+    const createCastle = (x, z) => {
+      const castleGroup = new THREE.Group();
+      
+      // Castle materials
+      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
+      const darkStoneMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.85 });
+      const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.7 });
+      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
+      
+      // Castle ground/foundation
+      const foundation = new THREE.Mesh(
+        new THREE.CylinderGeometry(25, 28, 1, 8),
+        new THREE.MeshStandardMaterial({ color: 0x3d3d3d, roughness: 0.95 })
+      );
+      foundation.position.y = 0.5;
+      castleGroup.add(foundation);
+      
+      // Main keep (central tower)
+      const mainKeep = new THREE.Mesh(new THREE.BoxGeometry(12, 18, 12), stoneMaterial);
+      mainKeep.position.y = 9;
+      mainKeep.castShadow = true;
+      castleGroup.add(mainKeep);
+      
+      // Main keep roof
+      const mainRoof = new THREE.Mesh(new THREE.ConeGeometry(9, 6, 4), roofMaterial);
+      mainRoof.position.y = 21;
+      mainRoof.rotation.y = Math.PI / 4;
+      mainRoof.castShadow = true;
+      castleGroup.add(mainRoof);
+      
+      // Corner towers (4)
+      const towerPositions = [
+        [-18, -18], [18, -18], [-18, 18], [18, 18]
+      ];
+      
+      towerPositions.forEach(([tx, tz]) => {
+        // Tower base
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 15, 8), stoneMaterial);
+        tower.position.set(tx, 7.5, tz);
+        tower.castShadow = true;
+        castleGroup.add(tower);
+        
+        // Tower roof
+        const towerRoof = new THREE.Mesh(new THREE.ConeGeometry(5, 4, 8), roofMaterial);
+        towerRoof.position.set(tx, 17, tz);
+        towerRoof.castShadow = true;
+        castleGroup.add(towerRoof);
+        
+        // Tower battlements
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const battlement = new THREE.Mesh(
+            new THREE.BoxGeometry(1.5, 2, 0.8),
+            darkStoneMaterial
+          );
+          battlement.position.set(
+            tx + Math.cos(angle) * 4,
+            15.5,
+            tz + Math.sin(angle) * 4
+          );
+          battlement.rotation.y = angle;
+          castleGroup.add(battlement);
+        }
+      });
+      
+      // Walls connecting towers
+      const wallPositions = [
+        { x: 0, z: -18, rx: 0, length: 32 },
+        { x: 0, z: 18, rx: 0, length: 32 },
+        { x: -18, z: 0, rx: Math.PI / 2, length: 32 },
+        { x: 18, z: 0, rx: Math.PI / 2, length: 32 },
+      ];
+      
+      wallPositions.forEach(({ x: wx, z: wz, rx, length }) => {
+        const wall = new THREE.Mesh(
+          new THREE.BoxGeometry(length, 8, 2),
+          stoneMaterial
+        );
+        wall.position.set(wx, 4, wz);
+        wall.rotation.y = rx;
+        wall.castShadow = true;
+        castleGroup.add(wall);
+        
+        // Wall top walkway
+        const walkway = new THREE.Mesh(
+          new THREE.BoxGeometry(length, 0.5, 3),
+          darkStoneMaterial
+        );
+        walkway.position.set(wx, 8.25, wz);
+        walkway.rotation.y = rx;
+        castleGroup.add(walkway);
+      });
+      
+      // Castle gate
+      const gateFrame = new THREE.Mesh(new THREE.BoxGeometry(6, 8, 3), darkStoneMaterial);
+      gateFrame.position.set(0, 4, -19);
+      castleGroup.add(gateFrame);
+      
+      // Gate opening (dark)
+      const gateOpening = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 6, 4),
+        new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
+      );
+      gateOpening.position.set(0, 3, -19);
+      castleGroup.add(gateOpening);
+      
+      // Gate arch
+      const gateArch = new THREE.Mesh(
+        new THREE.TorusGeometry(2, 0.5, 8, 16, Math.PI),
+        darkStoneMaterial
+      );
+      gateArch.position.set(0, 6, -18);
+      gateArch.rotation.x = Math.PI / 2;
+      castleGroup.add(gateArch);
+      
+      // Torches at gate
+      const torchMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xFF4500, 
+        emissive: 0xFF4500, 
+        emissiveIntensity: 0.8 
+      });
+      [[-3.5, -17], [3.5, -17]].forEach(([ttx, ttz]) => {
+        const torchHolder = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.15, 0.15, 1.5, 8),
+          woodMaterial
+        );
+        torchHolder.position.set(ttx, 5, ttz);
+        castleGroup.add(torchHolder);
+        
+        const flame = new THREE.Mesh(
+          new THREE.SphereGeometry(0.3, 8, 8),
+          torchMaterial
+        );
+        flame.position.set(ttx, 6, ttz);
+        castleGroup.add(flame);
+      });
+      
+      // Inner courtyard (darker ground)
+      const courtyard = new THREE.Mesh(
+        new THREE.CircleGeometry(15, 16),
+        new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.95 })
+      );
+      courtyard.rotation.x = -Math.PI / 2;
+      courtyard.position.y = 1.02;
+      castleGroup.add(courtyard);
+      
+      // Banners on main keep
+      const bannerMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8B0000, 
+        side: THREE.DoubleSide 
+      });
+      [[6.1, 12, 0], [-6.1, 12, 0], [0, 12, 6.1], [0, 12, -6.1]].forEach(([bx, by, bz]) => {
+        const banner = new THREE.Mesh(new THREE.PlaneGeometry(2, 4), bannerMaterial);
+        banner.position.set(bx, by, bz);
+        if (bx !== 0) banner.rotation.y = Math.PI / 2;
+        castleGroup.add(banner);
+      });
+      
+      castleGroup.position.set(x, 0, z);
+      scene.add(castleGroup);
+      return castleGroup;
+    };
+    
+    // Create the castle
+    createCastle(CASTLE_X, CASTLE_Z);
+    
+    // Path to castle
+    const castlePathMaterial = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.95 });
+    const castlePath = new THREE.Mesh(new THREE.PlaneGeometry(5, 100), castlePathMaterial);
+    castlePath.rotation.x = -Math.PI / 2;
+    castlePath.rotation.z = Math.atan2(CASTLE_Z, CASTLE_X);
+    castlePath.position.set(CASTLE_X / 2 + 10, 0.02, CASTLE_Z / 2 - 5);
+    scene.add(castlePath);
+    
+    // Spawn enemies inside the castle
+    const castleEnemyPositions = [
+      // Courtyard guards
+      { x: CASTLE_X - 8, z: CASTLE_Z, type: 'skeleton', level: 3 },
+      { x: CASTLE_X + 8, z: CASTLE_Z, type: 'skeleton', level: 3 },
+      { x: CASTLE_X, z: CASTLE_Z - 8, type: 'skeleton', level: 4 },
+      { x: CASTLE_X, z: CASTLE_Z + 8, type: 'skeleton', level: 4 },
+      // Inner castle
+      { x: CASTLE_X - 5, z: CASTLE_Z - 5, type: 'skeleton', level: 5 },
+      { x: CASTLE_X + 5, z: CASTLE_Z - 5, type: 'skeleton', level: 5 },
+      { x: CASTLE_X + 5, z: CASTLE_Z + 5, type: 'skeleton', level: 5 },
+      { x: CASTLE_X - 5, z: CASTLE_Z + 5, type: 'skeleton', level: 5 },
+      // Boss area (near main keep)
+      { x: CASTLE_X, z: CASTLE_Z, type: 'demon', level: 8 },
+    ];
+    
+    // Store castle enemies for later spawning
+    castleEnemiesRef.current = castleEnemyPositions;
+    
+    // ==================== END DARK CASTLE ====================
     
     // ==================== END TOWN CENTER ====================
     
@@ -4435,6 +4617,29 @@ const GameWorld = () => {
     // createMonster(-35, 28, 0x4a7c23, 'Goblin', 'goblin', 1);
     // createMonster(-28, 30, 0x4a7c23, 'Goblin Warrior', 'goblin', 3);
     // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
+    
+    // ==================== CASTLE ENEMIES ====================
+    // Spawn enemies inside the dark castle (uses CASTLE_X and CASTLE_Z from castle creation)
+    
+    // Courtyard skeleton guards
+    createMonster(CASTLE_X - 10, CASTLE_Z, 0xd4d4d4, 'Castle Guard', 'skeleton', 3);
+    createMonster(CASTLE_X + 10, CASTLE_Z, 0xd4d4d4, 'Castle Guard', 'skeleton', 3);
+    createMonster(CASTLE_X, CASTLE_Z - 10, 0xc4c4c4, 'Skeleton Warrior', 'skeleton', 4);
+    createMonster(CASTLE_X, CASTLE_Z + 10, 0xc4c4c4, 'Skeleton Warrior', 'skeleton', 4);
+    
+    // Inner castle elite guards
+    createMonster(CASTLE_X - 6, CASTLE_Z - 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
+    createMonster(CASTLE_X + 6, CASTLE_Z - 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
+    createMonster(CASTLE_X + 6, CASTLE_Z + 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
+    createMonster(CASTLE_X - 6, CASTLE_Z + 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
+    
+    // Castle boss - near main keep
+    createMonster(CASTLE_X, CASTLE_Z, 0x8B0000, 'Castle Lord', 'demon', 10);
+    
+    // Additional enemies patrolling near castle entrance
+    createMonster(CASTLE_X - 5, CASTLE_Z - 22, 0xa4a4a4, 'Gate Warden', 'skeleton', 6);
+    createMonster(CASTLE_X + 5, CASTLE_Z - 22, 0xa4a4a4, 'Gate Warden', 'skeleton', 6);
+    // ==================== END CASTLE ENEMIES ====================
     
     // Wolf pack
     // createMonster(30, 25, 0x808080, 'Gray Wolf', 'wolf', 4);
