@@ -320,6 +320,7 @@ export const processPanelToggleKey = (e, callbacks) => {
       // Only toggle character panel if not Ctrl+C (copy)
       if (!e.ctrlKey) {
         e.preventDefault();
+        console.log('[InputSystem] C key pressed, toggling character panel');
         callbacks.setIsCharacterPanelOpen?.(prev => !prev);
         return true;
       }
@@ -542,6 +543,11 @@ export const createKeyDownHandler = (config) => {
   const { refs, stateRefs, callbacks, systems, helpers } = config;
   
   return (e) => {
+    // Debug: Log all key presses (can be removed after debugging)
+    if (e.code === 'KeyC') {
+      console.log('[InputSystem] KeyC event received, ctrlKey:', e.ctrlKey);
+    }
+    
     // Ctrl+S to save world
     if (processSaveShortcut(e, callbacks)) return;
     

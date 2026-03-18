@@ -107,9 +107,9 @@ user_problem_statement: "Controlled system extraction from GameWorld.jsx - React
 frontend:
   - task: "InputSystem extraction - keyboard handlers"
     implemented: true
-    working: false
+    working: true
     file: "frontend/src/systems/InputSystem.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -125,6 +125,12 @@ frontend:
         - working: false
         - agent: "testing"
         - comment: "Re-tested after stateRef fix. RESULTS: 3/4 tests passed (75%). ✅ WORKING: Escape key now closes Spell Book, Escape key closes World Map, regression tests passed (L, B, WASD all working). ❌ STILL FAILING: C key does NOT open Character Panel. The stateRef fix successfully resolved the Escape key issue, but C key remains non-functional. Character Panel can be opened via UI button click (verified panel exists and works), but keyboard shortcut C is not triggering the panel. Need to investigate why processPanelToggleKey for 'KeyC' is not calling setIsCharacterPanelOpen callback. No console errors detected."
+        - working: "NA"
+        - agent: "main"
+        - comment: "Added debug console.log statements at two key points: (1) Line 547-549 logs '[InputSystem] KeyC event received, ctrlKey: false' when C key reaches the handler entry point, (2) Line 323 logs '[InputSystem] C key pressed, toggling character panel' inside processPanelToggleKey() when the toggle function is called. These debug logs will help identify exactly where C key is being blocked if issue persists."
+        - working: true
+        - agent: "testing"
+        - comment: "✅ C KEY NOW WORKING! Debug test confirmed both console messages appear correctly: (1) '[InputSystem] KeyC event received, ctrlKey: false' - C key successfully reaching handler, (2) '[InputSystem] C key pressed, toggling character panel' - toggle function being called. Character Panel opens when C is pressed and closes when C is pressed again (verified with screenshots). The stateRef fix from previous iteration has successfully resolved the C key issue. All 13/13 keyboard shortcuts now fully functional: WASD, Space, Tab, L, P, M, B, C, Escape, F1, F2, F3, F7. InputSystem extraction complete and working."
 
 metadata:
   created_by: "main_agent"
@@ -133,8 +139,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "InputSystem extraction - C key fix needed"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -144,3 +149,7 @@ agent_communication:
     - message: "Fixed C key and Escape key by converting from states to stateRefs. The issue was stale closures - handler captured values at creation time. Now using refs synced via useEffect. Please re-test: (1) C key should toggle Character Panel, (2) Escape should close open panels (test with P spell book then Escape). All other keys should still work."
     - agent: "testing"
     - message: "Re-test complete. GOOD NEWS: Escape key fix is working perfectly - both Spell Book and World Map now close with Escape key. BAD NEWS: C key still not working - does not open Character Panel. The panel itself works (can be opened via UI button), but the keyboard shortcut is not triggering. Checked InputSystem.js - processPanelToggleKey has correct logic for KeyC (line 319-326), preventing default and calling setIsCharacterPanelOpen callback. Need to verify GameWorld.jsx is passing the correct callback and that stateRef for isCharacterPanelOpen is properly wired. All regression tests passed (L, P, M, B, WASD). 12/13 keys working overall. Recommend investigating GameWorld.jsx callback wiring for Character Panel."
+    - agent: "main"
+    - message: "Added console.log debug statements to trace C key: Line 547-549 logs '[InputSystem] KeyC event received' at handler entry, Line 323 logs '[InputSystem] C key pressed, toggling character panel' inside processPanelToggleKey. Please test C key and check browser console for these messages to determine where C key is being blocked."
+    - agent: "testing"
+    - message: "✅ C KEY DEBUG TEST COMPLETE - C KEY IS NOW WORKING! Both debug messages appear in console when C is pressed: (1) '[InputSystem] KeyC event received, ctrlKey: false' detected at handler entry (line 547), (2) '[InputSystem] C key pressed, toggling character panel' detected in toggle function (line 323). Character Panel successfully opens when C is pressed and closes when C is pressed again. Visual confirmation from screenshots shows panel toggling correctly. The stateRef fix from main agent has resolved the issue. C key is fully functional. All 13/13 keyboard shortcuts now working."
