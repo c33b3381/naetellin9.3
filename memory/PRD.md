@@ -17,14 +17,15 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 │   │   ├── items.js           # LOOT_ITEMS + generateLoot
 │   │   ├── spells.js          # WARRIOR_SPELLS
 │   │   └── objects.js         # OBJECT_CATEGORIES
-│   ├── systems/               # Extracted game systems (3,608 lines total)
+│   ├── systems/               # Extracted game systems (3,813 lines total)
 │   │   ├── PlayerMovementSystem.js  # WASD movement, jump, terrain follow (300 lines)
 │   │   ├── CameraSystem.js          # WoW-style orbit camera (226 lines)
 │   │   ├── EnemyAISystem.js         # Patrol, aggro, chase, leash, spread (443 lines)
 │   │   ├── CombatSystem.js          # Damage text, XP, health bars, constants (195 lines)
-│   │   └── WorldAssetFactory.js     # Procedural mesh generator (2,444 lines)
+│   │   ├── WorldAssetFactory.js     # Procedural mesh generator (2,444 lines)
+│   │   └── WorldObjectSystem.js     # Object persistence: load/save/normalize (205 lines)
 │   ├── pages/
-│   │   └── GameWorld.jsx      # Main game (~6,563 lines, down from 9,208)
+│   │   └── GameWorld.jsx      # Main game (~6,391 lines, down from 9,208)
 │   ├── components/
 │   │   ├── game/              # Game UI components
 │   │   │   └── _unused/       # Archived unused components
@@ -46,7 +47,8 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 | EnemyAISystem.js | ~117 | Done |
 | CombatSystem.js | ~100 | Done |
 | WorldAssetFactory.js | ~2,425 | Done |
-| **Total saved from GameWorld.jsx** | **~5,167** | |
+| WorldObjectSystem.js | ~172 | Done |
+| **Total saved from GameWorld.jsx** | **~5,339** | |
 
 ## Core Features Implemented
 
@@ -70,16 +72,17 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 ### World Building
 - World Builder (F1), Terrain Editor (F2), Enemy Editor (F3)
 - Procedural mesh generation via WorldAssetFactory.js
-- Object rotation persistence (fixed Feb 2026)
+- Object persistence via WorldObjectSystem.js (rotation, quest fields preserved)
 
 ### Map & Economy
 - 3D Minimap, World Map (M key), zone system
 - Copper/Gold currency, vendor selling
 
 ## Bug Fixes Applied (Feb 2026)
-- Object rotation persistence: Added rotation, level, subType, quest fields to handleSaveWorld
+- Object rotation persistence: Added rotation, level, subType, quest fields to save path
 - Quest Dialog NPC filtering: Fixed trainer path + tightened fallback filter
-- Preview parameter order: Fixed swapped name/level params in preview call site
+- Preview parameter order: Fixed swapped name/level params
+- Logout save enrichment: normalizeObjectForSave now sends full field set including subType, category, color, quest_id
 
 ## Pending Tasks
 
@@ -113,5 +116,5 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 
 ### World
 - GET /api/world/objects, POST /api/world/objects
-- POST /api/world/objects/bulk
+- POST /api/world/objects/bulk, DELETE /api/world/objects/{id}
 - GET /api/terrain, POST /api/terrain
