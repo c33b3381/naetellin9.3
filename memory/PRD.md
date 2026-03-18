@@ -10,17 +10,24 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 /app/
 ├── CODEBASE_INDEX.md          # Comprehensive codebase documentation
 ├── backend/
-│   └── server.py              # FastAPI backend (1,234 lines)
+│   └── server.py              # FastAPI backend (~1,235 lines)
 ├── frontend/src/
-│   ├── data/                  # 🆕 Centralized data files
-│   │   └── enemies.js         # ENEMY_DATABASE (extracted)
-│   ├── hooks/game/            # 🆕 Game-specific hooks (planned)
-│   ├── utils/                 # 🆕 Utility functions (planned)
+│   ├── data/                  # Centralized data files
+│   │   ├── enemies.js         # ENEMY_DATABASE
+│   │   ├── items.js           # LOOT_ITEMS + generateLoot
+│   │   ├── spells.js          # WARRIOR_SPELLS
+│   │   └── objects.js         # OBJECT_CATEGORIES
+│   ├── systems/               # Extracted game systems
+│   │   ├── PlayerMovementSystem.js  # WASD movement, jump, terrain follow
+│   │   ├── CameraSystem.js          # WoW-style orbit camera
+│   │   ├── EnemyAISystem.js         # Patrol, aggro, chase, leash, spread
+│   │   └── CombatSystem.js          # Damage text, XP, health bars, constants
+│   ├── hooks/game/            # (planned) Game-specific hooks
 │   ├── pages/
-│   │   └── GameWorld.jsx      # Main game (9,456 lines - needs splitting)
+│   │   └── GameWorld.jsx      # Main game (~8,987 lines, actively being refactored)
 │   ├── components/
-│   │   ├── game/              # Game components
-│   │   │   └── _unused/       # 🆕 Archived unused components
+│   │   ├── game/              # Game UI components
+│   │   │   └── _unused/       # Archived unused components
 │   │   ├── hud/               # HUD components
 │   │   ├── panels/            # Character panels
 │   │   └── ui/                # Shadcn components
@@ -31,87 +38,51 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 ```
 
 ### Refactoring Progress
-- ✅ Created `/data/enemies.js` - Extracted ENEMY_DATABASE (344 lines saved from EnemyEditor)
-- ✅ Created `/data/items.js` - Extracted LOOT_ITEMS + generateLoot (812 lines saved from LootPanel)
-- ✅ Created `/data/spells.js` - Extracted WARRIOR_SPELLS (173 lines saved from TrainerPanel)
-- ✅ Created `/data/objects.js` - Extracted OBJECT_CATEGORIES (794 lines saved from WorldEditor)
-- ✅ Moved 7 unused components to `_unused/` folder
-- ✅ Created `CODEBASE_INDEX.md` - Full documentation
-- ✅ Updated all imports to use new data files
-- 🔄 Pending: Split GameWorld.jsx into custom hooks
+- Data extraction: enemies.js, items.js, spells.js, objects.js
+- System extraction: PlayerMovementSystem, CameraSystem, EnemyAISystem, CombatSystem
+- 7 unused components archived to _unused/
+- CODEBASE_INDEX.md created
 
 ## Core Features Implemented
 
 ### Character System
-- Character creation with class selection (Warrior, Mage, Ranger, Paladin)
-- Gender, hair color, and skin tone customization
-- Level progression (1-50) with XP bar
-- Health, Mana, and XP stats
-- Death/resurrection system with ghost mode
+- Class selection (Warrior, Mage, Ranger, Paladin), customization
+- Level progression (1-20) with XP bar
+- Health, Mana, XP stats, death/resurrection
 
-### Combat System
-- Click-to-target enemy selection
-- Auto-attack toggle
-- Spell casting with cooldowns
-- Enemy AI with patrol patterns
-- Loot drops from defeated enemies
+### Combat System (CombatSystem.js + GameWorld.jsx)
+- Click-to-target, auto-attack toggle, spell casting with cooldowns
+- Enemy AI (EnemyAISystem.js): patrol, aggro, chase, leash, spread positioning
+- Floating damage text, health bars, loot drops
+- XP/leveling calculations extracted to CombatSystem.js
 
-### Quest System ✅ (COMPLETE - Dec 2025)
-- **Global Quest Database** - Create quests via F7 Quest Maker, save to database
-- **NPC Quest Assignment** - Assign quests to any NPC, visible to ALL players
-- **Yellow Quest Markers** - NPCs with quests show yellow "!" indicator
-- **Quest Acceptance** - Click NPC, view quest details, accept
-- **Kill Tracking** - Real-time progress updates when killing target enemies
-- **Quest Turn-in** - Return to NPC, "I've completed your task!", receive rewards
-- **Quest Log (L)** - View active/completed quests, track progress, abandon quests
-- **Rewards System** - XP and Gold awarded on quest completion
+### Quest System
+- Global Quest Database (F7 Quest Maker)
+- NPC quest assignment with yellow markers
+- Kill tracking, quest turn-in, rewards
+- Quest Log (L key)
 
 ### World Building
-- World Builder (F1) with extensive object categories
-- Terrain Editor (F2) for landscape modification
-- Enemy Editor (F3) for placing monsters
-- Real-time preview of object scale/rotation
+- World Builder (F1), Terrain Editor (F2), Enemy Editor (F3)
+- Object rotation persistence (fixed Feb 2026)
 
-### Map System
-- 3D Minimap in corner (real-time top-down view)
-- World Map (M key) for navigation
-- Zone system with different areas
-
-### Economy
-- Copper/Gold currency
-- Vendor selling (buy system pending)
-- Loot collection
-
-## Technical Architecture
-
-```
-/app/
-├── backend/
-│   └── server.py       # FastAPI with MongoDB
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── game/     # QuestDialog, QuestMaker, QuestLog, WorldEditor
-│   │   │   ├── hud/      # HUD, Minimap, WorldMap
-│   │   │   └── panels/   # Inventory, Skills, Character panels
-│   │   ├── pages/
-│   │   │   └── GameWorld.jsx  # Main game component (8000+ lines)
-│   │   └── store/
-│   │       └── gameStore.js   # Zustand state management
-└── memory/
-    └── PRD.md
-```
+### Map & Economy
+- 3D Minimap, World Map (M key), zone system
+- Copper/Gold currency, vendor selling
 
 ## Pending Tasks
 
+### P0 - Deferred
+- Custom hooks extraction (useQuesting, useExperience, usePlayerState)
+
 ### P1 - Medium Priority
-- **Vendor Buy System**: Implement purchasing items from vendors
+- Vendor Buy System
 
 ### P2 - Lower Priority
-- **GameWorld.jsx Refactoring**: Break down into smaller components
-- **Spirit Healer NPC**: Instant revive at graveyard
-- **Weapon Swing Effects**: Visual attack animations
-- **Quest Persistence**: Save player's active quests to database
+- Spirit Healer NPC
+- Weapon Swing Effects
+- Quest Persistence to database
+- Backend refactoring (split server.py)
 
 ## Database Collections
 - `players`: Character data, position, level, XP
@@ -122,19 +93,20 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 
 ## API Endpoints
 
-### Quest System
-- `GET /api/quests/global` - List all global quests
-- `POST /api/quests/global` - Create global quest
-- `PUT /api/quests/global/{id}/assign` - Assign quest to NPC
-- `PUT /api/quests/global/{id}/unassign` - Remove NPC assignment
-- `DELETE /api/quests/global/{id}` - Delete quest
+### Auth & Player
+- POST /api/auth/register, /api/auth/login
+- GET /api/player, POST /api/player/save-all
 
-## Completed This Session (Dec 2025)
-- ✅ Global Quest Database system
-- ✅ Quest Maker F7 UI with database tab
-- ✅ NPC quest assignment with yellow markers
-- ✅ Quest acceptance from NPCs
-- ✅ Kill tracking with notifications
-- ✅ Quest turn-in with XP/Gold rewards
-- ✅ Quest Log with abandon functionality
-- ✅ Cross-account quest visibility
+### Quest System
+- GET /api/quests/global, POST /api/quests/global
+- PUT /api/quests/global/{id}/assign, /api/quests/global/{id}/unassign
+
+### World
+- GET /api/world/objects, POST /api/world/objects
+- POST /api/world/objects/bulk
+- GET /api/terrain, POST /api/terrain
+
+## Bug Fixes Applied (Feb 2026)
+- Object rotation persistence: Added rotation, level, subType, quest fields to handleSaveWorld object mapping
+- Quest Dialog NPC filtering: Fixed trainer path missing setQuestGiverId; tightened fallback filter to not show all quests when npcId is null
+- Mouse wheel zoom: P2, pending user verification
