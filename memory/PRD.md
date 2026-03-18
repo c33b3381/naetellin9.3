@@ -17,14 +17,14 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 │   │   ├── items.js           # LOOT_ITEMS + generateLoot
 │   │   ├── spells.js          # WARRIOR_SPELLS
 │   │   └── objects.js         # OBJECT_CATEGORIES
-│   ├── systems/               # Extracted game systems
-│   │   ├── PlayerMovementSystem.js  # WASD movement, jump, terrain follow
-│   │   ├── CameraSystem.js          # WoW-style orbit camera
-│   │   ├── EnemyAISystem.js         # Patrol, aggro, chase, leash, spread
-│   │   └── CombatSystem.js          # Damage text, XP, health bars, constants
-│   ├── hooks/game/            # (planned) Game-specific hooks
+│   ├── systems/               # Extracted game systems (3,608 lines total)
+│   │   ├── PlayerMovementSystem.js  # WASD movement, jump, terrain follow (300 lines)
+│   │   ├── CameraSystem.js          # WoW-style orbit camera (226 lines)
+│   │   ├── EnemyAISystem.js         # Patrol, aggro, chase, leash, spread (443 lines)
+│   │   ├── CombatSystem.js          # Damage text, XP, health bars, constants (195 lines)
+│   │   └── WorldAssetFactory.js     # Procedural mesh generator (2,444 lines)
 │   ├── pages/
-│   │   └── GameWorld.jsx      # Main game (~8,987 lines, actively being refactored)
+│   │   └── GameWorld.jsx      # Main game (~6,563 lines, down from 9,208)
 │   ├── components/
 │   │   ├── game/              # Game UI components
 │   │   │   └── _unused/       # Archived unused components
@@ -37,11 +37,16 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
     └── PRD.md                 # This file
 ```
 
-### Refactoring Progress
-- Data extraction: enemies.js, items.js, spells.js, objects.js
-- System extraction: PlayerMovementSystem, CameraSystem, EnemyAISystem, CombatSystem
-- 7 unused components archived to _unused/
-- CODEBASE_INDEX.md created
+### Refactoring Progress Summary
+| Extraction | Lines Saved | Status |
+|------------|-------------|--------|
+| Data files (enemies, items, spells, objects) | ~2,000 | Done |
+| PlayerMovementSystem.js | ~300 | Done |
+| CameraSystem.js | ~225 | Done |
+| EnemyAISystem.js | ~117 | Done |
+| CombatSystem.js | ~100 | Done |
+| WorldAssetFactory.js | ~2,425 | Done |
+| **Total saved from GameWorld.jsx** | **~5,167** | |
 
 ## Core Features Implemented
 
@@ -64,18 +69,22 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 
 ### World Building
 - World Builder (F1), Terrain Editor (F2), Enemy Editor (F3)
+- Procedural mesh generation via WorldAssetFactory.js
 - Object rotation persistence (fixed Feb 2026)
 
 ### Map & Economy
 - 3D Minimap, World Map (M key), zone system
 - Copper/Gold currency, vendor selling
 
+## Bug Fixes Applied (Feb 2026)
+- Object rotation persistence: Added rotation, level, subType, quest fields to handleSaveWorld
+- Quest Dialog NPC filtering: Fixed trainer path + tightened fallback filter
+- Preview parameter order: Fixed swapped name/level params in preview call site
+
 ## Pending Tasks
 
-### P0 - Deferred
+### P1 - Next Up
 - Custom hooks extraction (useQuesting, useExperience, usePlayerState)
-
-### P1 - Medium Priority
 - Vendor Buy System
 
 ### P2 - Lower Priority
@@ -83,6 +92,7 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - Weapon Swing Effects
 - Quest Persistence to database
 - Backend refactoring (split server.py)
+- Mouse wheel zoom verification (pending user check)
 
 ## Database Collections
 - `players`: Character data, position, level, XP
@@ -105,8 +115,3 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - GET /api/world/objects, POST /api/world/objects
 - POST /api/world/objects/bulk
 - GET /api/terrain, POST /api/terrain
-
-## Bug Fixes Applied (Feb 2026)
-- Object rotation persistence: Added rotation, level, subType, quest fields to handleSaveWorld object mapping
-- Quest Dialog NPC filtering: Fixed trainer path missing setQuestGiverId; tightened fallback filter to not show all quests when npcId is null
-- Mouse wheel zoom: P2, pending user verification
