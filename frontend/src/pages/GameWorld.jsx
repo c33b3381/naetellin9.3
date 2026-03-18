@@ -590,9 +590,10 @@ const GameWorld = () => {
   const autoAttackSpeedRef = useRef(2.0); // 2.0 second swing timer (reduced from 3.0)
   const globalCooldownRef = useRef(0); // GCD in seconds
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC: {enemyId: {inCombat, aggroTarget, lastAttack, spawnPos}}
-  const meleeRange = 5; // 5 yards for melee
-  const aggroRange = 8; // 8 yards aggro range (reduced for better gameplay)
-  const leashRange = 40; // 40 yards leash range
+  // Combat ranges from EnemyAISystem
+  const meleeRange = AI_CONSTANTS.MELEE_RANGE;
+  const aggroRange = AI_CONSTANTS.AGGRO_RANGE;
+  const leashRange = AI_CONSTANTS.LEASH_RANGE;
   
   // Attack animation state
   const attackHandRef = useRef('right'); // Alternates between 'right' and 'left'
