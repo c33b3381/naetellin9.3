@@ -78,6 +78,10 @@ Build a World of Warcraft-inspired RPG game called "Quest of Honor" - a browser-
 - Procedural mesh generation via WorldAssetFactory.js
 - Object persistence via WorldObjectSystem.js (rotation, quest fields preserved)
 
+### Visual Improvements
+- **Terrain Coloring System**: Zone-specific palettes, height/slope/water-proximity based coloring
+- **World Lighting**: ACES tone mapping, warm sun light, fill light, 4K shadow maps, enhanced fog
+
 ### Map & Economy
 - 3D Minimap, World Map (M key), zone system
 - Copper/Gold currency, vendor selling
