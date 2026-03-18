@@ -364,20 +364,8 @@ const GameWorld = () => {
   const monsterHealthBarsRef = useRef({});
   const editorObjectsRef = useRef([]);
   
-  // WoW-style camera controls
-  const cameraState = useRef({
-    distance: 12,
-    minDistance: 3,
-    maxDistance: 30,
-    rotationY: 0, // Horizontal rotation (yaw)
-    rotationX: 0.3, // Vertical rotation (pitch)
-    minPitch: -0.5,
-    maxPitch: 1.2,
-    isRightMouseDown: false,
-    isLeftMouseDown: false,
-    lastMouseX: 0,
-    lastMouseY: 0
-  });
+  // WoW-style camera controls - using centralized system
+  const cameraState = useRef(createCameraState());
   
   // Movement state - using centralized system
   const movementState = useRef(createMovementState());
