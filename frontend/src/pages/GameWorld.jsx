@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { useGameStore } from '../store/gameStore';
 import { Save } from 'lucide-react';
 import axios from 'axios';
@@ -2816,60 +2817,110 @@ const GameWorld = () => {
     scene.add(path2);
     
     // Create Player Character (more detailed)
-    const createPlayer = () => {
+    // Create player group container (model will be loaded into this)
+    const playerGroup = new THREE.Group();
+    playerGroup.name = 'player';
+    
+    // Selection circle under player (added immediately)
+    const selectionCircle = new THREE.Mesh(
+      new THREE.RingGeometry(0.5, 0.55, 32),
+      new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
+    );
+    selectionCircle.rotation.x = -Math.PI / 2;
+    selectionCircle.position.y = 0.02;
+    playerGroup.add(selectionCircle);
+    
+    // Add placeholder arm pivots for attack animation compatibility
+    const leftArmPivot = new THREE.Group();
+    leftArmPivot.name = 'leftArmPivot';
+    leftArmPivot.position.set(-0.35, 1.2, 0);
+    playerGroup.add(leftArmPivot);
+    
+    const rightArmPivot = new THREE.Group();
+    rightArmPivot.name = 'rightArmPivot';
+    rightArmPivot.position.set(0.35, 1.2, 0);
+    playerGroup.add(rightArmPivot);
+    
+    scene.add(playerGroup);
+    playerRef.current = playerGroup;
+    
+    // Load GLTF model asynchronously
+    const loader = new GLTFLoader();
+    loader.load(
+      '/models/player.gltf',
+      (gltf) => {
+        const model = gltf.scene;
+        
+        // Scale the model to match player size (original is ~5.5 units tall, we want ~1.75)
+        const scaleFactor = 0.32;
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        
+        // Position model so feet are at ground level
+        model.position.y = 0;
+        
+        // Rotate model to face forward (Z+ direction)
+        model.rotation.y = Math.PI;
+        
+        // Enable shadows for all meshes in the model
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            // Improve material if needed
+            if (child.material) {
+              child.material.side = THREE.FrontSide;
+            }
+          }
+        });
+        
+        // Add the loaded model to the player group
+        model.name = 'playerModel';
+        playerGroup.add(model);
+        
+        console.log('Player GLTF model loaded successfully');
+      },
+      (progress) => {
+        // Loading progress
+        const percent = (progress.loaded / progress.total) * 100;
+        console.log(`Loading player model: ${percent.toFixed(1)}%`);
+      },
+      (error) => {
+        console.error('Error loading player GLTF model:', error);
+        // Fallback to primitive player if model fails to load
+        createFallbackPlayer(playerGroup);
+      }
+    );
+    
+    // Fallback function to create primitive player if GLTF fails
+    const createFallbackPlayer = (group) => {
       const skinColor = character?.skin_tone || '#D2B48C';
       const hairColor = character?.hair_color || '#4a3728';
-      const playerGroup = new THREE.Group();
-      playerGroup.name = 'player';
       
       // Legs
       const legMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
       const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), legMaterial);
       leftLeg.position.set(-0.15, 0.35, 0);
       leftLeg.castShadow = true;
-      playerGroup.add(leftLeg);
+      group.add(leftLeg);
       
       const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), legMaterial);
       rightLeg.position.set(0.15, 0.35, 0);
       rightLeg.castShadow = true;
-      playerGroup.add(rightLeg);
+      group.add(rightLeg);
       
       // Torso
       const torsoMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
       const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.25), torsoMaterial);
       torso.position.y = 1;
       torso.castShadow = true;
-      playerGroup.add(torso);
-      
-      // Arms - with pivot points for animation
-      const armMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
-      
-      // Left arm pivot (for rotation from shoulder)
-      const leftArmPivot = new THREE.Group();
-      leftArmPivot.name = 'leftArmPivot';
-      leftArmPivot.position.set(-0.35, 1.2, 0); // Shoulder position
-      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), armMaterial);
-      leftArm.position.y = -0.2; // Offset from pivot
-      leftArm.castShadow = true;
-      leftArmPivot.add(leftArm);
-      playerGroup.add(leftArmPivot);
-      
-      // Right arm pivot (for rotation from shoulder)
-      const rightArmPivot = new THREE.Group();
-      rightArmPivot.name = 'rightArmPivot';
-      rightArmPivot.position.set(0.35, 1.2, 0); // Shoulder position
-      const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), armMaterial);
-      rightArm.position.y = -0.2; // Offset from pivot
-      rightArm.castShadow = true;
-      rightArmPivot.add(rightArm);
-      playerGroup.add(rightArmPivot);
+      group.add(torso);
       
       // Head
       const headMaterial = new THREE.MeshStandardMaterial({ color: skinColor });
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), headMaterial);
       head.position.y = 1.52;
       head.castShadow = true;
-      playerGroup.add(head);
+      group.add(head);
       
       // Hair
       const hairMaterial = new THREE.MeshStandardMaterial({ color: hairColor });
@@ -2878,58 +2929,16 @@ const GameWorld = () => {
         hairMaterial
       );
       hair.position.y = 1.65;
-      playerGroup.add(hair);
+      group.add(hair);
       
-      // Eyes
-      const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMaterial);
-      leftEye.position.set(-0.07, 1.55, 0.18);
-      playerGroup.add(leftEye);
-      
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMaterial);
-      rightEye.position.set(0.07, 1.55, 0.18);
-      playerGroup.add(rightEye);
-      
-      // Weapon (Sword on back)
-      const swordGroup = new THREE.Group();
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(0.06, 0.8, 0.02),
-        new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8, roughness: 0.2 })
-      );
-      swordGroup.add(blade);
-      
-      const hilt = new THREE.Mesh(
-        new THREE.BoxGeometry(0.18, 0.08, 0.04),
-        new THREE.MeshStandardMaterial({ color: 0x78350f })
-      );
-      hilt.position.y = -0.44;
-      swordGroup.add(hilt);
-      
-      swordGroup.position.set(0.25, 1.1, -0.15);
-      swordGroup.rotation.set(0.2, 0, 0.15);
-      playerGroup.add(swordGroup);
-      
-      // Selection circle under player
-      const selectionCircle = new THREE.Mesh(
-        new THREE.RingGeometry(0.5, 0.55, 32),
-        new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
-      );
-      selectionCircle.rotation.x = -Math.PI / 2;
-      selectionCircle.position.y = 0.02;
-      playerGroup.add(selectionCircle);
-      
-      return playerGroup;
+      console.log('Using fallback primitive player model');
     };
-    
-    const player = createPlayer();
-    scene.add(player);
-    playerRef.current = player;
     
     // Restore player position from saved game state
     const startX = savedPosition.x || 0;
     const startZ = savedPosition.z || 0;
     const startY = getTerrainHeight(startX, startZ);
-    player.position.set(startX, startY, startZ);
+    playerGroup.position.set(startX, startY, startZ);
     
     // Mark if we started at a non-origin position
     if (startX !== 0 || startZ !== 0) {
