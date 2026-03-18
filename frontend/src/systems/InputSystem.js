@@ -532,28 +532,29 @@ export const processCopyEnemyKey = (e, editorStates, callbacks) => {
  * 
  * @param {Object} config - Configuration object containing:
  *   - refs: React refs (playerRef, targetIndicatorRef, etc.)
- *   - states: Current state values
+ *   - stateRefs: Refs to current state values (for reading current values in handlers)
  *   - callbacks: State setters and action handlers
  *   - systems: External system functions (handleMovementKeyDown, etc.)
  *   - helpers: Helper functions (getTerrainHeight, etc.)
  * @returns {Function} Event handler function
  */
 export const createKeyDownHandler = (config) => {
-  const { refs, states, callbacks, systems, helpers } = config;
+  const { refs, stateRefs, callbacks, systems, helpers } = config;
   
   return (e) => {
     // Ctrl+S to save world
     if (processSaveShortcut(e, callbacks)) return;
     
     // Check if dialog is blocking (except Escape and M)
+    // Use stateRefs to get current values
     const panelStates = {
-      isQuestDialogOpen: states.isQuestDialogOpen,
-      isQuestLogOpen: states.isQuestLogOpen,
-      isTrainerOpen: states.isTrainerOpen,
-      isSpellBookOpen: states.isSpellBookOpen,
-      isCharacterPanelOpen: states.isCharacterPanelOpen,
-      isItemEditorOpen: states.isItemEditorOpen,
-      isWorldMapOpen: states.isWorldMapOpen,
+      isQuestDialogOpen: stateRefs.isQuestDialogOpenRef?.current ?? false,
+      isQuestLogOpen: stateRefs.isQuestLogOpenRef?.current ?? false,
+      isTrainerOpen: stateRefs.isTrainerOpenRef?.current ?? false,
+      isSpellBookOpen: stateRefs.isSpellBookOpenRef?.current ?? false,
+      isCharacterPanelOpen: stateRefs.isCharacterPanelOpenRef?.current ?? false,
+      isItemEditorOpen: stateRefs.isItemEditorOpenRef?.current ?? false,
+      isWorldMapOpen: stateRefs.isWorldMapOpenRef?.current ?? false,
     };
     
     if (isDialogBlocking(panelStates)) {
@@ -593,25 +594,28 @@ export const createKeyDownHandler = (config) => {
     }
     
     // Action bar hotkeys (1-6)
-    if (processActionBarKey(e, states.actionBarSpells, states.selectedTarget, refs, callbacks)) {
+    // Get current values from stateRefs
+    const actionBarSpells = stateRefs.actionBarSpellsRef?.current ?? [];
+    const selectedTarget = stateRefs.selectedTargetRef?.current ?? null;
+    if (processActionBarKey(e, actionBarSpells, selectedTarget, refs, callbacks)) {
       return;
     }
     
-    // Panel toggles (P, M, B)
+    // Panel toggles (P, M, B, C)
     if (processPanelToggleKey(e, callbacks)) {
       return;
     }
     
-    // Escape key
+    // Escape key - use current state values from refs
     const escapePanelStates = {
-      isWorldMapOpen: states.isWorldMapOpen,
-      isEditorOpen: states.isEditorOpen,
-      isSpellBookOpen: states.isSpellBookOpen,
-      isTerrainEditorOpen: states.isTerrainEditorOpen,
-      isEnemyEditorOpen: states.isEnemyEditorOpen,
-      openBagIndex: states.openBagIndex,
-      isCharacterPanelOpen: states.isCharacterPanelOpen,
-      isItemEditorOpen: states.isItemEditorOpen,
+      isWorldMapOpen: stateRefs.isWorldMapOpenRef?.current ?? false,
+      isEditorOpen: stateRefs.isEditorOpenRef?.current ?? false,
+      isSpellBookOpen: stateRefs.isSpellBookOpenRef?.current ?? false,
+      isTerrainEditorOpen: stateRefs.isTerrainEditorOpenRef?.current ?? false,
+      isEnemyEditorOpen: stateRefs.isEnemyEditorOpenRef?.current ?? false,
+      openBagIndex: stateRefs.openBagIndexRef?.current ?? null,
+      isCharacterPanelOpen: stateRefs.isCharacterPanelOpenRef?.current ?? false,
+      isItemEditorOpen: stateRefs.isItemEditorOpenRef?.current ?? false,
     };
     if (processEscapeKey(e, escapePanelStates, refs, callbacks)) {
       return;
@@ -622,12 +626,12 @@ export const createKeyDownHandler = (config) => {
       return;
     }
     
-    // Delete/Backspace for deleting objects
+    // Delete/Backspace for deleting objects - use current values from refs
     const editorStates = {
-      selectedEditObject: states.selectedEditObject,
-      isEditorOpen: states.isEditorOpen,
-      selectedEditEnemy: states.selectedEditEnemy,
-      isEnemyEditorOpen: states.isEnemyEditorOpen,
+      selectedEditObject: stateRefs.selectedEditObjectRef?.current ?? null,
+      isEditorOpen: stateRefs.isEditorOpenRef?.current ?? false,
+      selectedEditEnemy: stateRefs.selectedEditEnemyRef?.current ?? null,
+      isEnemyEditorOpen: stateRefs.isEnemyEditorOpenRef?.current ?? false,
     };
     if (processDeleteKey(e, editorStates, callbacks)) {
       return;

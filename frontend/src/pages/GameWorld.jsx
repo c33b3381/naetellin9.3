@@ -543,13 +543,17 @@ const GameWorld = () => {
   
   // Trainer state
   const [isTrainerOpen, setIsTrainerOpen] = useState(false);
+  const isTrainerOpenRef = useRef(false);
   
   // Character Panel state
   const [isCharacterPanelOpen, setIsCharacterPanelOpen] = useState(false);
+  const isCharacterPanelOpenRef = useRef(false);
   
   // Quest state
   const [isQuestDialogOpen, setIsQuestDialogOpen] = useState(false);
+  const isQuestDialogOpenRef = useRef(false);
   const [isQuestLogOpen, setIsQuestLogOpen] = useState(false);
+  const isQuestLogOpenRef = useRef(false);
   const [activeQuests, setActiveQuests] = useState([]);
   const [completedQuests, setCompletedQuests] = useState([]);
   const [trackedQuestId, setTrackedQuestId] = useState(null);
@@ -560,6 +564,7 @@ const GameWorld = () => {
   
   // Terrain Editor state
   const [isTerrainEditorOpen, setIsTerrainEditorOpen] = useState(false);
+  const isTerrainEditorOpenRef = useRef(false);
   const [terrainTool, setTerrainTool] = useState('raise');
   const terrainToolRef = useRef('raise'); // Ref for animation loop access
   
@@ -654,8 +659,10 @@ const GameWorld = () => {
   
   // Enemy Editor state
   const [isEnemyEditorOpen, setIsEnemyEditorOpen] = useState(false);
+  const isEnemyEditorOpenRef = useRef(false);
   const [placedEnemies, setPlacedEnemies] = useState([]);
   const [selectedEditEnemy, setSelectedEditEnemy] = useState(null);
+  const selectedEditEnemyRef = useRef(null);
   const [pendingEnemyPlacement, setPendingEnemyPlacement] = useState(null);
   const enemyEditorActiveRef = useRef(false);
   const pendingEnemyPlacementRef = useRef(null); // CRITICAL: Ref for closure fix
@@ -665,12 +672,14 @@ const GameWorld = () => {
   
   // Item Database Editor state
   const [isItemEditorOpen, setIsItemEditorOpen] = useState(false);
+  const isItemEditorOpenRef = useRef(false);
   const [isQuestMakerOpen, setIsQuestMakerOpen] = useState(false);
   const [customQuests, setCustomQuests] = useState([]);
   const [selectedNPCForQuest, setSelectedNPCForQuest] = useState(null);
   
   // World Map state
   const [isWorldMapOpen, setIsWorldMapOpen] = useState(false);
+  const isWorldMapOpenRef = useRef(false);
   
   // Loot system state
   const [isLootPanelOpen, setIsLootPanelOpen] = useState(false);
@@ -687,6 +696,16 @@ const GameWorld = () => {
   
   // Bag system state
   const [openBagIndex, setOpenBagIndex] = useState(null);
+  const openBagIndexRef = useRef(null);
+  
+  // Spell book state ref (already have isSpellBookOpen state)
+  const isSpellBookOpenRef = useRef(false);
+  
+  // Selected edit object ref
+  const selectedEditObjectRef = useRef(null);
+  
+  // Action bar spells ref
+  const actionBarSpellsRef = useRef([]);
   
   const { 
     activePanel, 
@@ -826,6 +845,59 @@ const GameWorld = () => {
   useEffect(() => {
     placedObjectsRef.current = placedObjects;
   }, [placedObjects]);
+  
+  // Keep InputSystem state refs in sync (CRITICAL for keyboard handler closures)
+  useEffect(() => {
+    isTrainerOpenRef.current = isTrainerOpen;
+  }, [isTrainerOpen]);
+  
+  useEffect(() => {
+    isCharacterPanelOpenRef.current = isCharacterPanelOpen;
+  }, [isCharacterPanelOpen]);
+  
+  useEffect(() => {
+    isQuestDialogOpenRef.current = isQuestDialogOpen;
+  }, [isQuestDialogOpen]);
+  
+  useEffect(() => {
+    isQuestLogOpenRef.current = isQuestLogOpen;
+  }, [isQuestLogOpen]);
+  
+  useEffect(() => {
+    isTerrainEditorOpenRef.current = isTerrainEditorOpen;
+  }, [isTerrainEditorOpen]);
+  
+  useEffect(() => {
+    isEnemyEditorOpenRef.current = isEnemyEditorOpen;
+  }, [isEnemyEditorOpen]);
+  
+  useEffect(() => {
+    selectedEditEnemyRef.current = selectedEditEnemy;
+  }, [selectedEditEnemy]);
+  
+  useEffect(() => {
+    isItemEditorOpenRef.current = isItemEditorOpen;
+  }, [isItemEditorOpen]);
+  
+  useEffect(() => {
+    isWorldMapOpenRef.current = isWorldMapOpen;
+  }, [isWorldMapOpen]);
+  
+  useEffect(() => {
+    openBagIndexRef.current = openBagIndex;
+  }, [openBagIndex]);
+  
+  useEffect(() => {
+    isSpellBookOpenRef.current = isSpellBookOpen;
+  }, [isSpellBookOpen]);
+  
+  useEffect(() => {
+    selectedEditObjectRef.current = selectedEditObject;
+  }, [selectedEditObject]);
+  
+  useEffect(() => {
+    actionBarSpellsRef.current = actionBarSpells;
+  }, [actionBarSpells]);
   
   // Cooldown timer effect
   useEffect(() => {
@@ -4987,22 +5059,23 @@ const GameWorld = () => {
         monsterHealthBarsRef,
         scene,
       },
-      states: {
-        isQuestDialogOpen,
-        isQuestLogOpen,
-        isTrainerOpen,
-        isSpellBookOpen,
-        isCharacterPanelOpen,
-        isItemEditorOpen,
-        isWorldMapOpen,
-        isEditorOpen,
-        isTerrainEditorOpen,
-        isEnemyEditorOpen,
-        openBagIndex,
-        selectedEditObject,
-        selectedEditEnemy,
-        actionBarSpells,
-        selectedTarget,
+      stateRefs: {
+        // Panel state refs for InputSystem to read current values
+        isQuestDialogOpenRef,
+        isQuestLogOpenRef,
+        isTrainerOpenRef,
+        isSpellBookOpenRef,
+        isCharacterPanelOpenRef,
+        isItemEditorOpenRef,
+        isWorldMapOpenRef,
+        isEditorOpenRef,
+        isTerrainEditorOpenRef,
+        isEnemyEditorOpenRef,
+        openBagIndexRef,
+        selectedEditObjectRef,
+        selectedEditEnemyRef,
+        actionBarSpellsRef,
+        selectedTargetRef,
       },
       callbacks: {
         onSaveWorld: handleSaveWorld,
