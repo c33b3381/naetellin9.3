@@ -8052,13 +8052,8 @@ const GameWorld = () => {
           // Hide player in map editor mode
           player.visible = false;
         } else {
-          // Normal Game Mode - WoW-style orbit camera
-          const camX = player.position.x + Math.sin(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
-          const camY = player.position.y + 2 + Math.sin(cam.rotationX) * cam.distance;
-          const camZ = player.position.z + Math.cos(cam.rotationY) * Math.cos(cam.rotationX) * cam.distance;
-          
-          camera.position.set(camX, Math.max(1, camY), camZ);
-          camera.lookAt(player.position.x, player.position.y + 1.5, player.position.z);
+          // Normal Game Mode - WoW-style orbit camera (using CameraSystem)
+          updateCamera(camera, player, cam);
           
           // Show player in game mode
           player.visible = true;
