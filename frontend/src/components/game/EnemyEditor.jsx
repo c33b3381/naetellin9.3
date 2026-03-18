@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { 
-  Skull, Plus, Trash2, Eye, EyeOff, ChevronDown, ChevronUp,
-  Sword, Shield, Flame, Snowflake, Wind, Mountain, Bug, Bird,
-  Cat, Crown, Bone, Droplets, TreePine, Ghost, Zap
+  Plus, Trash2, Eye, EyeOff, ChevronDown, ChevronUp,
+  Sword
 } from 'lucide-react';
+// Import enemy database from centralized data file
+import { ENEMY_DATABASE } from '../../data/enemies';
 
-// Enemy NPC Database with stats - exported for use in QuestMaker
-export const ENEMY_DATABASE = {
+// Re-export for backwards compatibility
+export { ENEMY_DATABASE };
+
+// Legacy inline database removed - now using ../../data/enemies.js
+const _LEGACY_ENEMY_DATABASE = {
   // Tier 1 - Starter Enemies (Level 1-5)
   tier1: {
     label: 'Starter (Lv 1-5)',
