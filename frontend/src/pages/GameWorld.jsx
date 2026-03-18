@@ -19,6 +19,23 @@ import {
   handleCameraWheel,
   updateCamera
 } from '../systems/CameraSystem';
+import {
+  AI_CONSTANTS,
+  createPatrolData,
+  createCombatState,
+  getPatrolPattern,
+  updatePatrol,
+  updateCombatFacing,
+  shouldAggro,
+  shouldLeash,
+  moveToSpawn,
+  chasePlayer,
+  maintainSpreadPosition,
+  resetEnemyHealth,
+  resetCombatState,
+  activateAggro,
+  getDistance2D
+} from '../systems/EnemyAISystem';
 
 // HUD Components
 import HUD from '../components/hud/HUD';
