@@ -54,14 +54,11 @@ const QuestDialog = ({
   });
   
   // Build the list of available quests from database
-  // Show quests assigned to this NPC, or all assigned quests if npcId is not set
+  // Only show quests specifically assigned to this NPC
   const formattedDatabaseQuests = databaseQuests
     .filter(quest => {
-      if (npcId) {
-        return quest.assigned_npc_id === npcId;
-      }
-      // Fallback: show quests that have any NPC assignment
-      return !!quest.assigned_npc_id;
+      if (!npcId) return false; // No NPC ID = no database quests to show
+      return quest.assigned_npc_id === npcId;
     })
     .map(quest => ({
       id: quest.quest_id,

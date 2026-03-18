@@ -23,7 +23,6 @@ import {
   AI_CONSTANTS,
   createPatrolData,
   createCombatState,
-  getPatrolPattern,
   updatePatrol,
   updateCombatFacing,
   shouldAggro,
@@ -32,10 +31,19 @@ import {
   chasePlayer,
   maintainSpreadPosition,
   resetEnemyHealth,
-  resetCombatState,
-  activateAggro,
-  getDistance2D
+  activateAggro
 } from '../systems/EnemyAISystem';
+import {
+  COMBAT_CONSTANTS,
+  MAX_LEVEL,
+  XP_THRESHOLDS,
+  createDamageText,
+  updateEnemyHealthBar,
+  getMobDifficultyColor,
+  calculateXPGain,
+  calculateAutoAttackDamage,
+  calculateNpcAttackDamage
+} from '../systems/CombatSystem';
 
 // HUD Components
 import HUD from '../components/hud/HUD';
@@ -327,45 +335,6 @@ const LoadingSpinner = () => (
 );
 
 // Floating damage text component data
-const createDamageText = (scene, position, damage, isPlayerDamage = false, isHealing = false) => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 64;
-  const ctx = canvas.getContext('2d');
-  ctx.font = 'bold 48px Arial';
-  ctx.textAlign = 'center';
-  
-  // Color based on type: healing (green), player damage (red), monster damage (yellow)
-  if (isHealing) {
-    ctx.fillStyle = '#44ff44'; // Green for healing
-  } else if (isPlayerDamage) {
-    ctx.fillStyle = '#ff4444'; // Red for damage to player
-  } else {
-    ctx.fillStyle = '#ffff00'; // Yellow for damage to enemies
-  }
-  
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 4;
-  const prefix = isHealing ? '+' : '-';
-  ctx.strokeText(`${prefix}${damage}`, 64, 48);
-  ctx.fillText(`${prefix}${damage}`, 64, 48);
-  
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
-  const sprite = new THREE.Sprite(material);
-  sprite.position.copy(position);
-  sprite.position.y += 2;
-  sprite.scale.set(1.5, 0.75, 1);
-  sprite.userData = { 
-    type: 'damageText', 
-    velocity: 0.03, 
-    opacity: 1, 
-    createdAt: Date.now() 
-  };
-  scene.add(sprite);
-  return sprite;
-};
-
 const GameWorld = () => {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
@@ -431,74 +400,6 @@ const GameWorld = () => {
   const currentXPRef = useRef(0);
   
   // XP thresholds for each level (cumulative XP needed to reach that level)
-  const XP_THRESHOLDS = [
-    0,      // Level 1 (starting)
-    250,    // Level 2
-    655,    // Level 3
-    1265,   // Level 4
-    2085,   // Level 5
-    3240,   // Level 6
-    4125,   // Level 7
-    4785,   // Level 8
-    5865,   // Level 9
-    7275,   // Level 10
-    8205,   // Level 11
-    9365,   // Level 12
-    10715,  // Level 13
-    12085,  // Level 14
-    13455,  // Level 15
-    14810,  // Level 16
-    16135,  // Level 17
-    17415,  // Level 18
-    18635,  // Level 19
-    19775,  // Level 20
-    20825   // Level 20 cap (max XP)
-  ];
-  
-  const MAX_LEVEL = 20;
-  
-  // Mob difficulty color system (based on level difference)
-  // Returns: { color: hex, name: string, xpMultiplier: number }
-  const getMobDifficultyColor = useCallback((mobLevel, playerLvl) => {
-    const levelDiff = mobLevel - playerLvl;
-    
-    if (levelDiff >= 5) {
-      // Skull (red) - 5+ levels higher, very dangerous
-      return { color: 0xff0000, name: 'Skull', xpMultiplier: 1.2, textColor: '#ff0000' };
-    } else if (levelDiff >= 3) {
-      // Red - 3-4 levels higher, dangerous
-      return { color: 0xff3333, name: 'Red', xpMultiplier: 1.15, textColor: '#ff3333' };
-    } else if (levelDiff >= 1) {
-      // Orange - 1-2 levels higher
-      return { color: 0xff8c00, name: 'Orange', xpMultiplier: 1.1, textColor: '#ff8c00' };
-    } else if (levelDiff >= -2) {
-      // Yellow - same level or up to 2 below
-      return { color: 0xffff00, name: 'Yellow', xpMultiplier: 1.0, textColor: '#ffff00' };
-    } else if (levelDiff >= -5) {
-      // Green - 3-5 levels below
-      return { color: 0x00ff00, name: 'Green', xpMultiplier: 0.8, textColor: '#00ff00' };
-    } else if (levelDiff >= -8) {
-      // Grey - 6-8 levels below, reduced XP
-      return { color: 0x808080, name: 'Grey', xpMultiplier: 0.1, textColor: '#808080' };
-    } else {
-      // Grey (trivial) - 9+ levels below, no XP
-      return { color: 0x505050, name: 'Trivial', xpMultiplier: 0, textColor: '#505050' };
-    }
-  }, []);
-  
-  // Calculate XP gained from killing a mob
-  const calculateXPGain = useCallback((mobLevel, playerLvl) => {
-    const difficulty = getMobDifficultyColor(mobLevel, playerLvl);
-    
-    // Base XP = mob level * 5 + 45 (WoW-like formula)
-    const baseXP = mobLevel * 5 + 45;
-    
-    // Apply difficulty multiplier
-    const finalXP = Math.floor(baseXP * difficulty.xpMultiplier);
-    
-    return finalXP;
-  }, [getMobDifficultyColor]);
-  
   // Handle gaining XP (uses addNotificationRef to avoid initialization order issues)
   const gainXP = useCallback((amount) => {
     if (playerLevel >= MAX_LEVEL) return; // Already max level
@@ -587,13 +488,9 @@ const GameWorld = () => {
   const isAutoAttackingRef = useRef(false); // Ref for animation loop closure
   const autoAttackTimerRef = useRef(null);
   const lastAutoAttackRef = useRef(0);
-  const autoAttackSpeedRef = useRef(2.0); // 2.0 second swing timer (reduced from 3.0)
+  const autoAttackSpeedRef = useRef(COMBAT_CONSTANTS.PLAYER_AUTO_ATTACK_SPEED);
   const globalCooldownRef = useRef(0); // GCD in seconds
-  const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC: {enemyId: {inCombat, aggroTarget, lastAttack, spawnPos}}
-  // Combat ranges from EnemyAISystem
-  const meleeRange = AI_CONSTANTS.MELEE_RANGE;
-  const aggroRange = AI_CONSTANTS.AGGRO_RANGE;
-  const leashRange = AI_CONSTANTS.LEASH_RANGE;
+  const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC
   
   // Attack animation state
   const attackHandRef = useRef('right'); // Alternates between 'right' and 'left'
@@ -967,7 +864,7 @@ const GameWorld = () => {
     combatTimerRef.current = setTimeout(() => {
       setIsInCombat(false);
       setIsAutoAttacking(false); // Stop auto-attacking when leaving combat
-    }, 5000);
+    }, COMBAT_CONSTANTS.COMBAT_EXIT_DELAY);
   }, []);
   
   // Keep enterCombat ref updated (for animation loop)
@@ -1478,7 +1375,7 @@ const GameWorld = () => {
     }, RESPAWN_TIME);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
-  }, [addNotification, calculateXPGain, gainXP, playerLevel, updateQuestKillProgress]); // addNotification needed for the immediate "Defeated" notification
+  }, [addNotification, gainXP, playerLevel, updateQuestKillProgress]);
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
@@ -1723,7 +1620,7 @@ const GameWorld = () => {
     const dx = playerRef.current.position.x - target.position.x;
     const dz = playerRef.current.position.z - target.position.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
-    if (distance > meleeRange) {
+    if (distance > AI_CONSTANTS.MELEE_RANGE) {
       return; // Too far, silently wait
     }
     
@@ -1752,8 +1649,8 @@ const GameWorld = () => {
       enterCombatRef.current();
     }
     
-    // Calculate auto-attack damage (10-15 base damage)
-    const damage = Math.floor(Math.random() * 6) + 10;
+    // Calculate auto-attack damage (using CombatSystem)
+    const damage = calculateAutoAttackDamage();
     
     // Apply damage to target (use currentHealth, fallback to maxHealth)
     const currentHp = target.userData.currentHealth ?? target.userData.maxHealth;
@@ -1766,15 +1663,9 @@ const GameWorld = () => {
       damageTextsRef.current.push(damageSprite);
     }
     
-    // Update NPC health bar
+    // Update NPC health bar (using CombatSystem)
     const enemyId = target.userData.enemyId;
-    const healthBarFill = target.getObjectByName('healthBarFill');
-    if (healthBarFill && target.userData.healthBarWidth) {
-      const hpPercent = Math.max(0, newHp / target.userData.maxHealth);
-      healthBarFill.scale.x = Math.max(0.01, hpPercent); // Min 0.01 to avoid disappearing
-      const offset = (target.userData.healthBarWidth * (1 - hpPercent)) / 2;
-      healthBarFill.position.x = -offset;
-    }
+    updateEnemyHealthBar(target, newHp);
     
     // Force UI update for target health bar
     setTargetHealthUpdate(prev => prev + 1);
@@ -1785,19 +1676,11 @@ const GameWorld = () => {
       text: `Auto-attack hits ${target.userData.name} for ${damage} damage!`
     }]);
     
-    // Aggro the NPC
+    // Aggro the NPC (using EnemyAISystem)
     if (enemyId) {
       let combatState = npcCombatStateRef.current.get(enemyId);
       if (!combatState) {
-        combatState = {
-          inCombat: false,
-          aggroTarget: null,
-          lastAttack: 0,
-          spawnPos: {
-            x: target.userData.spawnX,
-            z: target.userData.spawnZ
-          }
-        };
+        combatState = createCombatState(target);
       }
       combatState.inCombat = true;
       combatState.aggroTarget = playerRef.current;
@@ -2450,7 +2333,7 @@ const GameWorld = () => {
     setSpellCooldowns(prev => ({ ...prev, [spellId]: spell.cooldown }));
     
     // Set global cooldown (1.5s for most spells)
-    globalCooldownRef.current = 1.5;
+    globalCooldownRef.current = COMBAT_CONSTANTS.GCD_DURATION;
     
     // Enter combat
     enterCombat();
@@ -2479,17 +2362,9 @@ const GameWorld = () => {
       const targetPosition = selectedTarget.position.clone();
       const monsterType = selectedTarget.userData.monsterType || 'goblin';
       
-      // Mark enemy as in combat and aggro them (WoW-style combat)
+      // Mark enemy as in combat and aggro them (using EnemyAISystem)
       if (enemyId) {
-        const combatState = npcCombatStateRef.current.get(enemyId) || {
-          inCombat: false,
-          aggroTarget: null,
-          lastAttack: 0,
-          spawnPos: {
-            x: selectedTarget.userData.spawnX,
-            z: selectedTarget.userData.spawnZ
-          }
-        };
+        const combatState = npcCombatStateRef.current.get(enemyId) || createCombatState(selectedTarget);
         combatState.inCombat = true;
         combatState.aggroTarget = playerRef.current;
         npcCombatStateRef.current.set(enemyId, combatState);
@@ -2521,14 +2396,8 @@ const GameWorld = () => {
         }]);
       }
       
-      // Update health bar above enemy
-      const healthBarFill = selectedTarget.getObjectByName('healthBarFill');
-      if (healthBarFill && selectedTarget.userData.healthBarWidth) {
-        const hpPercent = Math.max(0, newHp / selectedTarget.userData.maxHealth);
-        healthBarFill.scale.x = Math.max(0.01, hpPercent);
-        const offset = (selectedTarget.userData.healthBarWidth * (1 - hpPercent)) / 2;
-        healthBarFill.position.x = -offset;
-      }
+      // Update health bar above enemy (using CombatSystem)
+      updateEnemyHealthBar(selectedTarget, newHp);
       
       // Force UI update for target health bar
       setTargetHealthUpdate(prev => prev + 1);
@@ -7531,6 +7400,7 @@ const GameWorld = () => {
             getQuestByNPC(npcId).then(quest => {
               setQuestGiverName(target.name || 'Trainer');
               setQuestGiverType('trainer');
+              setQuestGiverId(npcId);
               setCurrentNPCQuest(quest);
               setIsQuestDialogOpen(true);
             }).catch(() => {
@@ -8160,48 +8030,28 @@ const GameWorld = () => {
           globalCooldownRef.current = Math.max(0, globalCooldownRef.current - delta);
         }
         
-        // NPC Combat AI - Process each enemy
+        // NPC Combat AI - Process each enemy (using EnemyAISystem)
         const combatNow = Date.now() / 1000;
         enemyMeshesRef.current.forEach(enemyMesh => {
           if (!enemyMesh || !enemyMesh.userData) return;
           if (!playerRef.current) return;
-          
-          // SKIP CORPSES - dead enemies don't fight
           if (enemyMesh.userData.isCorpse) return;
           
           const enemyId = enemyMesh.userData.enemyId;
+          const player = playerRef.current;
           
-          // Use 2D distance (X/Z only) to ignore terrain height differences
-          const dx = enemyMesh.position.x - playerRef.current.position.x;
-          const dz = enemyMesh.position.z - playerRef.current.position.z;
-          const distanceToPlayer = Math.sqrt(dx * dx + dz * dz);
-          
-          // Get or initialize combat state
+          // Get or initialize combat state (using EnemyAISystem)
           let combatState = npcCombatStateRef.current.get(enemyId);
           if (!combatState) {
-            combatState = {
-              inCombat: false,
-              aggroTarget: null,
-              lastAttack: 0,
-              notifiedAggro: false,
-              notifiedReset: false,
-              spawnPos: {
-                x: enemyMesh.userData.spawnX || enemyMesh.position.x,
-                z: enemyMesh.userData.spawnZ || enemyMesh.position.z
-              }
-            };
+            combatState = createCombatState(enemyMesh);
             npcCombatStateRef.current.set(enemyId, combatState);
           }
           
-          // PROXIMITY AGGRO: If enemy is hostile and player is within aggro range, engage!
-          // Skip if player is dead or a ghost
-          if (!isDeadRef.current && !isGhostRef.current && !combatState.inCombat && enemyMesh.userData.hostile && distanceToPlayer <= aggroRange) {
-            combatState.inCombat = true;
-            combatState.aggroTarget = playerRef.current;
-            combatState.lastAttack = combatNow - 2; // Allow attack after 0.5s
+          // PROXIMITY AGGRO (using EnemyAISystem)
+          if (shouldAggro(enemyMesh, player, combatState, isDeadRef.current, isGhostRef.current)) {
+            activateAggro(combatState, player, combatNow);
             combatEngagedEnemiesRef.current.add(enemyId);
             
-            // Notification ONCE when enemy first aggros - check flag BEFORE showing
             if (!combatState.notifiedAggro && addNotificationRef.current) {
               combatState.notifiedAggro = true;
               addNotificationRef.current(`${enemyMesh.userData.name} attacks you!`, 'warning');
@@ -8224,17 +8074,10 @@ const GameWorld = () => {
           // Skip further processing if not in combat
           if (!combatState.inCombat || !combatState.aggroTarget) return;
           
-          // Check leash range (2D distance to spawn)
-          const distanceToSpawn = Math.sqrt(
-            Math.pow(enemyMesh.position.x - combatState.spawnPos.x, 2) +
-            Math.pow(enemyMesh.position.z - combatState.spawnPos.z, 2)
-          );
-          
-          if (distanceToPlayer > leashRange || distanceToSpawn > leashRange) {
-            // Player left leash range - reset enemy (only notify once)
+          // Check leash range (using EnemyAISystem)
+          if (shouldLeash(enemyMesh, player, combatState)) {
             if (combatState.inCombat && !combatState.notifiedReset) {
               combatState.notifiedReset = true;
-              // Only notify if this was player's target
               if (selectedTargetRef.current === enemyMesh && addNotificationRef.current) {
                 addNotificationRef.current(`${enemyMesh.userData.name} has reset!`, 'info');
               }
@@ -8243,116 +8086,44 @@ const GameWorld = () => {
             combatState.inCombat = false;
             combatState.aggroTarget = null;
             combatEngagedEnemiesRef.current.delete(enemyId);
+            resetEnemyHealth(enemyMesh);
             
-            // Restore full health
-            enemyMesh.userData.currentHealth = enemyMesh.userData.maxHealth;
-            const healthBarFill = enemyMesh.getObjectByName('healthBarFill');
-            if (healthBarFill) {
-              healthBarFill.scale.x = 1;
-              healthBarFill.position.x = 0;
-            }
-            
-            // Move back to spawn
-            const dxSpawn = combatState.spawnPos.x - enemyMesh.position.x;
-            const dzSpawn = combatState.spawnPos.z - enemyMesh.position.z;
-            const returnDist = Math.sqrt(dxSpawn * dxSpawn + dzSpawn * dzSpawn);
-            
-            if (returnDist > 0.5) {
-              const returnSpeed = 6 * delta; // Fast return speed
-              enemyMesh.position.x += (dxSpawn / returnDist) * returnSpeed;
-              enemyMesh.position.z += (dzSpawn / returnDist) * returnSpeed;
-              enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-              
-              const angle = Math.atan2(dxSpawn, dzSpawn);
-              enemyMesh.rotation.y = angle;
-            } else {
-              // Reached spawn, snap to exact position and reset notification flag
-              enemyMesh.position.x = combatState.spawnPos.x;
-              enemyMesh.position.z = combatState.spawnPos.z;
-              enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-              combatState.notifiedReset = false; // Reset so it can notify again next time
-              combatState.notifiedAggro = false; // Reset aggro notification
+            // Move back to spawn (using EnemyAISystem)
+            const reachedSpawn = moveToSpawn(enemyMesh, combatState, delta, getTerrainHeight);
+            if (reachedSpawn) {
+              combatState.notifiedReset = false;
+              combatState.notifiedAggro = false;
             }
             
             return;
           }
           
-          // Chase player if outside melee range - WITH SPREAD POSITIONING
-          if (distanceToPlayer > meleeRange) {
-            // Calculate spread position - enemies should position around the player, not stack
-            // Assign each enemy a unique angle slot based on their enemy ID hash
-            const enemyIdHash = enemyId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-            const numSlots = 8; // 8 positions around the player
-            const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
-            
-            // Target position is close to player - spread distance of 2 units (very close combat)
-            const spreadDistance = 2; // Close combat distance - enemies surround player tightly
-            const targetPosX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
-            const targetPosZ = playerRef.current.position.z + Math.sin(slotAngle) * spreadDistance;
-            
-            const dxTarget = targetPosX - enemyMesh.position.x;
-            const dzTarget = targetPosZ - enemyMesh.position.z;
-            const distToTarget = Math.sqrt(dxTarget * dxTarget + dzTarget * dzTarget);
-            
-            if (distToTarget > 0.3) {
-              const chaseSpeed = 4 * delta; // NPC chase speed
-              enemyMesh.position.x += (dxTarget / distToTarget) * chaseSpeed;
-              enemyMesh.position.z += (dzTarget / distToTarget) * chaseSpeed;
-              enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-            }
-            
-            // Always face the player
-            const dx = playerRef.current.position.x - enemyMesh.position.x;
-            const dz = playerRef.current.position.z - enemyMesh.position.z;
-            const angle = Math.atan2(dx, dz);
-            enemyMesh.rotation.y = angle;
-          } else {
-            // In melee range - attack player
-            const npcAttackSpeed = 2.5; // NPC attack every 2.5 seconds
-            
-            if (combatNow - combatState.lastAttack >= npcAttackSpeed) {
+          // Chase player / check melee range (using EnemyAISystem)
+          const inMeleeRange = chasePlayer(enemyMesh, player, enemyId, delta, getTerrainHeight);
+          
+          if (inMeleeRange) {
+            // In melee range - NPC attacks player (damage resolution stays in GameWorld)
+            if (combatNow - combatState.lastAttack >= COMBAT_CONSTANTS.NPC_ATTACK_SPEED) {
               combatState.lastAttack = combatNow;
               
-              // NPC attacks player
-              const damage = Math.floor(Math.random() * (enemyMesh.userData.damage || 10)) + 5;
+              const damage = calculateNpcAttackDamage(enemyMesh.userData.damage);
               setCurrentHealth(prev => Math.max(0, prev - damage));
               
-              // Show damage text on player
               if (playerRef.current && sceneRef.current) {
                 const dmgSprite = createDamageText(sceneRef.current, playerRef.current.position.clone(), damage, true);
                 damageTextsRef.current.push(dmgSprite);
               }
               
-              // Combat log
               setCombatLog(prev => [...prev.slice(-9), {
                 time: Date.now(),
                 text: `${enemyMesh.userData.name} hits you for ${damage} damage!`
               }]);
               
-              // Keep player in combat
               enterCombat();
             }
             
-            // Face player while attacking - and maintain spread position
-            const enemyIdHash = enemyId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-            const numSlots = 8;
-            const slotAngle = (enemyIdHash % numSlots) * (Math.PI * 2 / numSlots);
-            const spreadDistance = 2; // Close combat - 2 units from player
-            
-            // Gently drift to assigned spread position while in melee range
-            const idealX = playerRef.current.position.x + Math.cos(slotAngle) * spreadDistance;
-            const idealZ = playerRef.current.position.z + Math.sin(slotAngle) * spreadDistance;
-            const driftSpeed = 1.5 * delta;
-            
-            enemyMesh.position.x += (idealX - enemyMesh.position.x) * driftSpeed;
-            enemyMesh.position.z += (idealZ - enemyMesh.position.z) * driftSpeed;
-            enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-            
-            // Face player
-            const dx = playerRef.current.position.x - enemyMesh.position.x;
-            const dz = playerRef.current.position.z - enemyMesh.position.z;
-            const angle = Math.atan2(dx, dz);
-            enemyMesh.rotation.y = angle;
+            // Maintain spread position while in melee (using EnemyAISystem)
+            maintainSpreadPosition(enemyMesh, player, enemyId, delta, getTerrainHeight);
           }
         });
         // ==================== END COMBAT AI ====================
@@ -8604,13 +8375,21 @@ const GameWorld = () => {
         return {
           id: obj.id,
           type: obj.type,
+          subType: obj.subType,
           fullType: obj.fullType || obj.subType || obj.type,
           position: position,
           name: obj.name,
+          level: obj.level || 1,
           scale: obj.scale || 1,
+          rotation: obj.rotation || 0,
           color: obj.color,
           category: obj.category,
-          zone: obj.zone || currentZone
+          zone: obj.zone || currentZone,
+          quest_id: obj.quest_id,
+          quest_giver: obj.quest_giver,
+          global_quest_id: obj.global_quest_id,
+          isVendor: obj.isVendor,
+          hasQuest: obj.hasQuest
         };
       });
       
