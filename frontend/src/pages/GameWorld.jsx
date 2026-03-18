@@ -2861,24 +2861,29 @@ const GameWorld = () => {
       (gltf) => {
         const model = gltf.scene;
         
-        // Scale the model to match player size
-        model.scale.set(1.0, 1.0, 1.0);
+        // The GLTF has internal transformations that make it very small (~0.12 units)
+        // Scale to get a player height of about 1.8 units
+        model.scale.set(1.5, 1.5, 1.5);
         
         // Position model so feet are at ground level
         model.position.y = 0;
         
-        // Rotate model to face forward (Z+ direction)
+        // Rotate model to face forward
         model.rotation.y = 0;
         
-        // Enable shadows for all meshes in the model
+        // Fix materials and enable shadows
         model.traverse((child) => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            // Improve material if needed
-            if (child.material) {
-              child.material.side = THREE.FrontSide;
-            }
+            
+            // Replace with visible material (original uses unsupported extension)
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0xD2B48C,
+              roughness: 0.6,
+              metalness: 0.1,
+              side: THREE.DoubleSide
+            });
           }
         });
         
@@ -2892,7 +2897,6 @@ const GameWorld = () => {
         console.log('Player GLTF model loaded successfully');
       },
       (progress) => {
-        // Loading progress
         const percent = (progress.loaded / progress.total) * 100;
         console.log(`Loading player model: ${percent.toFixed(1)}%`);
       },
@@ -2904,7 +2908,7 @@ const GameWorld = () => {
     );
     
     // Fallback function to create primitive player if GLTF fails
-    const createFallbackPlayer = (group) => {
+    function createFallbackPlayer(group) {
       const skinColor = character?.skin_tone || '#D2B48C';
       const hairColor = character?.hair_color || '#4a3728';
       
@@ -2944,7 +2948,7 @@ const GameWorld = () => {
       group.add(hair);
       
       console.log('Using fallback primitive player model');
-    };
+    }
     
     // Restore player position from saved game state
     const startX = savedPosition.x || 0;
