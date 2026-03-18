@@ -2910,7 +2910,7 @@ const GameWorld = () => {
       return fountainGroup;
     };
     
-    createFountain(0, 0); // Central fountain
+    createFountain(0, 8); // Central fountain (moved north so player doesn't spawn inside)
     
     // === MARKET STALLS ===
     const createMarketStall = (x, z, rotation = 0, canopyColor = 0xDC143C, goods = true) => {
