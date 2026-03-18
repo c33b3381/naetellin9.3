@@ -156,6 +156,16 @@ const GameWorld = () => {
   const monsterHealthBarsRef = useRef({});
   const editorObjectsRef = useRef([]);
   
+  // Player animation state
+  const playerModelRef = useRef(null); // Reference to the loaded GLTF model
+  const playerAnimationState = useRef({
+    isMoving: false,
+    animationTime: 0,
+    bobOffset: 0,
+    legSwing: 0,
+    armSwing: 0
+  });
+  
   // WoW-style camera controls - using centralized system
   const cameraState = useRef(createCameraState());
   
@@ -2876,6 +2886,9 @@ const GameWorld = () => {
         model.name = 'playerModel';
         playerGroup.add(model);
         
+        // Store reference to the model for animations
+        playerModelRef.current = model;
+        
         console.log('Player GLTF model loaded successfully');
       },
       (progress) => {
@@ -5036,6 +5049,61 @@ const GameWorld = () => {
         if (movementResult.reverted) {
           return;
         }
+        
+        // ==================== PLAYER ANIMATION ====================
+        // Update player animation based on movement state
+        const animState = playerAnimationState.current;
+        const playerModel = playerModelRef.current;
+        
+        if (playerModel) {
+          const isMoving = movementResult.moved;
+          animState.isMoving = isMoving;
+          
+          // Update animation time
+          animState.animationTime += delta;
+          
+          if (isMoving) {
+            // WALK ANIMATION - faster bobbing and more pronounced movement
+            const walkSpeed = 8; // Animation cycles per second
+            const walkPhase = animState.animationTime * walkSpeed;
+            
+            // Vertical bobbing (subtle up/down motion while walking)
+            const bobAmount = 0.05;
+            animState.bobOffset = Math.sin(walkPhase * 2) * bobAmount;
+            playerModel.position.y = animState.bobOffset;
+            
+            // Side-to-side sway
+            const swayAmount = 0.02;
+            playerModel.position.x = Math.sin(walkPhase) * swayAmount;
+            
+            // Forward/back lean while walking
+            const leanAmount = 0.03;
+            playerModel.rotation.x = Math.sin(walkPhase * 2) * leanAmount;
+            
+            // Slight rotation sway
+            const rotSway = 0.02;
+            playerModel.rotation.z = Math.sin(walkPhase) * rotSway;
+            
+          } else {
+            // IDLE ANIMATION - subtle breathing motion
+            const idleSpeed = 1.5; // Slow, relaxed breathing
+            const idlePhase = animState.animationTime * idleSpeed;
+            
+            // Gentle vertical breathing motion
+            const breathAmount = 0.015;
+            animState.bobOffset = Math.sin(idlePhase) * breathAmount;
+            playerModel.position.y = animState.bobOffset;
+            
+            // Very subtle horizontal sway
+            const idleSway = 0.005;
+            playerModel.position.x = Math.sin(idlePhase * 0.7) * idleSway;
+            
+            // Minimal rotation (reset any walk rotation)
+            playerModel.rotation.x = playerModel.rotation.x * 0.9; // Smoothly return to 0
+            playerModel.rotation.z = playerModel.rotation.z * 0.9; // Smoothly return to 0
+          }
+        }
+        // ==================== END PLAYER ANIMATION ====================
       }
       
       if (player) {
