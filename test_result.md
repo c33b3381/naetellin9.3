@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Controlled system extraction from GameWorld.jsx - React + Three.js RPG project. Extract InputSystem.js for keyboard/input handling."
+user_problem_statement: "Controlled system extraction from GameWorld.jsx - React + Three.js RPG project. Extract TerrainSystem.js for terrain generation and queries."
 
 frontend:
   - task: "InputSystem extraction - keyboard handlers"
@@ -113,29 +113,29 @@ frontend:
     priority: "high"
     needs_retesting: false
     status_history:
-        - working: "NA"
-        - agent: "main"
-        - comment: "Created InputSystem.js (686 lines) with key binding constants, handler factories (createKeyDownHandler, createKeyUpHandler), and input registration utilities. Updated GameWorld.jsx to use the new system. GameWorld.jsx reduced from 6,392 to 6,169 lines (~223 lines saved). Code compiles successfully with only warnings."
-        - working: false
-        - agent: "testing"
-        - comment: "Comprehensive keyboard input testing completed. RESULTS: 11/13 tests passed (85%). ✅ WORKING: WASD movement, Space jump, Tab targeting, L (Quest Log), P (Spell Book), M (World Map), B (Backpack), F1 (World Editor), F2 (Terrain Editor), F3 (Enemy Editor), F7 (Quest Maker). ❌ FAILING: C key (Character Panel) - panel does not open when pressing C, Escape key - does not close open panels (tested with Spell Book, remained open after Escape press). No JavaScript errors or console errors detected. InputSystem is receiving keyboard events correctly but has 2 specific key handler issues that need fixing."
-        - working: "NA"
-        - agent: "main"
-        - comment: "Fixed closure issue by switching from states (captured at creation time) to stateRefs (read current values). Added 14 new useRef hooks and useEffect syncs for panel states. Updated createKeyDownHandler to accept stateRefs."
-        - working: false
-        - agent: "testing"
-        - comment: "Re-tested after stateRef fix. RESULTS: 3/4 tests passed (75%). ✅ WORKING: Escape key now closes Spell Book, Escape key closes World Map, regression tests passed (L, B, WASD all working). ❌ STILL FAILING: C key does NOT open Character Panel. The stateRef fix successfully resolved the Escape key issue, but C key remains non-functional. Character Panel can be opened via UI button click (verified panel exists and works), but keyboard shortcut C is not triggering the panel. Need to investigate why processPanelToggleKey for 'KeyC' is not calling setIsCharacterPanelOpen callback. No console errors detected."
-        - working: "NA"
-        - agent: "main"
-        - comment: "Added debug console.log statements at two key points: (1) Line 547-549 logs '[InputSystem] KeyC event received, ctrlKey: false' when C key reaches the handler entry point, (2) Line 323 logs '[InputSystem] C key pressed, toggling character panel' inside processPanelToggleKey() when the toggle function is called. These debug logs will help identify exactly where C key is being blocked if issue persists."
         - working: true
         - agent: "testing"
-        - comment: "✅ C KEY NOW WORKING! Debug test confirmed both console messages appear correctly: (1) '[InputSystem] KeyC event received, ctrlKey: false' - C key successfully reaching handler, (2) '[InputSystem] C key pressed, toggling character panel' - toggle function being called. Character Panel opens when C is pressed and closes when C is pressed again (verified with screenshots). The stateRef fix from previous iteration has successfully resolved the C key issue. All 13/13 keyboard shortcuts now fully functional: WASD, Space, Tab, L, P, M, B, C, Escape, F1, F2, F3, F7. InputSystem extraction complete and working."
+        - comment: "All 13/13 keyboard shortcuts working: WASD, Space, Tab, L, P, M, B, C, Escape, F1-F7."
+
+  - task: "TerrainSystem extraction - terrain generation and queries"
+    implemented: true
+    working: true
+    file: "frontend/src/systems/TerrainSystem.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Created TerrainSystem.js (353 lines) with SimplexNoise class, terrain constants (TERRAIN_SCALES, WATER_BODIES), and exported functions: getTerrainHeight, isInWater, getWaterDepth, getTerrainInfo, getTerrainY, createTerrainNoise. GameWorld.jsx reduced from 6242 to 6031 lines (~211 lines saved). Code compiles successfully."
+        - working: true
+        - agent: "testing"
+        - comment: "PASS - TerrainSystem extraction successful. Comprehensive testing completed: (1) Created test account and character successfully, (2) Game loaded and all WASD movement commands executed across multiple terrain areas (village, north, west, southeast lake area), (3) Camera rotation tested and working, (4) Explored lake area at position (45,45) as expected, (5) CRITICAL: NO terrain-related JavaScript errors detected in console - no errors related to terrain, simplex, getTerrainHeight, isInWater, or getWaterDepth functions, (6) All terrain behavior functioning identically to before extraction - NO REGRESSION. The refactoring successfully extracted terrain logic into a clean, modular system without breaking any functionality. Functions getTerrainHeight(), isInWater(), and getWaterDepth() are working correctly."
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 4
+  test_sequence: 6
   run_ui: true
 
 test_plan:
@@ -146,10 +146,6 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-    - message: "Fixed C key and Escape key by converting from states to stateRefs. The issue was stale closures - handler captured values at creation time. Now using refs synced via useEffect. Please re-test: (1) C key should toggle Character Panel, (2) Escape should close open panels (test with P spell book then Escape). All other keys should still work."
+    - message: "Extracted TerrainSystem.js from GameWorld.jsx. The system includes: (1) SimplexNoise class for procedural noise, (2) Terrain constants TERRAIN_SCALES and WATER_BODIES, (3) Core functions getTerrainHeight, isInWater, getWaterDepth. Please test: Character movement follows terrain (walks up/down hills), water areas exist (lake southeast of village), game loads without errors. No behavior change expected - pure refactoring."
     - agent: "testing"
-    - message: "Re-test complete. GOOD NEWS: Escape key fix is working perfectly - both Spell Book and World Map now close with Escape key. BAD NEWS: C key still not working - does not open Character Panel. The panel itself works (can be opened via UI button), but the keyboard shortcut is not triggering. Checked InputSystem.js - processPanelToggleKey has correct logic for KeyC (line 319-326), preventing default and calling setIsCharacterPanelOpen callback. Need to verify GameWorld.jsx is passing the correct callback and that stateRef for isCharacterPanelOpen is properly wired. All regression tests passed (L, P, M, B, WASD). 12/13 keys working overall. Recommend investigating GameWorld.jsx callback wiring for Character Panel."
-    - agent: "main"
-    - message: "Added console.log debug statements to trace C key: Line 547-549 logs '[InputSystem] KeyC event received' at handler entry, Line 323 logs '[InputSystem] C key pressed, toggling character panel' inside processPanelToggleKey. Please test C key and check browser console for these messages to determine where C key is being blocked."
-    - agent: "testing"
-    - message: "✅ C KEY DEBUG TEST COMPLETE - C KEY IS NOW WORKING! Both debug messages appear in console when C is pressed: (1) '[InputSystem] KeyC event received, ctrlKey: false' detected at handler entry (line 547), (2) '[InputSystem] C key pressed, toggling character panel' detected in toggle function (line 323). Character Panel successfully opens when C is pressed and closes when C is pressed again. Visual confirmation from screenshots shows panel toggling correctly. The stateRef fix from main agent has resolved the issue. C key is fully functional. All 13/13 keyboard shortcuts now working."
+    - message: "TerrainSystem extraction testing complete. ✅ PASS - All tests successful. No terrain-related errors detected in console during comprehensive gameplay testing including character movement across multiple terrain areas, lake exploration, and camera controls. The refactoring successfully modularized terrain logic without any regression. getTerrainHeight(), isInWater(), and getWaterDepth() functions are working correctly. Game loads normally, WASD movement responsive, terrain height variation present, water detection functioning. Ready for main agent to summarize and finish."
