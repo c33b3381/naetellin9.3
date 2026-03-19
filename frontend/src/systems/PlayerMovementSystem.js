@@ -169,34 +169,27 @@ export const getTerrainHeightAtPosition = (scene, x, z, fallbackGetHeight) => {
 };
 
 /**
- * Check for collision with buildings/obstacles
- * Uses raycasting in 8 directions to detect nearby obstacles
+ * Check for collision with buildings/obstacles in a specific direction
+ * Uses raycasting to detect nearby obstacles
  * 
  * @param {THREE.Object3D} player - Player mesh/group
  * @param {THREE.Scene} scene - The scene
- * @param {number} checkRadius - Radius to check for collisions (default 1.5)
- * @returns {boolean} True if collision detected
+ * @param {THREE.Vector3} direction - Direction to check (normalized)
+ * @param {number} checkRadius - Radius to check for collisions
+ * @returns {boolean} True if collision detected in that direction
  */
-export const checkBuildingCollision = (player, scene, checkRadius = 1.5) => {
+export const checkBuildingCollisionInDirection = (player, scene, direction, checkRadius = 1.0) => {
   if (!player || !scene) return false;
   
   const raycaster = new THREE.Raycaster();
-  const playerPos = player.position.clone();
-  playerPos.y += 1; // Check at chest height
   
-  // Check 8 directions around player
-  const directions = [
-    new THREE.Vector3(1, 0, 0),    // East
-    new THREE.Vector3(-1, 0, 0),   // West
-    new THREE.Vector3(0, 0, 1),    // North
-    new THREE.Vector3(0, 0, -1),   // South
-    new THREE.Vector3(0.707, 0, 0.707),   // NE
-    new THREE.Vector3(-0.707, 0, 0.707),  // NW
-    new THREE.Vector3(0.707, 0, -0.707),  // SE
-    new THREE.Vector3(-0.707, 0, -0.707), // SW
-  ];
+  // Check at multiple heights (waist and chest) for better coverage
+  const heights = [0.5, 1.2]; // Waist and chest height
   
-  for (const direction of directions) {
+  for (const heightOffset of heights) {
+    const playerPos = player.position.clone();
+    playerPos.y += heightOffset;
+    
     raycaster.set(playerPos, direction);
     
     // Raycast against all scene children recursively
@@ -237,6 +230,39 @@ export const checkBuildingCollision = (player, scene, checkRadius = 1.5) => {
       if (isCollidable && intersect.distance < checkRadius) {
         return true;
       }
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * Check for collision with buildings/obstacles (legacy function)
+ * Uses raycasting in 8 directions to detect nearby obstacles
+ * 
+ * @param {THREE.Object3D} player - Player mesh/group
+ * @param {THREE.Scene} scene - The scene
+ * @param {number} checkRadius - Radius to check for collisions (default 1.0)
+ * @returns {boolean} True if collision detected
+ */
+export const checkBuildingCollision = (player, scene, checkRadius = 1.0) => {
+  if (!player || !scene) return false;
+  
+  // Check 8 directions around player
+  const directions = [
+    new THREE.Vector3(1, 0, 0),    // East
+    new THREE.Vector3(-1, 0, 0),   // West
+    new THREE.Vector3(0, 0, 1),    // North
+    new THREE.Vector3(0, 0, -1),   // South
+    new THREE.Vector3(0.707, 0, 0.707),   // NE
+    new THREE.Vector3(-0.707, 0, 0.707),  // NW
+    new THREE.Vector3(0.707, 0, -0.707),  // SE
+    new THREE.Vector3(-0.707, 0, -0.707), // SW
+  ];
+  
+  for (const direction of directions) {
+    if (checkBuildingCollisionInDirection(player, scene, direction, checkRadius)) {
+      return true;
     }
   }
   
@@ -306,21 +332,44 @@ export const updatePlayerMovement = (
     rotatedDirection = direction.clone();
     rotatedDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraState.rotationY);
     
-    // Move player
-    player.position.x += rotatedDirection.x * moveSpeed;
-    player.position.z += rotatedDirection.z * moveSpeed;
+    // ==================== AXIS-SEPARATED COLLISION FOR WALL SLIDING ====================
+    // Instead of moving both axes and reverting both on collision,
+    // we test X and Z separately to allow sliding along walls
     
-    // COLLISION DETECTION: Check for building/obstacle collision
-    if (checkBuildingCollision(player, scene)) {
-      // Collision detected - revert movement
+    const deltaX = rotatedDirection.x * moveSpeed;
+    const deltaZ = rotatedDirection.z * moveSpeed;
+    
+    // Test X-axis movement
+    player.position.x += deltaX;
+    
+    // Check collision in X direction
+    const xDirection = new THREE.Vector3(Math.sign(deltaX), 0, 0).normalize();
+    if (Math.abs(deltaX) > 0.001 && checkBuildingCollisionInDirection(player, scene, xDirection, 1.0)) {
+      // X-axis collision - revert X only
       player.position.x = lastPlayerPos.x;
+    }
+    
+    // Test Z-axis movement
+    player.position.z += deltaZ;
+    
+    // Check collision in Z direction
+    const zDirection = new THREE.Vector3(0, 0, Math.sign(deltaZ)).normalize();
+    if (Math.abs(deltaZ) > 0.001 && checkBuildingCollisionInDirection(player, scene, zDirection, 1.0)) {
+      // Z-axis collision - revert Z only
       player.position.z = lastPlayerPos.z;
-      moved = false;
-      rotatedDirection.set(0, 0, 0);
-    } else {
-      // No collision - rotate player to face movement direction
+    }
+    
+    // Check if we actually moved (at least one axis succeeded)
+    const actuallyMoved = (player.position.x !== lastPlayerPos.x) || (player.position.z !== lastPlayerPos.z);
+    
+    if (actuallyMoved) {
+      // Rotate player to face movement direction (only if we moved)
       const targetRotation = Math.atan2(rotatedDirection.x, rotatedDirection.z);
       player.rotation.y = targetRotation;
+    } else {
+      // Both axes blocked - no movement
+      moved = false;
+      rotatedDirection.set(0, 0, 0);
     }
   }
   
@@ -381,5 +430,6 @@ export default {
   updatePlayerMovement,
   calculateMovementDirection,
   getTerrainHeightAtPosition,
-  checkBuildingCollision
+  checkBuildingCollision,
+  checkBuildingCollisionInDirection
 };
