@@ -2395,15 +2395,15 @@ const GameWorld = () => {
     // A lively starter town with central square, market, and functional NPCs
     
     // === GROUND & TOWN SQUARE ===
-    // Town square ground - cobblestone
+    // Town square ground - cobblestone (raised above terrain)
     const townSquareGeometry = new THREE.CircleGeometry(18, 32);
     const townSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
     const townSquare = new THREE.Mesh(townSquareGeometry, townSquareMaterial);
     townSquare.rotation.x = -Math.PI / 2;
-    townSquare.position.y = 0.015;
+    townSquare.position.y = 0.15; // Raised from 0.015 to 0.15 to be above terrain
     scene.add(townSquare);
     
-    // Grass areas around the square
+    // Grass areas around the square (raised above terrain)
     const grassMaterial = new THREE.MeshStandardMaterial({ color: 0x32CD32 });
     const grassPatches = [
       { x: -22, z: 0, r: 8 },
@@ -2414,7 +2414,7 @@ const GameWorld = () => {
     grassPatches.forEach(patch => {
       const grass = new THREE.Mesh(new THREE.CircleGeometry(patch.r, 16), grassMaterial);
       grass.rotation.x = -Math.PI / 2;
-      grass.position.set(patch.x, 0.01, patch.z);
+      grass.position.set(patch.x, 0.12, patch.z); // Raised from 0.01 to 0.12 to be above terrain
       scene.add(grass);
     });
     
