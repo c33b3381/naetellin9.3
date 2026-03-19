@@ -3922,26 +3922,7 @@ const GameWorld = () => {
     // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
     
     // ==================== CASTLE ENEMIES ====================
-    // Spawn enemies inside the dark castle (uses CASTLE_X and CASTLE_Z from castle creation)
-    
-    // Courtyard skeleton guards
-    createMonster(CASTLE_X - 10, CASTLE_Z, 0xd4d4d4, 'Castle Guard', 'skeleton', 3);
-    createMonster(CASTLE_X + 10, CASTLE_Z, 0xd4d4d4, 'Castle Guard', 'skeleton', 3);
-    createMonster(CASTLE_X, CASTLE_Z - 10, 0xc4c4c4, 'Skeleton Warrior', 'skeleton', 4);
-    createMonster(CASTLE_X, CASTLE_Z + 10, 0xc4c4c4, 'Skeleton Warrior', 'skeleton', 4);
-    
-    // Inner castle elite guards
-    createMonster(CASTLE_X - 6, CASTLE_Z - 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
-    createMonster(CASTLE_X + 6, CASTLE_Z - 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
-    createMonster(CASTLE_X + 6, CASTLE_Z + 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
-    createMonster(CASTLE_X - 6, CASTLE_Z + 6, 0xb4b4b4, 'Elite Skeleton', 'skeleton', 5);
-    
-    // Castle boss - near main keep
-    createMonster(CASTLE_X, CASTLE_Z, 0x8B0000, 'Castle Lord', 'demon', 10);
-    
-    // Additional enemies patrolling near castle entrance
-    createMonster(CASTLE_X - 5, CASTLE_Z - 22, 0xa4a4a4, 'Gate Warden', 'skeleton', 6);
-    createMonster(CASTLE_X + 5, CASTLE_Z - 22, 0xa4a4a4, 'Gate Warden', 'skeleton', 6);
+    // Castle enemies removed - castle was at (80, -60), outside reduced world bounds (±115 units)
     // ==================== END CASTLE ENEMIES ====================
     
     // Wolf pack
