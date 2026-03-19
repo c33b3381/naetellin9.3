@@ -4206,31 +4206,90 @@ const GameWorld = () => {
     
     // ==================== CASTLE GOBLIN INVADERS ====================
     // Pack of goblins have taken over the castle at (-70, 60)!
+    // These are properly configured with the enemy AI system
     const castleCenterX = -70;
     const castleCenterZ = 60;
     
-    // Goblin patrol near entrance (guards)
-    createMonster(castleCenterX - 2, castleCenterZ + 18, 0x4a7c23, 'Goblin Guard', 'goblin', 3);
-    createMonster(castleCenterX + 2, castleCenterZ + 18, 0x4a7c23, 'Goblin Guard', 'goblin', 3);
+    // Define goblin positions with proper enemy data structure
+    const castleGoblins = [
+      // Entrance guards
+      { x: castleCenterX - 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Guard' },
+      { x: castleCenterX + 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Guard' },
+      
+      // Courtyard forces
+      { x: castleCenterX - 5, z: castleCenterZ + 2, level: 4, name: 'Goblin Warrior' },
+      { x: castleCenterX + 6, z: castleCenterZ - 3, level: 2, name: 'Goblin Scout' },
+      { x: castleCenterX - 3, z: castleCenterZ - 5, level: 3, name: 'Goblin Raider' },
+      { x: castleCenterX + 4, z: castleCenterZ + 5, level: 4, name: 'Goblin Warrior' },
+      
+      // Boss
+      { x: castleCenterX, z: castleCenterZ, level: 6, name: 'Goblin Chieftain' },
+      
+      // Interior raiders
+      { x: castleCenterX - 8, z: castleCenterZ + 5, level: 2, name: 'Goblin Looter' },
+      { x: castleCenterX + 8, z: castleCenterZ - 8, level: 5, name: 'Goblin Shaman' },
+      
+      // Wall sentries
+      { x: castleCenterX - 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
+      { x: castleCenterX + 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
+      { x: castleCenterX - 12, z: castleCenterZ - 12, level: 3, name: 'Goblin Sentry' },
+      { x: castleCenterX + 12, z: castleCenterZ - 12, level: 3, name: 'Goblin Sentry' },
+    ];
     
-    // Goblins in courtyard
-    createMonster(castleCenterX - 5, castleCenterZ + 2, 0x3d6b1a, 'Goblin Warrior', 'goblin', 4);
-    createMonster(castleCenterX + 6, castleCenterZ - 3, 0x4a7c23, 'Goblin Scout', 'goblin', 2);
-    createMonster(castleCenterX - 3, castleCenterZ - 5, 0x4a7c23, 'Goblin Raider', 'goblin', 3);
-    createMonster(castleCenterX + 4, castleCenterZ + 5, 0x3d6b1a, 'Goblin Warrior', 'goblin', 4);
-    
-    // Goblin leader in center of courtyard
-    createMonster(castleCenterX, castleCenterZ, 0x5a8c2a, 'Goblin Chieftain', 'goblin', 6, null, 40, 12);
-    
-    // Goblins near interior buildings
-    createMonster(castleCenterX - 8, castleCenterZ + 5, 0x4a7c23, 'Goblin Looter', 'goblin', 2);
-    createMonster(castleCenterX + 8, castleCenterZ - 8, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5, null, 30, 8);
-    
-    // Scouts near walls
-    createMonster(castleCenterX - 12, castleCenterZ + 12, 0x4a7c23, 'Goblin Lookout', 'goblin', 2);
-    createMonster(castleCenterX + 12, castleCenterZ + 12, 0x4a7c23, 'Goblin Lookout', 'goblin', 2);
-    createMonster(castleCenterX - 12, castleCenterZ - 12, 0x4a7c23, 'Goblin Sentry', 'goblin', 3);
-    createMonster(castleCenterX + 12, castleCenterZ - 12, 0x4a7c23, 'Goblin Sentry', 'goblin', 3);
+    // Create enemies with proper AI using the enemy system
+    castleGoblins.forEach(goblinData => {
+      // Get goblin stats from database
+      const goblinBase = {
+        label: 'Goblin',
+        color: '#4a7c23',
+        baseLevel: 1,
+        baseHealth: 50,
+        baseDamage: 3,
+        xpReward: 15,
+        goldDrop: [1, 5]
+      };
+      
+      const levelMultiplier = 1 + (goblinData.level - goblinBase.baseLevel) * 0.1;
+      const balanceMultiplier = 0.35; // Balanced stats (35% of base)
+      
+      const enemyData = {
+        enemyType: 'goblin',
+        name: goblinData.name,
+        level: goblinData.level,
+        maxHealth: Math.round(goblinBase.baseHealth * levelMultiplier * balanceMultiplier),
+        currentHealth: Math.round(goblinBase.baseHealth * levelMultiplier * balanceMultiplier),
+        damage: Math.round(goblinBase.baseDamage * levelMultiplier * balanceMultiplier),
+        xpReward: Math.round(goblinBase.xpReward * levelMultiplier),
+        goldDrop: goblinBase.goldDrop,
+        color: goblinBase.color,
+        patrolRadius: 8, // Patrol within castle
+        respawnTime: 120, // 2 minute respawn
+        tier: 'tier1',
+        position: { x: goblinData.x, y: 0, z: goblinData.z }
+      };
+      
+      // Create enemy with full AI
+      const enemyId = `castle_goblin_${goblinData.x}_${goblinData.z}`;
+      const enemyMesh = createEnemyMesh(
+        goblinData.x,
+        goblinData.z,
+        enemyData,
+        enemyId
+      );
+      
+      if (enemyMesh && sceneRef.current) {
+        sceneRef.current.add(enemyMesh);
+        enemyMeshesRef.current.push(enemyMesh);
+        
+        // Add to placedEnemies state
+        setPlacedEnemies(prev => [...prev, {
+          ...enemyData,
+          x: goblinData.x,
+          z: goblinData.z,
+          enemyId: enemyId
+        }]);
+      }
+    });
     // ==================== END CASTLE GOBLIN INVADERS ====================
     
     // Wolf pack
