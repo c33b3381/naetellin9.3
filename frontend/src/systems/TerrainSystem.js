@@ -13,15 +13,23 @@
 
 // ==================== TERRAIN CONSTANTS ====================
 
-// Terrain generation scales
+// Terrain generation scales (REDUCED for flatter, more playable terrain)
 export const TERRAIN_SCALES = {
-  base: 0.015,
-  hill: 0.008,
-  detail: 0.05,
+  base: 0.015,      // Frequency stays same
+  hill: 0.008,      // Frequency stays same
+  detail: 0.05,     // Frequency stays same
 };
 
-// Village flattening
-export const VILLAGE_FLATTEN_RADIUS = 40;
+// Terrain amplitude multipliers (REDUCED for usability overhaul)
+export const TERRAIN_AMPLITUDES = {
+  base: 3,          // Reduced from 8 (base rolling terrain)
+  hill: 5,          // Reduced from 12 (larger hills)
+  detail: 0.2,      // Reduced from 0.5 (small bumps)
+};
+
+// Village flattening (EXPANDED for larger stable spawn area)
+export const VILLAGE_FLATTEN_RADIUS = 60;    // Increased from 40
+export const VILLAGE_TARGET_HEIGHT = 0.5;    // Target height for spawn area
 export const PATH_WIDTH = 3;
 
 // Water body definitions
@@ -195,6 +203,8 @@ export const getTerrainNoise = () => terrainNoise;
  * Get terrain height at any world position
  * Includes zone-specific terrain modifications
  * 
+ * USABILITY OVERHAUL: Reduced amplitude for flatter, more walkable terrain
+ * 
  * @param {number} x - World X coordinate
  * @param {number} z - World Z coordinate
  * @returns {number} Terrain height at position (minimum 0)
@@ -204,41 +214,45 @@ export const getTerrainHeight = (x, z) => {
   const hillScale = TERRAIN_SCALES.hill;
   const detailScale = TERRAIN_SCALES.detail;
   
-  // Base terrain with gentle rolling hills
-  let height = terrainNoise.fbm(x * scale, z * scale, 4, 2.0, 0.5) * 8;
+  // Base terrain with gentle rolling hills (REDUCED AMPLITUDE)
+  let height = terrainNoise.fbm(x * scale, z * scale, 4, 2.0, 0.5) * TERRAIN_AMPLITUDES.base;
   
-  // Add larger hills
-  height += terrainNoise.fbm(x * hillScale + 100, z * hillScale + 100, 3, 2.0, 0.6) * 12;
+  // Add larger hills (REDUCED AMPLITUDE)
+  height += terrainNoise.fbm(x * hillScale + 100, z * hillScale + 100, 3, 2.0, 0.6) * TERRAIN_AMPLITUDES.hill;
   
-  // Add small detail bumps
-  height += terrainNoise.noise2D(x * detailScale, z * detailScale) * 0.5;
+  // Add small detail bumps (REDUCED AMPLITUDE)
+  height += terrainNoise.noise2D(x * detailScale, z * detailScale) * TERRAIN_AMPLITUDES.detail;
   
-  // Flatten areas around village center
+  // IMPROVED SPAWN FLATTENING: Smooth lerp to target height instead of multiplying
   const distFromCenter = Math.sqrt(x * x + z * z);
   if (distFromCenter < VILLAGE_FLATTEN_RADIUS) {
-    const flatten = Math.max(0, 1 - distFromCenter / VILLAGE_FLATTEN_RADIUS);
-    height *= (1 - flatten * flatten);
+    // Smooth falloff using squared ease-out
+    const flattenStrength = Math.max(0, 1 - distFromCenter / VILLAGE_FLATTEN_RADIUS);
+    const smoothFlatten = flattenStrength * flattenStrength;
+    
+    // Lerp height toward target spawn height
+    height = height * (1 - smoothFlatten) + VILLAGE_TARGET_HEIGHT * smoothFlatten;
   }
   
-  // Flatten paths
+  // Flatten paths (less aggressive)
   if (Math.abs(x) < PATH_WIDTH || Math.abs(z) < PATH_WIDTH) {
-    height *= 0.3;
+    height *= 0.5;  // Changed from 0.3 to 0.5 (less extreme)
   }
   
-  // Zone-specific terrain modifications
-  // Frozen peaks - more mountainous
+  // Zone-specific terrain modifications (REDUCED for usability)
+  // Frozen peaks - more mountainous (REDUCED from +15 to +8)
   if (z < -100) {
-    height += terrainNoise.fbm(x * 0.02, z * 0.02, 3, 2.0, 0.7) * 15;
+    height += terrainNoise.fbm(x * 0.02, z * 0.02, 3, 2.0, 0.7) * 8;
   }
   
-  // Scorched plains - flatter with some dunes
+  // Scorched plains - flatter with some dunes (REDUCED from +3 to +2)
   if (x < -100) {
-    height = height * 0.5 + terrainNoise.noise2D(x * 0.03, z * 0.03) * 3;
+    height = height * 0.5 + terrainNoise.noise2D(x * 0.03, z * 0.03) * 2;
   }
   
-  // Crystal caves - rolling with some plateaus
+  // Crystal caves - rolling with some plateaus (gentler steps)
   if (z > 100) {
-    height = Math.floor(height / 3) * 3 + (height % 3) * 0.5;
+    height = Math.floor(height / 2) * 2 + (height % 2) * 0.5;  // Changed from /3 to /2
   }
   
   return Math.max(0, height);

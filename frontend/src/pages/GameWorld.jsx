@@ -2102,7 +2102,7 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
-    const TERRAIN_VERSION = 2; // Increment when terrain generation changes
+    const TERRAIN_VERSION = 3; // Increment when terrain generation changes (v3: Usability overhaul - flatter terrain + spawn area)
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();
@@ -2753,9 +2753,32 @@ const GameWorld = () => {
       window1.position.set(1.2, 1.5, 1.76);
       houseGroup.add(window1);
       
+      // COLLISION: Add invisible collider box
+      const colliderGeometry = new THREE.BoxGeometry(4.2, 2.5, 3.7);  // Slightly larger than walls
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+      collider.position.y = 1.25;
+      collider.name = 'collider';
+      houseGroup.add(collider);
+      
+      // Mark house group with collision metadata
+      houseGroup.userData = { 
+        type: 'building', 
+        hasCollision: true,
+        interactable: false  // Not selectable, but blocks raycasting
+      };
+      
       houseGroup.position.set(x, 0, z);
       houseGroup.rotation.y = rotation;
       scene.add(houseGroup);
+      
+      // Add collider to selectable objects so raycaster can detect it
+      selectableObjects.current.push(collider);
+      
       return houseGroup;
     };
     
@@ -3163,7 +3186,7 @@ const GameWorld = () => {
     const createBuilding = (x, z, width, height, depth, roofColor, name, type = 'building') => {
       const buildingGroup = new THREE.Group();
       buildingGroup.name = name;
-      buildingGroup.userData = { type, name, interactable: true };
+      buildingGroup.userData = { type, name, interactable: true, hasCollision: true };
       
       // Walls with texture
       const wallsMaterial = new THREE.MeshStandardMaterial({ color: 0xD2691E, roughness: 0.9 });
@@ -3204,10 +3227,26 @@ const GameWorld = () => {
         buildingGroup.add(rightWindow);
       }
       
+      // COLLISION: Add invisible collider box
+      const colliderGeometry = new THREE.BoxGeometry(width + 0.5, height, depth + 0.5);  // Slightly larger than walls
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+      collider.position.y = height / 2;
+      collider.name = 'collider';
+      buildingGroup.add(collider);
+      
       // Place building at terrain height
       const terrainY = getTerrainHeight(x, z);
       buildingGroup.position.set(x, terrainY, z);
       scene.add(buildingGroup);
+      
+      // Add collider to selectable objects so raycaster can detect it
+      selectableObjects.current.push(collider);
+      
       return buildingGroup;
     };
     
