@@ -55,6 +55,14 @@ import {
 } from '../systems/WorldAssetFactory';
 import { createGameScene, createGameCamera, createGameRenderer, setupWorldLighting } from '../systems/WorldSetup';
 import {
+  CORPSE_REVIVE_RADIUS,
+  GRAVEYARD_POSITION,
+  handlePlayerDeath as deathSystemHandlePlayerDeath,
+  handleReleaseCorpse as deathSystemHandleReleaseCorpse,
+  handlePlayerRevive as deathSystemHandlePlayerRevive,
+  isNearCorpse
+} from '../systems/DeathResurrectionSystem';
+import {
   SELECTABLE_TYPES,
   normalizeObjectForSave,
   normalizeEnemyForSave,
@@ -335,9 +343,9 @@ const GameWorld = () => {
   const isDeadRef = useRef(false); // Ref for game loop access
   const isGhostRef = useRef(false); // Ref for game loop access
   const justTeleportedRef = useRef(false); // Prevent position override after teleport
-  const CORPSE_REVIVE_RADIUS = 5; // Must be within 5 units of corpse to revive
-  const GRAVEYARD_X = -40;
-  const GRAVEYARD_Z = -40;
+  // Death/resurrection constants imported from DeathResurrectionSystem
+  const GRAVEYARD_X = GRAVEYARD_POSITION.x;
+  const GRAVEYARD_Z = GRAVEYARD_POSITION.z;
   
   // Keep death refs updated
   useEffect(() => {
@@ -769,183 +777,66 @@ const GameWorld = () => {
   // ==================== PLAYER DEATH & RESURRECTION SYSTEM ====================
   
   // Handle player death
+  // ==================== DEATH & RESURRECTION SYSTEM ====================
+  // Using DeathResurrectionSystem for all death/resurrection logic
+  
   const handlePlayerDeath = useCallback(() => {
     if (isDead) return; // Already dead
     
-    setIsDead(true);
-    setShowReleaseDialog(true);
-    setIsAutoAttacking(false);
-    setIsInCombat(false);
-    
-    // Store corpse position
-    if (playerRef.current) {
-      setCorpsePosition({
-        x: playerRef.current.position.x,
-        z: playerRef.current.position.z
-      });
-    }
-    
-    // Clear all combat states
-    combatEngagedEnemiesRef.current.clear();
-    npcCombatStateRef.current.clear();
-    
-    // Deselect target
-    setSelectedTarget(null);
-    
-    addNotification('You have died!', 'error');
+    deathSystemHandlePlayerDeath({
+      playerRef,
+      combatEngagedEnemiesRef,
+      npcCombatStateRef,
+      setters: {
+        setIsDead,
+        setShowReleaseDialog,
+        setIsAutoAttacking,
+        setIsInCombat,
+        setCorpsePosition,
+        setSelectedTarget
+      },
+      addNotification
+    });
   }, [isDead, addNotification]);
   
   // Handle releasing corpse (become ghost at graveyard)
   const handleReleaseCorpse = useCallback(() => {
-    setShowReleaseDialog(false);
-    setIsGhost(true);
-    
-    // Create player corpse at death location BEFORE teleporting
-    if (sceneRef.current && corpsePosition && playerRef.current) {
-      // Create a copy of the player model as a corpse
-      const corpseGroup = new THREE.Group();
-      corpseGroup.name = 'playerCorpse';
-      
-      // Get player colors/appearance
-      const playerColor = playerRef.current.userData?.skinColor || 0xffdbac;
-      const armorColor = playerRef.current.userData?.armorColor || 0x8B4513;
-      
-      // Create body (lying down - rotated)
-      const bodyGeom = new THREE.CapsuleGeometry(0.3, 0.8, 4, 8);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: armorColor });
-      const body = new THREE.Mesh(bodyGeom, bodyMat);
-      body.rotation.z = Math.PI / 2; // Lay on side
-      body.position.y = 0.3;
-      corpseGroup.add(body);
-      
-      // Create head
-      const headGeom = new THREE.SphereGeometry(0.25, 16, 16);
-      const headMat = new THREE.MeshStandardMaterial({ color: playerColor });
-      const head = new THREE.Mesh(headGeom, headMat);
-      head.position.set(0.7, 0.3, 0);
-      corpseGroup.add(head);
-      
-      // Create legs
-      const legGeom = new THREE.CapsuleGeometry(0.12, 0.5, 4, 8);
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
-      const leg1 = new THREE.Mesh(legGeom, legMat);
-      leg1.rotation.z = Math.PI / 2;
-      leg1.position.set(-0.6, 0.15, 0.15);
-      corpseGroup.add(leg1);
-      const leg2 = new THREE.Mesh(legGeom, legMat);
-      leg2.rotation.z = Math.PI / 2;
-      leg2.position.set(-0.6, 0.15, -0.15);
-      corpseGroup.add(leg2);
-      
-      // Create arms
-      const armGeom = new THREE.CapsuleGeometry(0.08, 0.4, 4, 8);
-      const armMat = new THREE.MeshStandardMaterial({ color: playerColor });
-      const arm1 = new THREE.Mesh(armGeom, armMat);
-      arm1.rotation.z = Math.PI / 2;
-      arm1.position.set(0.2, 0.3, 0.4);
-      corpseGroup.add(arm1);
-      const arm2 = new THREE.Mesh(armGeom, armMat);
-      arm2.rotation.z = Math.PI / 2;
-      arm2.position.set(0.2, 0.3, -0.4);
-      corpseGroup.add(arm2);
-      
-      // Add a subtle glow/highlight to make corpse visible
-      const glowGeom = new THREE.CircleGeometry(1.5, 32);
-      const glowMat = new THREE.MeshBasicMaterial({ 
-        color: 0xffff00, 
-        transparent: true, 
-        opacity: 0.3,
-        side: THREE.DoubleSide
-      });
-      const glow = new THREE.Mesh(glowGeom, glowMat);
-      glow.rotation.x = -Math.PI / 2;
-      glow.position.y = 0.05;
-      corpseGroup.add(glow);
-      
-      // Position corpse at death location
-      const terrainY = getTerrainHeight(corpsePosition.x, corpsePosition.z);
-      corpseGroup.position.set(corpsePosition.x, terrainY, corpsePosition.z);
-      
-      sceneRef.current.add(corpseGroup);
-      playerCorpseRef.current = corpseGroup;
-    }
-    
-    // Teleport player to graveyard
-    if (playerRef.current) {
-      justTeleportedRef.current = true; // Prevent position override
-      const graveyardY = getTerrainHeight(GRAVEYARD_X, GRAVEYARD_Z);
-      playerRef.current.position.set(GRAVEYARD_X, graveyardY, GRAVEYARD_Z);
-      
-      // Clear teleport flag after a delay
-      setTimeout(() => {
-        justTeleportedRef.current = false;
-      }, 1000);
-      
-      // Make player transparent (ghost effect)
-      playerRef.current.traverse((child) => {
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => {
-              m.transparent = true;
-              m.opacity = 0.4;
-            });
-          } else {
-            child.material.transparent = true;
-            child.material.opacity = 0.4;
-          }
-        }
-      });
-    }
-    
-    addNotification('You are now a ghost. Return to your corpse to revive.', 'info');
+    deathSystemHandleReleaseCorpse({
+      corpsePosition,
+      playerRef,
+      sceneRef,
+      playerCorpseRef,
+      justTeleportedRef,
+      getTerrainHeight,
+      setters: {
+        setShowReleaseDialog,
+        setIsGhost
+      },
+      addNotification
+    });
   }, [corpsePosition, addNotification]);
   
   // Handle reviving at corpse
   const handleRevive = useCallback(() => {
-    setShowReviveDialog(false);
-    setIsGhost(false);
-    setIsDead(false);
-    
-    // Restore to 50% HP and Mana
-    setCurrentHealth(Math.floor(maxHealth * 0.5));
-    setCurrentMana(Math.floor(maxMana * 0.5));
-    
-    // Teleport to corpse position
-    if (playerRef.current && corpsePosition) {
-      playerRef.current.position.x = corpsePosition.x;
-      playerRef.current.position.z = corpsePosition.z;
-      playerRef.current.position.y = getTerrainHeight(corpsePosition.x, corpsePosition.z);
-      
-      // Restore player opacity (remove ghost effect)
-      playerRef.current.traverse((child) => {
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => {
-              m.transparent = false;
-              m.opacity = 1.0;
-            });
-          } else {
-            child.material.transparent = false;
-            child.material.opacity = 1.0;
-          }
-        }
-      });
-    }
-    
-    // Remove corpse marker (legacy)
-    if (corpseMarkerRef.current && sceneRef.current) {
-      sceneRef.current.remove(corpseMarkerRef.current);
-      corpseMarkerRef.current = null;
-    }
-    
-    // Remove player corpse model
-    if (playerCorpseRef.current && sceneRef.current) {
-      sceneRef.current.remove(playerCorpseRef.current);
-      playerCorpseRef.current = null;
-    }
-    
-    setCorpsePosition(null);
-    addNotification('You have been resurrected!', 'success');
+    deathSystemHandlePlayerRevive({
+      corpsePosition,
+      playerRef,
+      sceneRef,
+      corpseMarkerRef,
+      playerCorpseRef,
+      getTerrainHeight,
+      maxHealth,
+      maxMana,
+      setters: {
+        setShowReviveDialog,
+        setIsGhost,
+        setIsDead,
+        setCurrentHealth,
+        setCurrentMana,
+        setCorpsePosition
+      },
+      addNotification
+    });
   }, [corpsePosition, maxHealth, maxMana, addNotification]);
   
   // Check if player is near corpse (for revive dialog)
@@ -955,11 +846,10 @@ const GameWorld = () => {
     const checkDistance = setInterval(() => {
       if (!playerRef.current || !corpsePosition) return;
       
-      const dx = playerRef.current.position.x - corpsePosition.x;
-      const dz = playerRef.current.position.z - corpsePosition.z;
-      const distance = Math.sqrt(dx * dx + dz * dz);
+      const playerPos = playerRef.current.position;
+      const nearCorpse = isNearCorpse(playerPos, corpsePosition, CORPSE_REVIVE_RADIUS);
       
-      if (distance <= CORPSE_REVIVE_RADIUS) {
+      if (nearCorpse) {
         setShowReviveDialog(true);
       } else {
         setShowReviveDialog(false);
