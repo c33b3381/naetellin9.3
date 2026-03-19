@@ -2916,14 +2916,7 @@ const GameWorld = () => {
     
     // ==================== END TOWN LAYOUT IMPROVEMENTS ====================
     
-    // Training area ground (dirt) - Now positioned along clear path
-    const trainingGround = new THREE.Mesh(
-      new THREE.CircleGeometry(8, 16),
-      new THREE.MeshStandardMaterial({ color: 0x9B7653, roughness: 0.95 })
-    );
-    trainingGround.rotation.x = -Math.PI / 2;
-    trainingGround.position.set(-18, 0.01, -12);
-    scene.add(trainingGround);
+    // Training area visuals removed - using natural terrain instead of decorative ground circle
     
     // Small houses/huts around the town (moved away from market areas)
     createSmallHouse(-28, 20, Math.PI * 0.1, 0x8B4513);
@@ -3704,8 +3697,8 @@ const GameWorld = () => {
       return treeGroup;
     };
     
-    // Forest areas
-    [[-20, -12], [-25, 0], [-22, 12], [-18, 20], [20, -12], [25, 0], [22, 12], [18, 20],
+    // Forest areas (removed trees near training ground and spawn center for clarity)
+    [[-22, 12], [-18, 20], [20, -12], [25, 0], [22, 12], [18, 20],
      [-30, -20], [-35, 5], [30, -20], [35, 5], [0, 28], [-8, 25], [8, 25]].forEach(([x, z]) => {
       createTree(x, z, 0.8 + Math.random() * 0.4);
     });
@@ -3762,10 +3755,10 @@ const GameWorld = () => {
     // Positioned prominently at town center near fountain
     createQuestGiverNPC(0, 3, 'Elder Theron', 'elder_theron_1');
     
-    // 2. WARRIOR TRAINER - TRAINING AREA (clear association)
-    // Position trainer IN the training area for clear role association
-    const trainerX = -18;
-    const trainerZ = -10; // Moved 2 units south for better positioning in training area
+    // 2. WARRIOR TRAINER - TRAINING AREA (outside the training circle, not on dummies)
+    // Position trainer NEAR but not IN the training area for clear role association
+    const trainerX = -22;  // Moved west (was -18), now beside the weapon racks
+    const trainerZ = -12;  // Central position for training area visibility
     const trainerTerrainY = getTerrainHeight(trainerX, trainerZ);
     const warriorTrainerNPC = createTrainer(trainerX, trainerZ, 'warrior');
     warriorTrainerNPC.position.y = trainerTerrainY;
