@@ -2407,37 +2407,8 @@ const GameWorld = () => {
       return getTerrainHeight(x, z); // Objects outside spawn area use terrain height
     };
     
-    // Town square ground - cobblestone (raised ABOVE terrain)
-    const townSquareGeometry = new THREE.CircleGeometry(18, 32);
-    const townSquareMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x8B7355, 
-      roughness: 0.9,
-      side: THREE.DoubleSide // Ensure it's visible from both sides
-    });
-    const townSquare = new THREE.Mesh(townSquareGeometry, townSquareMaterial);
-    townSquare.rotation.x = -Math.PI / 2;
-    townSquare.position.y = SPAWN_PLATFORM_HEIGHT;
-    townSquare.receiveShadow = true;
-    scene.add(townSquare);
-    
-    // Grass areas around the square (raised ABOVE terrain)
-    const grassMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x32CD32,
-      side: THREE.DoubleSide
-    });
-    const grassPatches = [
-      { x: -22, z: 0, r: 8 },
-      { x: 22, z: 0, r: 8 },
-      { x: 0, z: -22, r: 8 },
-      { x: 0, z: 22, r: 8 },
-    ];
-    grassPatches.forEach(patch => {
-      const grass = new THREE.Mesh(new THREE.CircleGeometry(patch.r, 16), grassMaterial);
-      grass.rotation.x = -Math.PI / 2;
-      grass.position.set(patch.x, SPAWN_PLATFORM_HEIGHT - 0.05, patch.z); // Slightly below town square
-      grass.receiveShadow = true;
-      scene.add(grass);
-    });
+    // Town square circle REMOVED per user request
+    // Grass patches REMOVED per user request
     
     // === PATHS ===
     // NOTE: All path meshes removed for clean uniform ground
