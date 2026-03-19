@@ -2288,28 +2288,13 @@ const GameWorld = () => {
     };
     
     // Create water bodies
-    const mainLake = createWaterBody(45, 45, 25); // Lake near village
-    const frozenPond = createWaterBody(-20, -180, 15); // Frozen pond (will look icy)
-    const oasis = createWaterBody(-180, 30, 12); // Oasis in scorched plains
-    const river = createWaterBody(100, 20, 8, 1.5, true, 180); // River through darkwood
+    // NOTE: All water bodies removed for clean slate
+    // The main lake at (45, 45) is outside the ideal spawn area
+    // Frozen pond (-20, -180), oasis (-180, 30), and river (100+) are all outside 240x240 bounds
+    // Use F1 World Builder to manually place water features within the active area if needed
     
-    // Frozen pond gets ice overlay
-    const iceGeometry = new THREE.CircleGeometry(14, 32);
-    const iceMaterial = new THREE.MeshStandardMaterial({
-      color: 0xb0e0e6,
-      transparent: true,
-      opacity: 0.6,
-      roughness: 0.05,
-      metalness: 0.8
-    });
-    const ice = new THREE.Mesh(iceGeometry, iceMaterial);
-    ice.rotation.x = -Math.PI / 2;
-    ice.position.set(-20, 0.4, -180);
-    ice.name = 'frozen_pond_ice';
-    scene.add(ice);
-    
-    // Water animation references
-    const waterBodies = [mainLake, frozenPond, oasis];
+    // Water animation references (empty array since no water bodies)
+    const waterBodies = [];
     
     // ==================== TERRAIN DECORATIONS ====================
     

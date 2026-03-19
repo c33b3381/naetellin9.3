@@ -32,35 +32,35 @@ export const VILLAGE_FLATTEN_RADIUS = 100;   // Large flat area around spawn
 export const VILLAGE_TARGET_HEIGHT = 0.3;    // Very flat target height
 export const PATH_WIDTH = 3;
 
-// Water body definitions
+// Water body definitions (DISABLED - all water outside 240x240 world bounds)
 export const WATER_BODIES = {
-  mainLake: {
-    x: 45,
-    z: 45,
-    radius: 25,
-    maxDepth: 3,
-  },
-  river: {
-    startX: 100,
-    endX: 280,
-    baseZ: 20,
-    amplitude: 15,
-    frequency: 0.05,
-    width: 8,
-    maxDepth: 1.5,
-  },
-  frozenPond: {
-    x: -20,
-    z: -180,
-    radius: 15,
-    maxDepth: 2,
-  },
-  oasis: {
-    x: -180,
-    z: 30,
-    radius: 12,
-    maxDepth: 2,
-  },
+  // mainLake: {
+  //   x: 45,
+  //   z: 45,
+  //   radius: 25,
+  //   maxDepth: 3,
+  // },
+  // river: {
+  //   startX: 100,
+  //   endX: 280,
+  //   baseZ: 20,
+  //   amplitude: 15,
+  //   frequency: 0.05,
+  //   width: 8,
+  //   maxDepth: 1.5,
+  // },
+  // frozenPond: {
+  //   x: -20,
+  //   z: -180,
+  //   radius: 15,
+  //   maxDepth: 2,
+  // },
+  // oasis: {
+  //   x: -180,
+  //   z: 30,
+  //   radius: 12,
+  //   maxDepth: 2,
+  // },
 };
 
 // ==================== SIMPLEX NOISE CLASS ====================
@@ -262,73 +262,28 @@ export const getTerrainHeight = (x, z) => {
 
 /**
  * Check if a position is in water
+ * NOTE: All water bodies removed - always returns false
  * 
  * @param {number} x - World X coordinate
  * @param {number} z - World Z coordinate
  * @returns {boolean} True if position is in water
  */
 export const isInWater = (x, z) => {
-  const { mainLake, river, frozenPond, oasis } = WATER_BODIES;
-  
-  // Main lake near village (southeast)
-  const distToLake = Math.sqrt((x - mainLake.x) ** 2 + (z - mainLake.z) ** 2);
-  if (distToLake < mainLake.radius) return true;
-  
-  // River running through darkwood forest
-  if (x > river.startX && x < river.endX) {
-    const riverZ = river.baseZ + Math.sin(x * river.frequency) * river.amplitude;
-    if (Math.abs(z - riverZ) < river.width) return true;
-  }
-  
-  // Pond in frozen peaks
-  const distToPond = Math.sqrt((x - frozenPond.x) ** 2 + (z - frozenPond.z) ** 2);
-  if (distToPond < frozenPond.radius) return true;
-  
-  // Small pond in scorched plains (oasis)
-  const distToOasis = Math.sqrt((x - oasis.x) ** 2 + (z - oasis.z) ** 2);
-  if (distToOasis < oasis.radius) return true;
-  
+  // No water bodies in the 240x240 world
   return false;
 };
 
 /**
  * Get water depth at a position
  * Returns 0 if not in water
+ * NOTE: All water bodies removed - always returns 0
  * 
  * @param {number} x - World X coordinate
  * @param {number} z - World Z coordinate
  * @returns {number} Water depth (0 if not in water)
  */
 export const getWaterDepth = (x, z) => {
-  const { mainLake, river, frozenPond, oasis } = WATER_BODIES;
-  
-  // Main lake
-  const distToLake = Math.sqrt((x - mainLake.x) ** 2 + (z - mainLake.z) ** 2);
-  if (distToLake < mainLake.radius) {
-    return Math.max(0, (1 - distToLake / mainLake.radius) * mainLake.maxDepth);
-  }
-  
-  // River
-  if (x > river.startX && x < river.endX) {
-    const riverZ = river.baseZ + Math.sin(x * river.frequency) * river.amplitude;
-    const distToRiver = Math.abs(z - riverZ);
-    if (distToRiver < river.width) {
-      return Math.max(0, (1 - distToRiver / river.width) * river.maxDepth);
-    }
-  }
-  
-  // Frozen pond
-  const distToPond = Math.sqrt((x - frozenPond.x) ** 2 + (z - frozenPond.z) ** 2);
-  if (distToPond < frozenPond.radius) {
-    return Math.max(0, (1 - distToPond / frozenPond.radius) * frozenPond.maxDepth);
-  }
-  
-  // Oasis
-  const distToOasis = Math.sqrt((x - oasis.x) ** 2 + (z - oasis.z) ** 2);
-  if (distToOasis < oasis.radius) {
-    return Math.max(0, (1 - distToOasis / oasis.radius) * oasis.maxDepth);
-  }
-  
+  // No water bodies in the 240x240 world
   return 0;
 };
 
@@ -453,39 +408,14 @@ export const getTerrainSlope = (x, z, sampleDist = 2) => {
 
 /**
  * Get distance to nearest water body (normalized)
+ * NOTE: All water bodies removed - always returns 0
  * @param {number} x - World X coordinate
  * @param {number} z - World Z coordinate
  * @returns {number} Proximity value 0-1 (1 = at water edge, 0 = far from water)
  */
 export const getWaterProximity = (x, z) => {
-  const { mainLake, river, frozenPond, oasis } = WATER_BODIES;
-  
-  let minDist = Infinity;
-  const maxProximityDist = 15; // Max distance to consider "near water"
-  
-  // Check main lake
-  const distToLake = Math.sqrt((x - mainLake.x) ** 2 + (z - mainLake.z) ** 2) - mainLake.radius;
-  if (distToLake < minDist) minDist = distToLake;
-  
-  // Check river (approximate)
-  if (x > river.startX - 20 && x < river.endX + 20) {
-    const riverZ = river.baseZ + Math.sin(x * river.frequency) * river.amplitude;
-    const distToRiver = Math.abs(z - riverZ) - river.width;
-    if (distToRiver < minDist) minDist = distToRiver;
-  }
-  
-  // Check frozen pond
-  const distToPond = Math.sqrt((x - frozenPond.x) ** 2 + (z - frozenPond.z) ** 2) - frozenPond.radius;
-  if (distToPond < minDist) minDist = distToPond;
-  
-  // Check oasis
-  const distToOasis = Math.sqrt((x - oasis.x) ** 2 + (z - oasis.z) ** 2) - oasis.radius;
-  if (distToOasis < minDist) minDist = distToOasis;
-  
-  // Convert to proximity (0-1, where 1 is at water edge)
-  if (minDist <= 0) return 1; // In or at water
-  if (minDist >= maxProximityDist) return 0; // Far from water
-  return 1 - (minDist / maxProximityDist);
+  // No water bodies in the 240x240 world
+  return 0;
 };
 
 /**
