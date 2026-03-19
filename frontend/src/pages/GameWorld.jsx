@@ -2558,9 +2558,32 @@ const GameWorld = () => {
         }
       }
       
+      // COLLISION: Add invisible collider box around stall
+      const colliderGeometry = new THREE.BoxGeometry(3.0, 2.5, 1.8);
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+      collider.position.set(0, 1.25, 0); // Center of stall
+      collider.name = 'collider';
+      stallGroup.add(collider);
+      
+      // Mark stall with collision metadata
+      stallGroup.userData = { 
+        type: 'market_stall', 
+        hasCollision: true,
+        interactable: true
+      };
+      
       stallGroup.position.set(x, 0, z);
       stallGroup.rotation.y = rotation;
       scene.add(stallGroup);
+      
+      // Add collider to selectable objects for collision detection
+      selectableObjects.current.push(collider);
+      
       return stallGroup;
     };
     
