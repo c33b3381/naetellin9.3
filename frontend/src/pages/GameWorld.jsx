@@ -3684,12 +3684,13 @@ const GameWorld = () => {
     };
     
     // Forest areas (filtered to active world radius of 120 units)
-    [[-22, 12], [-18, 20], [20, -12], [25, 0], [22, 12], [18, 20],
-     [-30, -20], [-35, 5], [30, -20], [35, 5], [0, 28], [-8, 25], [8, 25]]
-    .filter(([x, z]) => Math.sqrt(x*x + z*z) < 115) // Only within active radius
-    .forEach(([x, z]) => {
-      createTree(x, z, 0.8 + Math.random() * 0.4);
-    });
+    // NOTE: Trees removed - use F1 World Builder to place trees manually
+    // [[-22, 12], [-18, 20], [20, -12], [25, 0], [22, 12], [18, 20],
+    //  [-30, -20], [-35, 5], [30, -20], [35, 5], [0, 28], [-8, 25], [8, 25]]
+    // .filter(([x, z]) => Math.sqrt(x*x + z*z) < 115) // Only within active radius
+    // .forEach(([x, z]) => {
+    //   createTree(x, z, 0.8 + Math.random() * 0.4);
+    // });
     
     // NPCs - Using factory functions from WorldAssetFactory
     const createNPC = (x, z, color, name, type = 'npc') => {
@@ -3960,11 +3961,11 @@ const GameWorld = () => {
       return rockGroup;
     };
     
-    // Mining area
-    createRock(-40, -30, 0x696969, 'copper');
-    createRock(-43, -28, 0x696969, 'copper');
-    createRock(-38, -33, 0x505050, 'iron');
-    createRock(-45, -32, 0x696969, 'copper');
+    // Mining area - REMOVED for clean slate (use F1 World Builder to place rocks)
+    // createRock(-40, -30, 0x696969, 'copper');
+    // createRock(-43, -28, 0x696969, 'copper');
+    // createRock(-38, -33, 0x505050, 'iron');
+    // createRock(-45, -32, 0x696969, 'copper');
     
     // ==================== ASSET CREATION (uses WorldAssetFactory) ====================
     // Wrapper that creates an asset, positions it, adds to scene and selectableObjects
@@ -4086,192 +4087,18 @@ const GameWorld = () => {
     loadSavedEnemies();
     
     // ==================== EXPANDED ZONE CONTENT ====================
+    // NOTE: Zone content removed - world reduced to 240x240 units
+    // Use F1 World Builder to manually place objects within the active area
     
-    // Darkwood Forest Zone (East) - Dense dark forest with wolves
-    const darkwoodTrees = [];
-    for (let i = 0; i < 50; i++) {
-      const x = 120 + Math.random() * 160;
-      const z = -80 + Math.random() * 160;
-      const tree = createTree(x, z, 1.0 + Math.random() * 0.5);
-      // Make forest trees darker
-      if (tree) {
-        tree.children.forEach(child => {
-          if (child.material && child.material.color) {
-            child.material = child.material.clone();
-            child.material.color.multiplyScalar(0.6);
-          }
-        });
-        darkwoodTrees.push(tree);
-      }
-    }
+    // Darkwood Forest Zone (East) - REMOVED (outside 240x240 world)
+    // Crystal Caves Zone (North) - REMOVED (outside 240x240 world)
+    // Scorched Plains Zone (West) - REMOVED (outside 240x240 world)
+    // Frozen Peaks Zone (South) - REMOVED (outside 240x240 world)
     
-    // NOTE: Legacy wolves in forest removed - use F3 Enemy Editor
-    // createMonster(150, 20, 0x4a4a4a, 'Dark Wolf', 'wolf', 8);
-    // createMonster(180, -30, 0x3a3a3a, 'Shadow Wolf', 'wolf', 10);
-    // createMonster(200, 50, 0x4a4a4a, 'Alpha Wolf', 'wolf', 15);
-    // createMonster(220, -10, 0x5a5a5a, 'Gray Wolf', 'wolf', 6);
+    // NOTE: All zone-specific content (crystals, dead trees, fire pits, snow mounds, ice spikes)
+    // has been removed since the world is now 240x240 units and these zones are outside the playable area.
+    // Use F1 World Builder to manually place decorative objects within the active 240x240 world bounds.
     
-    // Crystal Caves Zone (North) - Mining area with crystals
-    for (let i = 0; i < 20; i++) {
-      const x = -60 + Math.random() * 120;
-      const z = 120 + Math.random() * 160;
-      const oreType = Math.random() > 0.7 ? 'gold' : Math.random() > 0.5 ? 'iron' : 'copper';
-      createRock(x, z, oreType === 'gold' ? 0x7a6a4a : 0x5a5a5a, oreType);
-    }
-    
-    // Crystal formations
-    const createCrystal = (x, z, color, scale = 1) => {
-      const crystalGroup = new THREE.Group();
-      crystalGroup.userData = { type: 'crystal', interactable: true };
-      
-      for (let i = 0; i < 3 + Math.floor(Math.random() * 3); i++) {
-        const height = (1 + Math.random() * 2) * scale;
-        const crystal = new THREE.Mesh(
-          new THREE.ConeGeometry(0.3 * scale, height, 6),
-          new THREE.MeshStandardMaterial({ 
-            color: color, 
-            emissive: color, 
-            emissiveIntensity: 0.3,
-            transparent: true,
-            opacity: 0.8
-          })
-        );
-        crystal.position.set(
-          (Math.random() - 0.5) * scale,
-          height / 2,
-          (Math.random() - 0.5) * scale
-        );
-        crystal.rotation.set(
-          (Math.random() - 0.5) * 0.3,
-          Math.random() * Math.PI,
-          (Math.random() - 0.5) * 0.3
-        );
-        crystalGroup.add(crystal);
-      }
-      
-      crystalGroup.position.set(x, 0, z);
-      scene.add(crystalGroup);
-      selectableObjects.current.push(crystalGroup);
-      return crystalGroup;
-    };
-    
-    // Purple and blue crystals in caves
-    for (let i = 0; i < 15; i++) {
-      const x = -50 + Math.random() * 100;
-      const z = 130 + Math.random() * 140;
-      const color = Math.random() > 0.5 ? 0x8b5cf6 : 0x3b82f6;
-      createCrystal(x, z, color, 0.8 + Math.random() * 0.5);
-    }
-    
-    // NOTE: Legacy cave skeletons removed - use F3 Enemy Editor
-    // createMonster(20, 150, 0xd4d4d4, 'Cave Skeleton', 'skeleton', 12);
-    // createMonster(-30, 180, 0xc4c4c4, 'Ancient Skeleton', 'skeleton', 15);
-    // createMonster(50, 200, 0xe4e4e4, 'Skeleton Warrior', 'skeleton', 18);
-    
-    // Scorched Plains Zone (West) - Desert with trolls
-    // Cacti/dead trees
-    const createDeadTree = (x, z) => {
-      const treeGroup = new THREE.Group();
-      treeGroup.userData = { type: 'deadtree', interactable: false };
-      
-      const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.15, 0.25, 3, 6),
-        new THREE.MeshStandardMaterial({ color: 0x3d3d3d })
-      );
-      trunk.position.y = 1.5;
-      treeGroup.add(trunk);
-      
-      // Dead branches
-      const branch = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.1, 1.5, 4),
-        new THREE.MeshStandardMaterial({ color: 0x3d3d3d })
-      );
-      branch.position.set(0.4, 2, 0);
-      branch.rotation.z = Math.PI / 4;
-      treeGroup.add(branch);
-      
-      treeGroup.position.set(x, 0, z);
-      scene.add(treeGroup);
-    };
-    
-    for (let i = 0; i < 20; i++) {
-      createDeadTree(-120 - Math.random() * 160, -60 + Math.random() * 120);
-    }
-    
-    // Fire pits in scorched plains
-    const createFirePit = (x, z) => {
-      const pitGroup = new THREE.Group();
-      
-      const rocks = new THREE.Mesh(
-        new THREE.TorusGeometry(0.5, 0.2, 8, 8),
-        new THREE.MeshStandardMaterial({ color: 0x4a4a4a })
-      );
-      rocks.rotation.x = Math.PI / 2;
-      rocks.position.y = 0.1;
-      pitGroup.add(rocks);
-      
-      // Fire glow
-      const fire = new THREE.Mesh(
-        new THREE.ConeGeometry(0.3, 0.8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xff6600 })
-      );
-      fire.position.y = 0.5;
-      pitGroup.add(fire);
-      
-      pitGroup.position.set(x, 0, z);
-      scene.add(pitGroup);
-    };
-    
-    createFirePit(-180, 0);
-    createFirePit(-220, 40);
-    createFirePit(-200, -50);
-    
-    // NOTE: Legacy trolls removed - use F3 Enemy Editor
-    // createMonster(-160, 30, 0x556B2F, 'Desert Troll', 'troll', 20);
-    // createMonster(-200, -20, 0x4a6b2f, 'Sand Troll', 'troll', 18);
-    // createMonster(-240, 60, 0x667b3f, 'Elder Troll', 'troll', 25);
-    
-    // Frozen Peaks Zone (South) - Snowy mountains
-    // Snow mounds and ice
-    const createSnowMound = (x, z, scale = 1) => {
-      const mound = new THREE.Mesh(
-        new THREE.SphereGeometry(1.5 * scale, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 })
-      );
-      mound.position.set(x, 0, z);
-      scene.add(mound);
-    };
-    
-    for (let i = 0; i < 30; i++) {
-      createSnowMound(
-        -60 + Math.random() * 120,
-        -130 - Math.random() * 150,
-        0.5 + Math.random() * 1.5
-      );
-    }
-    
-    // Ice formations
-    const createIceSpike = (x, z) => {
-      const spike = new THREE.Mesh(
-        new THREE.ConeGeometry(0.4, 2 + Math.random() * 2, 4),
-        new THREE.MeshStandardMaterial({ 
-          color: 0xadd8e6, 
-          transparent: true, 
-          opacity: 0.7,
-          roughness: 0.1
-        })
-      );
-      spike.position.set(x, 1, z);
-      scene.add(spike);
-    };
-    
-    for (let i = 0; i < 25; i++) {
-      createIceSpike(-50 + Math.random() * 100, -140 - Math.random() * 140);
-    }
-    
-    // NOTE: Legacy ice wolves and yetis removed - use F3 Enemy Editor
-    // createMonster(0, -150, 0xffffff, 'Frost Wolf', 'wolf', 12);
-    // createMonster(-40, -200, 0xe8e8e8, 'Ice Wolf', 'wolf', 14);
     // createMonster(30, -180, 0xf0f0f0, 'Snow Wolf', 'wolf', 10);
     // createMonster(0, -250, 0xffffff, 'Yeti', 'troll', 30);
     
