@@ -103,6 +103,14 @@ import EnemyEditor from '../components/game/EnemyEditor';
 import QuestMaker from '../components/game/QuestMaker';
 import LootPanel from '../components/game/LootPanel';
 import { generateLoot } from '../data/items';
+import {
+  transformToLootableCorpse,
+  createLootSparkles as lootSystemCreateSparkles,
+  applyLootItemPickup,
+  applyLootAllPickup,
+  cleanupCorpse as lootSystemCleanupCorpse,
+  CORPSE_DESPAWN_TIME
+} from '../systems/LootSystem';
 import BagBar from '../components/game/BagBar';
 import ItemDatabaseEditor from '../components/game/ItemDatabaseEditor';
 import VendorPanel from '../components/game/VendorPanel';
@@ -1007,43 +1015,14 @@ const GameWorld = () => {
     const enemyType = enemy.userData.enemyType || enemy.userData.name?.toLowerCase() || 'default';
     const loot = generateLoot(enemyType, enemy.userData.level || 1);
     
-    // Mark enemy as corpse (lootable, not hostile)
-    enemy.userData.isCorpse = true;
-    enemy.userData.hostile = false;
-    enemy.userData.lootData = loot;
-    enemy.userData.deathTime = Date.now();
-    enemy.userData.interactable = true; // Keep interactable for looting
-    
-    // Change appearance to show it's a corpse (rotate to side, darken)
-    enemy.rotation.z = Math.PI / 2; // Fall over
-    // Position corpse at terrain height (not below ground)
-    const terrainY = getTerrainHeight(enemy.position.x, enemy.position.z);
-    enemy.position.y = terrainY + 0.2; // Slightly above terrain to prevent clipping
-    
-    // Darken the corpse material
-    enemy.traverse(child => {
-      if (child.isMesh && child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(mat => {
-            mat.color.multiplyScalar(0.5);
-          });
-        } else {
-          child.material.color.multiplyScalar(0.5);
-        }
-      }
-    });
-    
-    // Hide health bar
-    const healthBarBg = enemy.getObjectByName('healthBarBg');
-    const healthBarFill = enemy.getObjectByName('healthBarFill');
-    if (healthBarBg) healthBarBg.visible = false;
-    if (healthBarFill) healthBarFill.visible = false;
+    // Transform enemy into lootable corpse (using LootSystem)
+    transformToLootableCorpse(enemy, getTerrainHeight, loot);
     
     // Store in lootable corpses
     lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot });
     
-    // Add sparkle effect to corpse
-    const sparkles = createLootSparkles();
+    // Add sparkle effect to corpse (using LootSystem)
+    const sparkles = lootSystemCreateSparkles();
     sparkles.position.set(0, 1.5, 0); // Above corpse
     enemy.add(sparkles);
     enemy.userData.sparkles = sparkles;
@@ -1057,8 +1036,7 @@ const GameWorld = () => {
       }
     }
     
-    // Set 15-second corpse despawn timer, then RESPAWN the enemy
-    const RESPAWN_TIME = 15000; // 15 seconds
+    // Set corpse despawn timer, then RESPAWN the enemy
     const despawnTimer = setTimeout(() => {
       console.log('[RESPAWN] Timer fired for enemy:', enemyId);
       
@@ -1171,129 +1149,80 @@ const GameWorld = () => {
     setIsLootPanelOpen(true);
   }, []);
   
-  // Handle looting an individual item - OPTIMIZED
-  const handleLootItem = useCallback((lootItem) => {
-    let newLootData = { ...currentLootData };
+  // Handle looting an individual item - using LootSystem
+  const handleLootItem = useCallback(async (lootItem) => {
+    const result = await applyLootItemPickup(
+      lootItem,
+      currentLootData,
+      { backpack, bags },
+      addItemToBag,
+      updateCopper,
+      copper || 0
+    );
     
-    if (lootItem.type === 'gold') {
-      // Add copper to player
-      const currentCopper = copper || 0;
-      const copperToAdd = lootItem.amount;
-      useGameStore.setState({ copper: currentCopper + copperToAdd });
-      updateCopper(copperToAdd).catch(err => console.error('Failed to save copper:', err));
-      addNotification(`Looted: ${copperToAdd} copper`, 'success');
-      newLootData.gold = 0;
-    } else if (lootItem.type === 'item') {
-      const item = lootItem.item;
-      const added = addItemToBag(item);
-      if (added) {
-        newLootData.items = newLootData.items.filter(i => i.id !== item.id);
-      }
+    // Update copper in state if needed
+    if (result.copperAdded > 0) {
+      useGameStore.setState({ copper: (copper || 0) + result.copperAdded });
+    }
+    
+    // Show notification
+    if (result.notification) {
+      addNotification(result.notification, 'success');
     }
     
     // Check if loot is empty and handle cleanup
-    const isEmpty = (!newLootData.gold || newLootData.gold <= 0) && (!newLootData.items || newLootData.items.length === 0);
-    
-    if (isEmpty) {
+    if (result.isEmpty) {
       // Close panel and remove corpse immediately
       setIsLootPanelOpen(false);
       setCurrentLootData(null);
       
       const corpseData = lootableCorpsesRef.current.get(currentLootCorpse);
       if (corpseData && corpseData.mesh && sceneRef.current) {
-        sceneRef.current.remove(corpseData.mesh);
-        selectableObjects.current = selectableObjects.current.filter(obj => obj !== corpseData.mesh);
-        enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== currentLootCorpse);
+        const { selectableObjects: newSelectableObjects, enemyMeshes: newEnemyMeshes } = 
+          lootSystemCleanupCorpse(
+            corpseData.mesh,
+            sceneRef.current,
+            selectableObjects.current,
+            enemyMeshesRef.current,
+            currentLootCorpse
+          );
+        selectableObjects.current = newSelectableObjects;
+        enemyMeshesRef.current = newEnemyMeshes;
       }
       
-      const timer = corpseTimersRef.current.get(currentLootCorpse);
-      // DON'T clear the respawn timer - it needs to run to respawn the enemy
-      // Just remove the corpse from lootable tracking (visual already removed above)
+      // Don't clear the respawn timer - it needs to run
       lootableCorpsesRef.current.delete(currentLootCorpse);
-      // DON'T remove from placedEnemies - let the respawn timer handle it
       setCurrentLootCorpse(null);
     } else {
-      setCurrentLootData(newLootData);
+      setCurrentLootData(result.newLootData);
     }
-  }, [addNotification, currentLootCorpse, currentLootData, addItemToBag, copper, updateCopper]);
+  }, [addNotification, currentLootCorpse, currentLootData, addItemToBag, copper, updateCopper, backpack, bags]);
   
-  // Handle loot all button - OPTIMIZED to batch operations
-  const handleLootAll = useCallback(() => {
+  // Handle loot all button - using LootSystem for batch operations
+  const handleLootAll = useCallback(async () => {
     if (!currentLootData) return;
     
-    // Collect looted items for single notification
-    const lootedItems = [];
-    let goldLooted = 0;
+    const result = await applyLootAllPickup(
+      currentLootData,
+      { backpack, bags },
+      updateCopper,
+      copper || 0
+    );
     
-    // Loot gold (stored as copper) first
-    if (currentLootData.gold > 0) {
-      goldLooted = currentLootData.gold;
-      const currentCopper = copper || 0;
-      useGameStore.setState({ copper: currentCopper + goldLooted });
-      updateCopper(goldLooted).catch(err => console.error('Failed to save copper:', err));
+    // Update copper in state
+    if (result.goldLooted > 0) {
+      useGameStore.setState({ copper: (copper || 0) + result.goldLooted });
     }
     
-    // Loot all items - add to bag WITHOUT individual notifications
-    if (currentLootData.items && currentLootData.items.length > 0) {
-      const { backpack, bags } = useGameStore.getState();
-      let backpackCopy = [...backpack];
-      let bagsCopy = bags.map(b => ({ ...b, items: [...b.items] }));
-      
-      currentLootData.items.forEach(item => {
-        let added = false;
-        
-        // Try to stack with existing item in backpack
-        for (let i = 0; i < backpackCopy.length; i++) {
-          if (backpackCopy[i].id === item.id && item.type !== 'bag') {
-            backpackCopy[i] = { ...backpackCopy[i], quantity: backpackCopy[i].quantity + (item.quantity || 1) };
-            added = true;
-            lootedItems.push(item.name);
-            break;
-          }
-        }
-        
-        // If not stacked and backpack has space
-        if (!added && backpackCopy.length < 16) {
-          backpackCopy.push({ ...item, quantity: item.quantity || 1 });
-          added = true;
-          lootedItems.push(item.name);
-        }
-        
-        // Try other bags if backpack is full
-        if (!added) {
-          for (let bagIndex = 0; bagIndex < bagsCopy.length; bagIndex++) {
-            const bag = bagsCopy[bagIndex];
-            if (!bag.bagItem) continue;
-            
-            for (let i = 0; i < bag.items.length; i++) {
-              if (bag.items[i].id === item.id && item.type !== 'bag') {
-                bag.items[i] = { ...bag.items[i], quantity: bag.items[i].quantity + (item.quantity || 1) };
-                added = true;
-                lootedItems.push(item.name);
-                break;
-              }
-            }
-            
-            if (!added && bag.items.length < bag.bagItem.slots) {
-              bag.items.push({ ...item, quantity: item.quantity || 1 });
-              added = true;
-              lootedItems.push(item.name);
-              break;
-            }
-          }
-        }
-      });
-      
-      // Single state update for all items
-      useGameStore.setState({ backpack: backpackCopy, bags: bagsCopy });
-    }
+    // Single state update for all items
+    useGameStore.setState({ 
+      backpack: result.backpackCopy, 
+      bags: result.bagsCopy 
+    });
     
     // Single notification for all loot
-    if (lootedItems.length > 0 || goldLooted > 0) {
-      const lootSummary = [];
-      if (goldLooted > 0) lootSummary.push(`${goldLooted} copper`);
-      if (lootedItems.length > 0) lootSummary.push(`${lootedItems.length} item${lootedItems.length > 1 ? 's' : ''}`);
-      addNotification(`Looted: ${lootSummary.join(', ')}`, 'success');
+    if (result.notification) {
+      addNotification(result.notification, 'success');
     }
     
     // Close panel and remove corpse
@@ -1301,19 +1230,24 @@ const GameWorld = () => {
     
     const corpseData = lootableCorpsesRef.current.get(currentLootCorpse);
     if (corpseData && corpseData.mesh && sceneRef.current) {
-      sceneRef.current.remove(corpseData.mesh);
-      selectableObjects.current = selectableObjects.current.filter(obj => obj !== corpseData.mesh);
-      enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== currentLootCorpse);
+      const { selectableObjects: newSelectableObjects, enemyMeshes: newEnemyMeshes } = 
+        lootSystemCleanupCorpse(
+          corpseData.mesh,
+          sceneRef.current,
+          selectableObjects.current,
+          enemyMeshesRef.current,
+          currentLootCorpse
+        );
+      selectableObjects.current = newSelectableObjects;
+      enemyMeshesRef.current = newEnemyMeshes;
     }
     
-    // DON'T clear the respawn timer - it needs to run to respawn the enemy
-    // Just remove the corpse from lootable tracking (visual already removed above)
+    // Don't clear the respawn timer - it needs to run
     lootableCorpsesRef.current.delete(currentLootCorpse);
-    // DON'T remove from placedEnemies - let the respawn timer handle it
     
     setCurrentLootCorpse(null);
     setCurrentLootData(null);
-  }, [currentLootData, currentLootCorpse, addNotification]);
+  }, [currentLootData, currentLootCorpse, addNotification, backpack, bags, copper, updateCopper]);
   
   // ==================== ATTACK ANIMATION SYSTEM ====================
   
@@ -1690,59 +1624,6 @@ const GameWorld = () => {
     setPlacedObjects(worldData.objects || []);
   }, [addNotification, currentZone]);
   
-  // Function to create loot sparkle effect
-  const createLootSparkles = useCallback(() => {
-    const group = new THREE.Group();
-    
-    // Create multiple sparkle particles
-    const particleCount = 8;
-    const particles = [];
-    
-    for (let i = 0; i < particleCount; i++) {
-      const geometry = new THREE.SphereGeometry(0.08, 8, 8);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0xffd700, // Gold color
-        transparent: true,
-        opacity: 0.8,
-        emissive: 0xffd700,
-        emissiveIntensity: 1
-      });
-      
-      const particle = new THREE.Mesh(geometry, material);
-      
-      // Position in a circle
-      const angle = (i / particleCount) * Math.PI * 2;
-      const radius = 0.4;
-      particle.position.x = Math.cos(angle) * radius;
-      particle.position.z = Math.sin(angle) * radius;
-      particle.position.y = Math.sin(i * 0.5) * 0.2;
-      
-      // Store initial position for animation
-      particle.userData.angle = angle;
-      particle.userData.yOffset = i * 0.1;
-      
-      particles.push(particle);
-      group.add(particle);
-    }
-    
-    // Add central glow
-    const glowGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      transparent: true,
-      opacity: 0.6,
-      emissive: 0xffff00,
-      emissiveIntensity: 2
-    });
-    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-    group.add(glow);
-    
-    group.userData.particles = particles;
-    group.userData.glow = glow;
-    group.userData.time = 0;
-    
-    return group;
-  }, []);
   
   // Function to create an enemy mesh - now using WorldAssetFactory
   // Wrapper to maintain compatibility with existing code
