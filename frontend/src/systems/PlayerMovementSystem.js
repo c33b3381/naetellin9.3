@@ -169,6 +169,81 @@ export const getTerrainHeightAtPosition = (scene, x, z, fallbackGetHeight) => {
 };
 
 /**
+ * Check for collision with buildings/obstacles
+ * Uses raycasting in 8 directions to detect nearby obstacles
+ * 
+ * @param {THREE.Object3D} player - Player mesh/group
+ * @param {THREE.Scene} scene - The scene
+ * @param {number} checkRadius - Radius to check for collisions (default 1.5)
+ * @returns {boolean} True if collision detected
+ */
+export const checkBuildingCollision = (player, scene, checkRadius = 1.5) => {
+  if (!player || !scene) return false;
+  
+  const raycaster = new THREE.Raycaster();
+  const playerPos = player.position.clone();
+  playerPos.y += 1; // Check at chest height
+  
+  // Check 8 directions around player
+  const directions = [
+    new THREE.Vector3(1, 0, 0),    // East
+    new THREE.Vector3(-1, 0, 0),   // West
+    new THREE.Vector3(0, 0, 1),    // North
+    new THREE.Vector3(0, 0, -1),   // South
+    new THREE.Vector3(0.707, 0, 0.707),   // NE
+    new THREE.Vector3(-0.707, 0, 0.707),  // NW
+    new THREE.Vector3(0.707, 0, -0.707),  // SE
+    new THREE.Vector3(-0.707, 0, -0.707), // SW
+  ];
+  
+  for (const direction of directions) {
+    raycaster.set(playerPos, direction);
+    
+    // Raycast against all scene children recursively
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    for (const intersect of intersects) {
+      const obj = intersect.object;
+      
+      // Skip terrain, player, water, and other non-solid objects
+      if (obj.name === 'terrain' || 
+          obj.name === 'brushIndicator' ||
+          obj.name?.includes('water') ||
+          obj.name?.includes('player') ||
+          obj.parent === player) {
+        continue;
+      }
+      
+      // Check if this object or its parent is marked as collidable/building
+      let currentObj = obj;
+      let isCollidable = false;
+      
+      while (currentObj && !isCollidable) {
+        const userData = currentObj.userData || {};
+        
+        // Check for collision markers
+        if (userData.hasCollision || 
+            userData.type === 'building' || 
+            userData.type === 'castle' ||
+            currentObj.name === 'collider') {
+          isCollidable = true;
+          break;
+        }
+        
+        currentObj = currentObj.parent;
+      }
+      
+      // If collidable and within check radius, collision detected
+      if (isCollidable && intersect.distance < checkRadius) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
+/**
  * Update player movement
  * Main function to be called every frame
  * 
@@ -235,9 +310,18 @@ export const updatePlayerMovement = (
     player.position.x += rotatedDirection.x * moveSpeed;
     player.position.z += rotatedDirection.z * moveSpeed;
     
-    // Rotate player to face movement direction
-    const targetRotation = Math.atan2(rotatedDirection.x, rotatedDirection.z);
-    player.rotation.y = targetRotation;
+    // COLLISION DETECTION: Check for building/obstacle collision
+    if (checkBuildingCollision(player, scene)) {
+      // Collision detected - revert movement
+      player.position.x = lastPlayerPos.x;
+      player.position.z = lastPlayerPos.z;
+      moved = false;
+      rotatedDirection.set(0, 0, 0);
+    } else {
+      // No collision - rotate player to face movement direction
+      const targetRotation = Math.atan2(rotatedDirection.x, rotatedDirection.z);
+      player.rotation.y = targetRotation;
+    }
   }
   
   // Get terrain height
@@ -296,5 +380,6 @@ export default {
   handleMovementKeyUp,
   updatePlayerMovement,
   calculateMovementDirection,
-  getTerrainHeightAtPosition
+  getTerrainHeightAtPosition,
+  checkBuildingCollision
 };

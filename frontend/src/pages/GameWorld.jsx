@@ -3088,6 +3088,7 @@ const GameWorld = () => {
       });
       
       castleGroup.position.set(x, 0, z);
+      castleGroup.userData = { type: 'castle', hasCollision: true };
       scene.add(castleGroup);
       return castleGroup;
     };
