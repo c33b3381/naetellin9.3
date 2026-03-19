@@ -2468,8 +2468,31 @@ const GameWorld = () => {
       spout.position.y = 3.1;
       fountainGroup.add(spout);
       
+      // COLLISION: Add invisible collider cylinder around fountain
+      const colliderGeometry = new THREE.CylinderGeometry(2.5, 2.5, 3.5, 16); // Covers base and pillar
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+      collider.position.y = 1.75; // Center of collision cylinder
+      collider.name = 'collider';
+      fountainGroup.add(collider);
+      
+      // Mark fountain with collision metadata
+      fountainGroup.userData = { 
+        type: 'fountain', 
+        hasCollision: true,
+        interactable: false
+      };
+      
       fountainGroup.position.set(x, 0.5, z); // Raised from 0 to 0.5 to be above terrain
       scene.add(fountainGroup);
+      
+      // Add collider to selectable objects for collision detection
+      selectableObjects.current.push(collider);
+      
       return fountainGroup;
     };
     
