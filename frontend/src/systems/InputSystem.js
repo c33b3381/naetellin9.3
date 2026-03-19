@@ -534,10 +534,10 @@ export const createKeyDownHandler = (config) => {
     // Editor shortcuts (Ctrl+S, F1-F7, Delete, Ctrl+C)
     const editorConfig = {
       refs: {
-        isMapEditorModeRef,
-        isFlightModeRef,
-        playerRef,
-        mapEditorCameraState
+        isMapEditorModeRef: refs.isMapEditorModeRef,
+        isFlightModeRef: refs.isFlightModeRef,
+        playerRef: refs.playerRef,
+        mapEditorCameraState: refs.mapEditorCameraState
       },
       editorStates: {
         selectedEditObject: stateRefs.selectedEditObjectRef?.current,
