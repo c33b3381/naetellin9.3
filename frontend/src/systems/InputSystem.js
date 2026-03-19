@@ -1,3 +1,5 @@
+import { processAllEditorShortcuts } from './EditorInputHandler';
+
 /**
  * InputSystem.js
  * 
@@ -68,20 +70,7 @@ export const createInputState = () => ({
 
 // ==================== KEY HANDLER PROCESSING ====================
 
-/**
- * Process Ctrl+S save world shortcut
- * @returns {boolean} true if handled
- */
-export const processSaveShortcut = (e, callbacks) => {
-  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') {
-    e.preventDefault();
-    if (callbacks.onSaveWorld) {
-      callbacks.onSaveWorld();
-    }
-    return true;
-  }
-  return false;
-};
+// Note: Editor shortcuts (F1-F7, Ctrl+S, Delete, Ctrl+C) moved to EditorInputHandler.js
 
 /**
  * Check if dialog blocking keys (except Escape and M)
@@ -542,8 +531,39 @@ export const createKeyDownHandler = (config) => {
   const { refs, stateRefs, callbacks, systems, helpers } = config;
   
   return (e) => {
-    // Ctrl+S to save world
-    if (processSaveShortcut(e, callbacks)) return;
+    // Editor shortcuts (Ctrl+S, F1-F7, Delete, Ctrl+C)
+    const editorConfig = {
+      refs: {
+        isMapEditorModeRef,
+        isFlightModeRef,
+        playerRef,
+        mapEditorCameraState
+      },
+      editorStates: {
+        selectedEditObject: stateRefs.selectedEditObjectRef?.current,
+        isEditorOpen: stateRefs.isEditorOpenRef?.current,
+        selectedEditEnemy: stateRefs.selectedEditEnemyRef?.current,
+        isEnemyEditorOpen: stateRefs.isEnemyEditorOpenRef?.current,
+      },
+      callbacks: {
+        onSaveWorld: callbacks.onSaveWorld,
+        setIsEditorOpen: callbacks.setIsEditorOpen,
+        setIsTerrainEditorOpen: callbacks.setIsTerrainEditorOpen,
+        setIsEnemyEditorOpen: callbacks.setIsEnemyEditorOpen,
+        setIsItemEditorOpen: callbacks.setIsItemEditorOpen,
+        setIsMapEditorMode: callbacks.setIsMapEditorMode,
+        setIsFlightMode: callbacks.setIsFlightMode,
+        setIsQuestMakerOpen: callbacks.setIsQuestMakerOpen,
+        handleDeleteObject: callbacks.handleDeleteObject,
+        handleDeleteEnemy: callbacks.handleDeleteEnemy,
+        handlePlaceEnemy: callbacks.handlePlaceEnemy,
+      },
+      helpers: {
+        getTerrainHeight: helpers?.getTerrainHeight
+      }
+    };
+    
+    if (processAllEditorShortcuts(e, editorConfig)) return;
     
     // Check if dialog is blocking (except Escape and M)
     // Use stateRefs to get current values
@@ -621,26 +641,7 @@ export const createKeyDownHandler = (config) => {
       return;
     }
     
-    // Editor toggle keys (F1-F7)
-    if (processEditorToggleKey(e, refs, callbacks, helpers.getTerrainHeight)) {
-      return;
-    }
-    
-    // Delete/Backspace for deleting objects - use current values from refs
-    const editorStates = {
-      selectedEditObject: stateRefs.selectedEditObjectRef?.current ?? null,
-      isEditorOpen: stateRefs.isEditorOpenRef?.current ?? false,
-      selectedEditEnemy: stateRefs.selectedEditEnemyRef?.current ?? null,
-      isEnemyEditorOpen: stateRefs.isEnemyEditorOpenRef?.current ?? false,
-    };
-    if (processDeleteKey(e, editorStates, callbacks)) {
-      return;
-    }
-    
-    // Ctrl+C for copying enemies
-    if (processCopyEnemyKey(e, editorStates, callbacks)) {
-      return;
-    }
+    // Note: Editor shortcuts (F1-F7, Delete, Ctrl+C) now handled by processAllEditorShortcuts above
   };
 };
 
