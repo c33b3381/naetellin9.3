@@ -40,6 +40,15 @@ export const AI_CONSTANTS = {
 const checkEnemyCollision = (enemyMesh, newX, newZ, collidableObjects) => {
   if (!collidableObjects || collidableObjects.length === 0) return false;
   
+  // Filter out invalid objects (null, sprites, objects without parent)
+  const validObjects = collidableObjects.filter(obj => {
+    if (!obj || !obj.parent) return false;
+    if (obj.type === 'Sprite') return false;
+    return true;
+  });
+  
+  if (validObjects.length === 0) return false;
+  
   const raycaster = new THREE.Raycaster();
   const enemyRadius = AI_CONSTANTS.COLLISION_RADIUS;
   
@@ -55,7 +64,7 @@ const checkEnemyCollision = (enemyMesh, newX, newZ, collidableObjects) => {
   
   for (const direction of directions) {
     raycaster.set(enemyPos, direction);
-    const intersects = raycaster.intersectObjects(collidableObjects, true);
+    const intersects = raycaster.intersectObjects(validObjects, true);
     
     if (intersects.length > 0 && intersects[0].distance < enemyRadius) {
       return true; // Collision detected

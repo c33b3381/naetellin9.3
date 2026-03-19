@@ -190,8 +190,19 @@ export const checkBuildingCollisionInDirection = (player, scene, direction, chec
   
   raycaster.set(playerPos, direction);
   
-  // Raycast against all scene children recursively
-  const intersects = raycaster.intersectObjects(scene.children, true);
+  // Filter out objects without valid matrixWorld or parent before raycasting
+  const validObjects = scene.children.filter(obj => {
+    // Skip objects that aren't properly in scene
+    if (!obj || !obj.parent) return false;
+    // Skip health bars and UI sprites
+    if (obj.type === 'Sprite') return false;
+    // Skip objects explicitly marked as non-collidable
+    if (obj.userData && obj.userData.noCollision === true) return false;
+    return true;
+  });
+  
+  // Raycast against filtered valid objects
+  const intersects = raycaster.intersectObjects(validObjects, true);
   
   for (const intersect of intersects) {
     const obj = intersect.object;
