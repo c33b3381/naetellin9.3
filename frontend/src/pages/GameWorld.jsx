@@ -2779,6 +2779,8 @@ const GameWorld = () => {
     // Create the castle at specified location
     createCastle(-70, 60);
     
+    // NOTE: Goblin invaders will be spawned after createMonster function is defined (see line ~4230)
+    
     // === MARKET STALLS ===
     const createMarketStall = (x, z, rotation = 0, canopyColor = 0xDC143C, goods = true) => {
       const stallGroup = new THREE.Group();
@@ -4202,9 +4204,34 @@ const GameWorld = () => {
     // createMonster(-28, 30, 0x4a7c23, 'Goblin Warrior', 'goblin', 3);
     // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
     
-    // ==================== CASTLE ENEMIES ====================
-    // Castle enemies removed - castle was at (80, -60), outside reduced world bounds (±115 units)
-    // ==================== END CASTLE ENEMIES ====================
+    // ==================== CASTLE GOBLIN INVADERS ====================
+    // Pack of goblins have taken over the castle at (-70, 60)!
+    const castleCenterX = -70;
+    const castleCenterZ = 60;
+    
+    // Goblin patrol near entrance (guards)
+    createMonster(castleCenterX - 2, castleCenterZ + 18, 0x4a7c23, 'Goblin Guard', 'goblin', 3);
+    createMonster(castleCenterX + 2, castleCenterZ + 18, 0x4a7c23, 'Goblin Guard', 'goblin', 3);
+    
+    // Goblins in courtyard
+    createMonster(castleCenterX - 5, castleCenterZ + 2, 0x3d6b1a, 'Goblin Warrior', 'goblin', 4);
+    createMonster(castleCenterX + 6, castleCenterZ - 3, 0x4a7c23, 'Goblin Scout', 'goblin', 2);
+    createMonster(castleCenterX - 3, castleCenterZ - 5, 0x4a7c23, 'Goblin Raider', 'goblin', 3);
+    createMonster(castleCenterX + 4, castleCenterZ + 5, 0x3d6b1a, 'Goblin Warrior', 'goblin', 4);
+    
+    // Goblin leader in center of courtyard
+    createMonster(castleCenterX, castleCenterZ, 0x5a8c2a, 'Goblin Chieftain', 'goblin', 6, null, 40, 12);
+    
+    // Goblins near interior buildings
+    createMonster(castleCenterX - 8, castleCenterZ + 5, 0x4a7c23, 'Goblin Looter', 'goblin', 2);
+    createMonster(castleCenterX + 8, castleCenterZ - 8, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5, null, 30, 8);
+    
+    // Scouts near walls
+    createMonster(castleCenterX - 12, castleCenterZ + 12, 0x4a7c23, 'Goblin Lookout', 'goblin', 2);
+    createMonster(castleCenterX + 12, castleCenterZ + 12, 0x4a7c23, 'Goblin Lookout', 'goblin', 2);
+    createMonster(castleCenterX - 12, castleCenterZ - 12, 0x4a7c23, 'Goblin Sentry', 'goblin', 3);
+    createMonster(castleCenterX + 12, castleCenterZ - 12, 0x4a7c23, 'Goblin Sentry', 'goblin', 3);
+    // ==================== END CASTLE GOBLIN INVADERS ====================
     
     // Wolf pack
     // createMonster(30, 25, 0x808080, 'Gray Wolf', 'wolf', 4);
