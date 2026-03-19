@@ -4484,8 +4484,13 @@ const GameWorld = () => {
     };
     
     // Place Market NPCs
-    // 1. WARRIOR TRAINER - Near training area (southwest)
-    createTrainer(-18, -8, 'warrior');
+    // 1. WARRIOR TRAINER - Using existing createTrainer function
+    // Note: Trainer placement moved to use getTerrainHeight
+    const trainerX = -18;
+    const trainerZ = -8;
+    const trainerTerrainY = getTerrainHeight(trainerX, trainerZ);
+    const warriorTrainerNPC = createTrainer(trainerX, trainerZ, 'warrior');
+    warriorTrainerNPC.position.y = trainerTerrainY;
     
     // 2. VENDOR NPC - At the main market stall area (east side)
     createVendorNPC(10, 6, 'Marcus the Merchant');
