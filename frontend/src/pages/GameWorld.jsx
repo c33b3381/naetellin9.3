@@ -2468,7 +2468,7 @@ const GameWorld = () => {
       spout.position.y = 3.1;
       fountainGroup.add(spout);
       
-      fountainGroup.position.set(x, 0, z);
+      fountainGroup.position.set(x, 0.5, z); // Raised from 0 to 0.5 to be above terrain
       scene.add(fountainGroup);
       return fountainGroup;
     };
