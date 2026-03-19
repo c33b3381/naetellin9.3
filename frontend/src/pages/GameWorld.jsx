@@ -494,6 +494,9 @@ const GameWorld = () => {
   const [brushStrength, setBrushStrength] = useState(0.5);
   const brushStrengthRef = useRef(0.5);
   
+  // Player position state for real-time coordinate display
+  const [playerPosition, setPlayerPosition] = useState({ x: 0, z: 0, y: 0 });
+  
   // Wrappers to update both state and ref
   const updateBrushSize = (size) => {
     setBrushSize(size);
@@ -1506,6 +1509,21 @@ const GameWorld = () => {
       setCustomQuests(quests || []);
     });
   }, [fetchCustomQuests]);
+
+  // Update player position state for real-time coordinate display
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      if (playerRef.current?.position) {
+        setPlayerPosition({
+          x: playerRef.current.position.x,
+          z: playerRef.current.position.z,
+          y: playerRef.current.position.y
+        });
+      }
+    }, 100); // Update every 100ms (10 times per second)
+
+    return () => clearInterval(updateInterval);
+  }, []); // Empty deps - runs once on mount, cleanup on unmount
 
   // ==================== CALLBACKS: Logout & Save ====================
   // Handle logout with comprehensive world save
@@ -6480,13 +6498,13 @@ const GameWorld = () => {
           <p className="text-[#a8a29e] text-xs font-semibold mb-1 tracking-wider">COORDINATES</p>
           <div className="space-y-0.5">
             <p className="text-white text-sm font-mono">
-              <span className="text-[#fbbf24]">X:</span> {playerRef.current?.position?.x?.toFixed(1) ?? '--'}
+              <span className="text-[#fbbf24]">X:</span> {playerPosition.x.toFixed(1)}
             </p>
             <p className="text-white text-sm font-mono">
-              <span className="text-[#fbbf24]">Z:</span> {playerRef.current?.position?.z?.toFixed(1) ?? '--'}
+              <span className="text-[#fbbf24]">Z:</span> {playerPosition.z.toFixed(1)}
             </p>
             <p className="text-white text-sm font-mono">
-              <span className="text-[#a8a29e]">Y:</span> {playerRef.current?.position?.y?.toFixed(1) ?? '--'}
+              <span className="text-[#a8a29e]">Y:</span> {playerPosition.y.toFixed(1)}
             </p>
           </div>
         </div>
