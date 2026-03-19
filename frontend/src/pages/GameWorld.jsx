@@ -6475,7 +6475,7 @@ const GameWorld = () => {
       />
 
       {/* Player Coordinates Display - For debugging and screenshot location identification */}
-      <div className="absolute top-20 right-4 z-30 pointer-events-none">
+      <div className="absolute top-1/2 -translate-y-1/2 right-4 z-30 pointer-events-none">
         <div className="bg-[#0c0a09]/80 backdrop-blur-sm border border-[#44403c] px-3 py-2 rounded-lg shadow-lg">
           <p className="text-[#a8a29e] text-xs font-semibold mb-1 tracking-wider">COORDINATES</p>
           <div className="space-y-0.5">
