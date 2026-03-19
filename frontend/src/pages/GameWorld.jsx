@@ -2612,21 +2612,10 @@ const GameWorld = () => {
         castleGroup.add(gateT);
       });
       
-      // Gate archway
-      const gateArch = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 5, gatehouseDepth + 0.2),
-        new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
-      );
-      gateArch.position.set(0, 2.5, outerSize/2 + gatehouseDepth/2 - 1);
-      castleGroup.add(gateArch);
+      // Gate archway - REMOVED (was blocking entrance)
+      // Leave open so players can walk through
       
-      // Portcullis
-      const portcullis = new THREE.Mesh(
-        new THREE.BoxGeometry(3.8, 4.8, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.8 })
-      );
-      portcullis.position.set(0, 2.4, outerSize/2 + 1);
-      castleGroup.add(portcullis);
+      // Portcullis - REMOVED (gate is open for players to enter)
       
       // === INTERIOR BUILDINGS (simplified rooms from plan) ===
       // Great Hall (rooms 10, 15)
@@ -2680,17 +2669,78 @@ const GameWorld = () => {
       castleGroup.add(courtyardGround);
       
       // === COLLISION SYSTEM ===
-      // Add invisible colliders for castle structure
-      const colliderGeometry = new THREE.BoxGeometry(outerSize + 4, wallHeight, outerSize + 4);
+      // Create multiple colliders for walls (leaving gate entrance open)
       const colliderMaterial = new THREE.MeshBasicMaterial({ 
         transparent: true, 
         opacity: 0,
         visible: false 
       });
-      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
-      collider.position.y = wallHeight/2;
-      collider.name = 'collider';
-      castleGroup.add(collider);
+      
+      // South wall collider
+      const southCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(outerSize, wallHeight, wallThickness + 2),
+        colliderMaterial
+      );
+      southCollider.position.set(0, wallHeight/2, -outerSize/2);
+      southCollider.name = 'collider';
+      castleGroup.add(southCollider);
+      selectableObjects.current.push(southCollider);
+      
+      // East wall collider
+      const eastCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness + 2, wallHeight, outerSize),
+        colliderMaterial
+      );
+      eastCollider.position.set(outerSize/2, wallHeight/2, 0);
+      eastCollider.name = 'collider';
+      castleGroup.add(eastCollider);
+      selectableObjects.current.push(eastCollider);
+      
+      // West wall collider
+      const westCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness + 2, wallHeight, outerSize),
+        colliderMaterial
+      );
+      westCollider.position.set(-outerSize/2, wallHeight/2, 0);
+      westCollider.name = 'collider';
+      castleGroup.add(westCollider);
+      selectableObjects.current.push(westCollider);
+      
+      // North wall colliders (split to leave gate opening)
+      const gateWidth = 6; // Opening width
+      const northWallWidth = (outerSize - gateWidth) / 2;
+      
+      // North wall left side
+      const northLeftCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(northWallWidth, wallHeight, wallThickness + 2),
+        colliderMaterial
+      );
+      northLeftCollider.position.set(-outerSize/4 - gateWidth/4, wallHeight/2, outerSize/2);
+      northLeftCollider.name = 'collider';
+      castleGroup.add(northLeftCollider);
+      selectableObjects.current.push(northLeftCollider);
+      
+      // North wall right side
+      const northRightCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(northWallWidth, wallHeight, wallThickness + 2),
+        colliderMaterial
+      );
+      northRightCollider.position.set(outerSize/4 + gateWidth/4, wallHeight/2, outerSize/2);
+      northRightCollider.name = 'collider';
+      castleGroup.add(northRightCollider);
+      selectableObjects.current.push(northRightCollider);
+      
+      // Tower colliders (4 corners)
+      towerPositions.forEach(pos => {
+        const towerCollider = new THREE.Mesh(
+          new THREE.CylinderGeometry(towerRadius + 0.5, towerRadius + 0.5, towerHeight, 8),
+          colliderMaterial
+        );
+        towerCollider.position.set(pos.x, towerHeight/2, pos.z);
+        towerCollider.name = 'collider';
+        castleGroup.add(towerCollider);
+        selectableObjects.current.push(towerCollider);
+      });
       
       // Mark castle with collision metadata
       castleGroup.userData = { 
@@ -2703,8 +2753,7 @@ const GameWorld = () => {
       castleGroup.position.set(centerX, baseY, centerZ);
       scene.add(castleGroup);
       
-      // Add collider to collision detection
-      selectableObjects.current.push(collider);
+      // Colliders already added to selectableObjects array above
       
       return castleGroup;
     };
