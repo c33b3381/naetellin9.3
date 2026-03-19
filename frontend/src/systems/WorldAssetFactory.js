@@ -2755,3 +2755,305 @@ export const createPlayerMesh = (characterData = {}) => {
   return bodyGroup;
 };
 
+
+/**
+ * Create a generic NPC mesh
+ * Extracted from GameWorld.jsx for reusability
+ * 
+ * @param {Object} config - NPC configuration
+ * @param {string} config.name - Display name
+ * @param {string} config.type - NPC type ('npc', 'questgiver', 'vendor', 'trainer', 'guard')
+ * @param {number} config.color - Body color (hex)
+ * @param {number} x - X position
+ * @param {number} z - Z position
+ * @param {Function} getTerrainHeight - Function to get terrain height
+ * @returns {THREE.Group} NPC mesh group
+ */
+export const createNPCMesh = (config, x, z, getTerrainHeight) => {
+  const { name, type = 'npc', color } = config;
+  const npcGroup = new THREE.Group();
+  npcGroup.name = name;
+  npcGroup.userData = { type, name, interactable: true, color };
+  
+  // Invisible hitbox for easier clicking
+  const hitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 2.5, 1.2),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hitbox.position.y = 1.2;
+  npcGroup.add(hitbox);
+  
+  // Body
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xD2B48C });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.25, 0.5, 8, 16), bodyMaterial);
+  body.position.y = 0.8;
+  body.castShadow = true;
+  npcGroup.add(body);
+  
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), bodyMaterial);
+  head.position.y = 1.45;
+  head.castShadow = true;
+  npcGroup.add(head);
+  
+  // Quest marker for quest givers - consistent yellow cone style
+  if (type === 'questgiver') {
+    const markerGeometry = new THREE.ConeGeometry(0.2, 0.5, 8);
+    const markerMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0xffff00,
+      emissive: 0xffff00,
+      emissiveIntensity: 0.8
+    });
+    const questMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+    questMarker.position.y = 2.2;
+    questMarker.userData.questMarker = true;
+    npcGroup.add(questMarker);
+  }
+  
+  // Place NPC at terrain height
+  const terrainY = getTerrainHeight(x, z);
+  npcGroup.position.set(x, terrainY, z);
+  
+  return npcGroup;
+};
+
+/**
+ * Create a trainer NPC mesh (armored appearance with weapon)
+ * Extracted from GameWorld.jsx for reusability
+ * 
+ * @param {string} trainerClass - Class the trainer teaches ('warrior', 'mage', 'ranger')
+ * @param {string} name - Trainer name
+ * @param {number} x - X position
+ * @param {number} z - Z position
+ * @param {Function} getTerrainHeight - Function to get terrain height
+ * @returns {THREE.Group} Trainer mesh group
+ */
+export const createTrainerMesh = (trainerClass, name, x, z, getTerrainHeight) => {
+  const trainerGroup = new THREE.Group();
+  trainerGroup.name = name || `${trainerClass.charAt(0).toUpperCase() + trainerClass.slice(1)} Trainer`;
+  trainerGroup.userData = { 
+    type: 'trainer', 
+    trainerClass: trainerClass,
+    name: trainerGroup.name, 
+    interactable: true 
+  };
+  
+  // Invisible hitbox
+  const hitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 3, 1.5),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hitbox.position.y = 1.5;
+  trainerGroup.add(hitbox);
+  
+  // Body - armored appearance
+  const armorMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, metalness: 0.6, roughness: 0.4 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 8, 16), armorMaterial);
+  body.position.y = 0.9;
+  body.castShadow = true;
+  trainerGroup.add(body);
+  
+  // Head
+  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xD2B48C });
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), headMaterial);
+  head.position.y = 1.55;
+  head.castShadow = true;
+  trainerGroup.add(head);
+  
+  // Helmet
+  const helmetMaterial = new THREE.MeshStandardMaterial({ color: 0x718096, metalness: 0.7, roughness: 0.3 });
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), helmetMaterial);
+  helmet.position.y = 1.65;
+  trainerGroup.add(helmet);
+  
+  // Sword on back
+  const swordMaterial = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8 });
+  const sword = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.05), swordMaterial);
+  sword.position.set(-0.25, 1.2, -0.15);
+  sword.rotation.z = -0.3;
+  trainerGroup.add(sword);
+  
+  // Trainer indicator - orange book icon to distinguish from quest givers
+  const indicatorMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xf59e0b, 
+    emissive: 0xf59e0b, 
+    emissiveIntensity: 0.8 
+  });
+  const indicator = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.08), indicatorMaterial);
+  indicator.position.y = 2.1;
+  indicator.userData.trainerIndicator = true;
+  trainerGroup.add(indicator);
+  
+  const terrainY = getTerrainHeight(x, z);
+  trainerGroup.position.set(x, terrainY, z);
+  
+  return trainerGroup;
+};
+
+/**
+ * Create a vendor NPC mesh (merchant appearance with apron)
+ * Extracted from GameWorld.jsx for reusability
+ * 
+ * @param {string} name - Vendor name
+ * @param {string} vendorType - Vendor type ('general', 'weapon', 'armor', etc.)
+ * @param {number} x - X position
+ * @param {number} z - Z position
+ * @param {Function} getTerrainHeight - Function to get terrain height
+ * @returns {THREE.Group} Vendor mesh group
+ */
+export const createVendorMesh = (name, vendorType, x, z, getTerrainHeight) => {
+  const npcGroup = new THREE.Group();
+  npcGroup.name = name || 'Merchant';
+  npcGroup.userData = { 
+    type: 'vendor', 
+    name: npcGroup.name, 
+    interactable: true,
+    vendorType: vendorType || 'general'
+  };
+  
+  // Invisible hitbox
+  const hitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 2.5, 1.2),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hitbox.position.y = 1.2;
+  npcGroup.add(hitbox);
+  
+  // Body - merchant clothing (green/brown)
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.55, 8, 16), bodyMaterial);
+  body.position.y = 0.85;
+  body.castShadow = true;
+  npcGroup.add(body);
+  
+  // Apron
+  const apronMaterial = new THREE.MeshStandardMaterial({ color: 0xF5DEB3 });
+  const apron = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.15), apronMaterial);
+  apron.position.set(0, 0.7, 0.2);
+  npcGroup.add(apron);
+  
+  // Head
+  const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), skinMaterial);
+  head.position.y = 1.5;
+  head.castShadow = true;
+  npcGroup.add(head);
+  
+  // Hat (merchant cap)
+  const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, 0.15, 16), hatMaterial);
+  hat.position.y = 1.72;
+  npcGroup.add(hat);
+  
+  // Vendor indicator - gold coin icon
+  const indicatorMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xFFD700, 
+    emissive: 0xFFD700, 
+    emissiveIntensity: 0.6 
+  });
+  const indicator = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16), indicatorMaterial);
+  indicator.position.y = 2.1;
+  indicator.rotation.x = Math.PI / 2;
+  npcGroup.add(indicator);
+  
+  const terrainY = getTerrainHeight(x, z);
+  npcGroup.position.set(x, terrainY, z);
+  
+  return npcGroup;
+};
+
+/**
+ * Create a quest giver NPC mesh (robed appearance with staff)
+ * Extracted from GameWorld.jsx for reusability
+ * 
+ * @param {string} name - Quest giver name
+ * @param {string} npcId - Unique NPC identifier
+ * @param {number} x - X position
+ * @param {number} z - Z position
+ * @param {Function} getTerrainHeight - Function to get terrain height
+ * @returns {THREE.Group} Quest giver mesh group
+ */
+export const createQuestGiverMesh = (name, npcId, x, z, getTerrainHeight) => {
+  const npcGroup = new THREE.Group();
+  npcGroup.name = name || 'Quest Giver';
+  npcGroup.userData = { 
+    type: 'questgiver', 
+    name: npcGroup.name, 
+    interactable: true,
+    npcId: npcId || `questgiver_${Date.now()}`
+  };
+  
+  // Invisible hitbox
+  const hitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 2.5, 1.2),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hitbox.position.y = 1.2;
+  npcGroup.add(hitbox);
+  
+  // Body - robed appearance (blue/purple)
+  const robeMaterial = new THREE.MeshStandardMaterial({ color: 0x4B0082 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 8, 16), robeMaterial);
+  body.position.y = 0.9;
+  body.castShadow = true;
+  npcGroup.add(body);
+  
+  // Robe bottom (wider skirt)
+  const robeBottom = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.4, 0.5, 16),
+    robeMaterial
+  );
+  robeBottom.position.y = 0.35;
+  npcGroup.add(robeBottom);
+  
+  // Head
+  const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), skinMaterial);
+  head.position.y = 1.55;
+  head.castShadow = true;
+  npcGroup.add(head);
+  
+  // Hood
+  const hoodMaterial = new THREE.MeshStandardMaterial({ color: 0x2F0B5E });
+  const hood = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
+    hoodMaterial
+  );
+  hood.position.y = 1.6;
+  hood.rotation.x = 0.3;
+  npcGroup.add(hood);
+  
+  // Staff
+  const staffMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+  const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2, 8), staffMaterial);
+  staff.position.set(0.4, 1, 0);
+  staff.rotation.z = 0.1;
+  npcGroup.add(staff);
+  
+  // Staff orb
+  const orbMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00BFFF, 
+    emissive: 0x00BFFF, 
+    emissiveIntensity: 0.5 
+  });
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), orbMaterial);
+  orb.position.set(0.45, 2.1, 0);
+  npcGroup.add(orb);
+  
+  // Quest marker - yellow exclamation mark style cone
+  const markerMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xFFFF00, 
+    emissive: 0xFFFF00, 
+    emissiveIntensity: 0.8 
+  });
+  const questMarker = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 8), markerMaterial);
+  questMarker.position.y = 2.3;
+  questMarker.userData.questMarker = true;
+  npcGroup.add(questMarker);
+  
+  const terrainY = getTerrainHeight(x, z);
+  npcGroup.position.set(x, terrainY, z);
+  
+  return npcGroup;
+};
+

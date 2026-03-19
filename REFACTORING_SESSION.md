@@ -2,7 +2,7 @@
 
 ## Session Date: December 19, 2025
 
-### Refactors Completed: 2
+### Refactors Completed: 3
 
 ---
 
@@ -78,6 +78,89 @@
 **After**:
 - WorldAssetFactory.js: Creates player mesh (factory)
 - GameWorld.jsx: Calls factory and manages player
+
+---
+
+## Refactor #3: NPC Mesh Creation Extraction (All Types)
+
+**Target**: P1 - NPC/Enemy Mesh Creation (Complete)  
+**Risk Level**: 🟢 LOW  
+**Status**: ✅ COMPLETED
+
+### What Changed
+- **Extracted**: 4 NPC creation functions (~251 lines total)
+  1. `createNPC()` - Generic NPC (~47 lines)
+  2. `createTrainer()` - Trainer NPC (~60 lines)
+  3. `createVendorNPC()` - Vendor NPC (~60 lines)
+  4. `createQuestGiverNPC()` - Quest Giver NPC (~84 lines)
+- **From**: `GameWorld.jsx` lines 3939-4209
+- **To**: `WorldAssetFactory.js` as exported functions:
+  - `createNPCMesh()`
+  - `createTrainerMesh()`
+  - `createVendorMesh()`
+  - `createQuestGiverMesh()`
+
+### Files Modified
+1. `/app/frontend/src/systems/WorldAssetFactory.js`
+   - Added 4 NPC mesh creation exports (~302 lines with JSDoc)
+   
+2. `/app/frontend/src/pages/GameWorld.jsx`
+   - Imported all 4 NPC factory functions
+   - Replaced 251-line inline functions with ~31-line wrappers
+   - **Reduction**: 6890 → 6670 lines (-220 lines)
+
+### Why It's Safe
+✅ **Pure function extraction**: Only creates THREE.js meshes, no state changes  
+✅ **No behavior changes**: Exact same visual output for all NPC types  
+✅ **No game logic**: Just geometry and material creation  
+✅ **No interaction changes**: Scene add + selectableObjects push still in GameWorld  
+✅ **No save/load impact**: Doesn't touch persistence  
+✅ **Preserved userData**: All NPCs have same userData structure  
+✅ **Easy verification**: Visual check - NPCs should look identical  
+
+### NPC Types Extracted
+1. **Generic NPC**: Simple body + head + optional quest marker
+2. **Trainer**: Armored appearance + helmet + sword + orange book indicator
+3. **Vendor**: Merchant clothing + apron + hat + gold coin indicator
+4. **Quest Giver**: Robed appearance + hood + staff + orb + yellow quest marker
+
+### Before/After Responsibility
+**Before**:
+- GameWorld.jsx: Creates and manages all NPC meshes inline
+
+**After**:
+- WorldAssetFactory.js: Creates all NPC mesh types (factory)
+- GameWorld.jsx: Calls factories, adds to scene, manages NPCs
+
+---
+
+## Cumulative Impact (After 3 Refactors)
+
+### Line Count Reduction
+- **Starting**: GameWorld.jsx = 7165 lines
+- **After Refactor #1** (Enemy): 7081 lines (-84)
+- **After Refactor #2** (Player): 6890 lines (-191)
+- **After Refactor #3** (NPCs): 6670 lines (-220)
+- **Total Reduction**: **-495 lines (6.9%)**
+
+### WorldAssetFactory.js Growth
+- **Starting**: 2445 lines
+- **After all refactors**: 3059 lines (+614)
+
+### Net Change
+- Total lines moved: ~525 lines
+- Net increase (with JSDoc): +119 lines (comprehensive documentation overhead)
+
+### P1 Target Status
+✅ **P1 - NPC/Enemy Mesh Creation: COMPLETE**
+- Enemy mesh extraction ✅
+- Player mesh extraction ✅
+- Generic NPC extraction ✅
+- Trainer NPC extraction ✅
+- Vendor NPC extraction ✅
+- Quest Giver NPC extraction ✅
+
+**All visual entity creation now consolidated in WorldAssetFactory.js**
 
 ---
 
