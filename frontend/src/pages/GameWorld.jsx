@@ -2871,7 +2871,50 @@ const GameWorld = () => {
     createWeaponRack(-22, -10, Math.PI * 0.5);
     createWeaponRack(-22, -14, Math.PI * 0.5);
     
-    // Training area ground (dirt)
+    // ==================== TOWN LAYOUT IMPROVEMENTS ====================
+    // Create clear path system and improve building placement for navigation clarity
+    
+    // Main Roads (North-South and East-West axes) - Flattened terrain for clear paths
+    const createMainRoad = (startX, startZ, endX, endZ, width = 4) => {
+      const roadMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8B7355, // Dirt road color
+        roughness: 0.95 
+      });
+      
+      // Calculate road dimensions
+      const centerX = (startX + endX) / 2;
+      const centerZ = (startZ + endZ) / 2;
+      const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endZ - startZ, 2));
+      const angle = Math.atan2(endX - startX, endZ - startZ);
+      
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, length),
+        roadMaterial
+      );
+      road.rotation.x = -Math.PI / 2;
+      road.rotation.z = angle;
+      road.position.set(centerX, 0.02, centerZ); // Slightly above ground
+      road.receiveShadow = true;
+      scene.add(road);
+      return road;
+    };
+    
+    // Create main cross-shaped road system
+    // North-South main road through town center
+    createMainRoad(0, -35, 0, 35, 5); // Main street
+    
+    // East-West main road through town center
+    createMainRoad(-35, 0, 35, 0, 5); // Main street
+    
+    // Secondary roads to key buildings
+    createMainRoad(0, -25, -22, -15, 3); // Town Hall to Armory
+    createMainRoad(0, -25, 22, -15, 3); // Town Hall to Inn
+    createMainRoad(-25, 0, -18, -8, 3); // Blacksmith to Training Area
+    createMainRoad(25, 0, 10, 6, 3); // General Store to Market
+    
+    // ==================== END TOWN LAYOUT IMPROVEMENTS ====================
+    
+    // Training area ground (dirt) - Now positioned along clear path
     const trainingGround = new THREE.Mesh(
       new THREE.CircleGeometry(8, 16),
       new THREE.MeshStandardMaterial({ color: 0x9B7653, roughness: 0.95 })
@@ -2915,16 +2958,30 @@ const GameWorld = () => {
     createBench(5, -5, -Math.PI * 0.25);
     createBench(-5, -5, Math.PI * 0.25);
     
-    // Ambient NPCs (non-interactive villagers for atmosphere)
-    createAmbientNPC(6, 10, 0x4169E1, 'Farmer');
-    createAmbientNPC(-4, 8, 0x8B0000, 'Townsperson');
-    createAmbientNPC(10, -2, 0x228B22, 'Merchant Helper');
-    createAmbientNPC(-8, 12, 0x9370DB, 'Elder');
-    createAmbientNPC(15, 14, 0xDAA520, 'Worker');
-    createAmbientNPC(-15, -6, 0x4a5568, 'Guard');
+    // ==================== AMBIENT NPCs - POSITIONED FOR TOWN LIFE ====================
+    // Positioned to reinforce district purposes and add life to key areas
+    
+    // Town Center - Near fountain and quest giver
+    createAmbientNPC(4, 6, 0x4169E1, 'Townsperson');
+    createAmbientNPC(-3, 5, 0x9370DB, 'Elder');
+    
+    // Market District (East) - Near shops and vendor
+    createAmbientNPC(20, 4, 0x228B22, 'Merchant Helper');
+    createAmbientNPC(24, -3, 0xDAA520, 'Shopper');
+    
+    // Training Area (West) - Near training grounds
+    createAmbientNPC(-16, -6, 0x4a5568, 'Guard');
+    createAmbientNPC(-20, -9, 0x8B0000, 'Recruit');
+    
+    // Residential Area (North) - Near houses
+    createAmbientNPC(-25, 18, 0x4169E1, 'Farmer');
+    createAmbientNPC(25, 18, 0x9370DB, 'Resident');
+    
+    // ==================== END AMBIENT NPCs ====================
     
     // ==================== DARK CASTLE (Enemy Area) ====================
     // A castle far from the village with enemies inside
+    // Clear visual beacon for progression - positioned northeast for natural exploration flow
     
     const CASTLE_X = 80;
     const CASTLE_Z = -60;
@@ -3677,6 +3734,7 @@ const GameWorld = () => {
     // createTrainer(-8, -12, 'warrior');
     
     // ==================== MARKET NPCs CREATION ====================
+    // Positioned along clear paths for easy discovery
     
     // VENDOR NPC Creator - Using factory function
     const createVendorNPC = (x, z, name = 'Merchant') => {
@@ -3694,20 +3752,64 @@ const GameWorld = () => {
       return npcGroup;
     };
     
-    // Place Market NPCs
-    // 1. WARRIOR TRAINER - Using existing createTrainer function
-    // Note: Trainer placement moved to use getTerrainHeight
+    // ==================== IMPROVED NPC PLACEMENT FOR NAVIGATION CLARITY ====================
+    
+    // 1. QUEST GIVER - TOWN CENTER (most visible, near spawn)
+    // Positioned prominently at town center near fountain
+    createQuestGiverNPC(0, 3, 'Elder Theron', 'elder_theron_1');
+    
+    // 2. WARRIOR TRAINER - TRAINING AREA (clear association)
+    // Position trainer IN the training area for clear role association
     const trainerX = -18;
-    const trainerZ = -8;
+    const trainerZ = -10; // Moved 2 units south for better positioning in training area
     const trainerTerrainY = getTerrainHeight(trainerX, trainerZ);
     const warriorTrainerNPC = createTrainer(trainerX, trainerZ, 'warrior');
     warriorTrainerNPC.position.y = trainerTerrainY;
     
-    // 2. VENDOR NPC - At the main market stall area (east side)
-    createVendorNPC(10, 6, 'Marcus the Merchant');
+    // 3. VENDOR NPC - MARKET AREA (east side, near General Store)
+    // Positioned right outside General Store for clear merchant association
+    createVendorNPC(22, 3, 'Marcus the Merchant');
     
-    // 3. QUEST GIVER NPC - Central location near fountain (easy to find)
-    createQuestGiverNPC(4, 2, 'Elder Theron', 'elder_theron_1');
+    // 4. GUARD NPCs - TOWN EXITS (directional guides)
+    // Position guards at main road exits to guide players toward gameplay areas
+    createNPC(0, 30, 0x3b82f6, 'North Gate Guard', 'npc'); // North exit
+    createNPC(30, 0, 0x3b82f6, 'East Gate Guard', 'npc'); // East exit
+    
+    // ==================== END IMPROVED NPC PLACEMENT ====================
+    
+    // ==================== DIRECTIONAL MARKERS ====================
+    // Add simple sign posts at key locations to improve navigation
+    
+    const createSignPost = (x, z, label) => {
+      const signGroup = new THREE.Group();
+      
+      // Post
+      const postMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2, 0.2), postMaterial);
+      post.position.y = 1;
+      post.castShadow = true;
+      signGroup.add(post);
+      
+      // Sign board
+      const boardMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355 });
+      const board = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.5, 0.1), boardMaterial);
+      board.position.y = 2;
+      board.castShadow = true;
+      signGroup.add(board);
+      
+      signGroup.position.set(x, 0, z);
+      signGroup.userData = { type: 'sign', label };
+      scene.add(signGroup);
+      return signGroup;
+    };
+    
+    // Place signs at key intersections
+    createSignPost(-3, -3, 'Town Center'); // Southwest of fountain
+    createSignPost(3, 25, 'Adventure Awaits →'); // North road - points to gameplay
+    createSignPost(25, 3, 'Market District'); // East side near shops
+    createSignPost(-25, 3, 'Training Grounds'); // West side near training
+    
+    // ==================== END DIRECTIONAL MARKERS ====================
     
     // ==================== END MARKET NPCs ====================
     
