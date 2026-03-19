@@ -2484,6 +2484,234 @@ const GameWorld = () => {
     
     createFountain(0, 8); // Central fountain (moved north so player doesn't spawn inside)
     
+    
+    // === CASTLE (Bodiam-style layout) ===
+    const createCastle = (centerX, centerZ) => {
+      const castleGroup = new THREE.Group();
+      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x6B6B6B, roughness: 0.9 });
+      const darkStoneMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
+      
+      // Castle dimensions (based on Bodiam layout)
+      const outerSize = 30; // Overall castle size
+      const wallThickness = 2;
+      const wallHeight = 8;
+      const towerRadius = 4;
+      const towerHeight = 12;
+      const courtyardSize = 18;
+      
+      // === CORNER TOWERS (Towers 2, 3, 4, 5) ===
+      const towerPositions = [
+        { x: -outerSize/2 + towerRadius, z: -outerSize/2 + towerRadius, label: 2 }, // Southwest
+        { x: outerSize/2 - towerRadius, z: -outerSize/2 + towerRadius, label: 3 },  // Southeast
+        { x: -outerSize/2 + towerRadius, z: outerSize/2 - towerRadius, label: 4 },  // Northwest
+        { x: outerSize/2 - towerRadius, z: outerSize/2 - towerRadius, label: 5 },   // Northeast
+      ];
+      
+      towerPositions.forEach(pos => {
+        const tower = new THREE.Mesh(
+          new THREE.CylinderGeometry(towerRadius, towerRadius + 0.3, towerHeight, 16),
+          stoneMaterial
+        );
+        tower.position.set(pos.x, towerHeight/2, pos.z);
+        tower.castShadow = true;
+        castleGroup.add(tower);
+        
+        // Tower battlements
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const battlement = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 1.5, 0.8),
+            darkStoneMaterial
+          );
+          battlement.position.set(
+            pos.x + Math.cos(angle) * (towerRadius + 0.3),
+            towerHeight + 0.75,
+            pos.z + Math.sin(angle) * (towerRadius + 0.3)
+          );
+          castleGroup.add(battlement);
+        }
+        
+        // Tower windows
+        for (let level = 0; level < 3; level++) {
+          const window1 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.8, 0.2),
+            new THREE.MeshStandardMaterial({ color: 0x2a2a2a })
+          );
+          window1.position.set(pos.x + towerRadius, 3 + level * 3, pos.z);
+          castleGroup.add(window1);
+        }
+      });
+      
+      // === CURTAIN WALLS ===
+      // North wall (with gatehouse)
+      const northWallLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(10, wallHeight, wallThickness),
+        stoneMaterial
+      );
+      northWallLeft.position.set(-10, wallHeight/2, outerSize/2);
+      northWallLeft.castShadow = true;
+      castleGroup.add(northWallLeft);
+      
+      const northWallRight = new THREE.Mesh(
+        new THREE.BoxGeometry(10, wallHeight, wallThickness),
+        stoneMaterial
+      );
+      northWallRight.position.set(10, wallHeight/2, outerSize/2);
+      northWallRight.castShadow = true;
+      castleGroup.add(northWallRight);
+      
+      // South wall
+      const southWall = new THREE.Mesh(
+        new THREE.BoxGeometry(outerSize - towerRadius * 2, wallHeight, wallThickness),
+        stoneMaterial
+      );
+      southWall.position.set(0, wallHeight/2, -outerSize/2);
+      southWall.castShadow = true;
+      castleGroup.add(southWall);
+      
+      // East wall
+      const eastWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness, wallHeight, outerSize - towerRadius * 2),
+        stoneMaterial
+      );
+      eastWall.position.set(outerSize/2, wallHeight/2, 0);
+      eastWall.castShadow = true;
+      castleGroup.add(eastWall);
+      
+      // West wall
+      const westWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThickness, wallHeight, outerSize - towerRadius * 2),
+        stoneMaterial
+      );
+      westWall.position.set(-outerSize/2, wallHeight/2, 0);
+      westWall.castShadow = true;
+      castleGroup.add(westWall);
+      
+      // === GATEHOUSE (Tower 1 and 8) ===
+      const gatehouseWidth = 8;
+      const gatehouseDepth = 6;
+      const gatehouseHeight = 10;
+      
+      // Main gatehouse structure
+      const gatehouse = new THREE.Mesh(
+        new THREE.BoxGeometry(gatehouseWidth, gatehouseHeight, gatehouseDepth),
+        stoneMaterial
+      );
+      gatehouse.position.set(0, gatehouseHeight/2, outerSize/2 + gatehouseDepth/2 - 1);
+      gatehouse.castShadow = true;
+      castleGroup.add(gatehouse);
+      
+      // Gatehouse towers (flanking)
+      [-4, 4].forEach(xOffset => {
+        const gateT = new THREE.Mesh(
+          new THREE.CylinderGeometry(2, 2.3, gatehouseHeight + 2, 12),
+          stoneMaterial
+        );
+        gateT.position.set(xOffset, (gatehouseHeight + 2)/2, outerSize/2 + gatehouseDepth/2 - 1);
+        gateT.castShadow = true;
+        castleGroup.add(gateT);
+      });
+      
+      // Gate archway
+      const gateArch = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 5, gatehouseDepth + 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+      );
+      gateArch.position.set(0, 2.5, outerSize/2 + gatehouseDepth/2 - 1);
+      castleGroup.add(gateArch);
+      
+      // Portcullis
+      const portcullis = new THREE.Mesh(
+        new THREE.BoxGeometry(3.8, 4.8, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.8 })
+      );
+      portcullis.position.set(0, 2.4, outerSize/2 + 1);
+      castleGroup.add(portcullis);
+      
+      // === INTERIOR BUILDINGS (simplified rooms from plan) ===
+      // Great Hall (rooms 10, 15)
+      const greatHall = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 6, 8),
+        new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 })
+      );
+      greatHall.position.set(-6, 3, 5);
+      castleGroup.add(greatHall);
+      
+      // Hall roof
+      const hallRoof = new THREE.Mesh(
+        new THREE.BoxGeometry(13, 0.5, 9),
+        new THREE.MeshStandardMaterial({ color: 0x654321 })
+      );
+      hallRoof.position.set(-6, 6.25, 5);
+      castleGroup.add(hallRoof);
+      
+      // Kitchen/Service area (rooms 19, 20, 21)
+      const kitchen = new THREE.Mesh(
+        new THREE.BoxGeometry(14, 5, 6),
+        new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 })
+      );
+      kitchen.position.set(2, 2.5, -10);
+      castleGroup.add(kitchen);
+      
+      // Chapel (room 9)
+      const chapel = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 7, 8),
+        new THREE.MeshStandardMaterial({ color: 0x9B8365, roughness: 0.85 })
+      );
+      chapel.position.set(-9, 3.5, -8);
+      castleGroup.add(chapel);
+      
+      // Chapel spire
+      const spire = new THREE.Mesh(
+        new THREE.ConeGeometry(1.5, 4, 8),
+        darkStoneMaterial
+      );
+      spire.position.set(-9, 9, -8);
+      castleGroup.add(spire);
+      
+      // === COURTYARD (open space in center) ===
+      const courtyardGround = new THREE.Mesh(
+        new THREE.PlaneGeometry(courtyardSize, courtyardSize),
+        new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.95 })
+      );
+      courtyardGround.rotation.x = -Math.PI / 2;
+      courtyardGround.position.y = 0.05;
+      courtyardGround.receiveShadow = true;
+      castleGroup.add(courtyardGround);
+      
+      // === COLLISION SYSTEM ===
+      // Add invisible colliders for castle structure
+      const colliderGeometry = new THREE.BoxGeometry(outerSize + 4, wallHeight, outerSize + 4);
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      const collider = new THREE.Mesh(colliderGeometry, colliderMaterial);
+      collider.position.y = wallHeight/2;
+      collider.name = 'collider';
+      castleGroup.add(collider);
+      
+      // Mark castle with collision metadata
+      castleGroup.userData = { 
+        type: 'castle', 
+        hasCollision: true,
+        interactable: false
+      };
+      
+      const baseY = getSpawnAwareHeight(centerX, centerZ);
+      castleGroup.position.set(centerX, baseY, centerZ);
+      scene.add(castleGroup);
+      
+      // Add collider to collision detection
+      selectableObjects.current.push(collider);
+      
+      return castleGroup;
+    };
+    
+    // Create the castle at specified location
+    createCastle(-70, 60);
+    
     // === MARKET STALLS ===
     const createMarketStall = (x, z, rotation = 0, canopyColor = 0xDC143C, goods = true) => {
       const stallGroup = new THREE.Group();
@@ -2979,169 +3207,169 @@ const GameWorld = () => {
     // Castle removed - was at (80, -60), outside reduced world bounds (±120 units)
     // World size reduced to single active zone for performance
     
-    const createCastle = (x, z) => {
-      const castleGroup = new THREE.Group();
-      
-      // Castle materials
-      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
-      const darkStoneMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.85 });
-      const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.7 });
-      const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
-      
-      // Castle ground/foundation
-      const foundation = new THREE.Mesh(
-        new THREE.CylinderGeometry(25, 28, 1, 8),
-        new THREE.MeshStandardMaterial({ color: 0x3d3d3d, roughness: 0.95 })
-      );
-      foundation.position.y = 0.5;
-      castleGroup.add(foundation);
-      
-      // Main keep (central tower)
-      const mainKeep = new THREE.Mesh(new THREE.BoxGeometry(12, 18, 12), stoneMaterial);
-      mainKeep.position.y = 9;
-      mainKeep.castShadow = true;
-      castleGroup.add(mainKeep);
-      
-      // Main keep roof
-      const mainRoof = new THREE.Mesh(new THREE.ConeGeometry(9, 6, 4), roofMaterial);
-      mainRoof.position.y = 21;
-      mainRoof.rotation.y = Math.PI / 4;
-      mainRoof.castShadow = true;
-      castleGroup.add(mainRoof);
-      
-      // Corner towers (4)
-      const towerPositions = [
-        [-18, -18], [18, -18], [-18, 18], [18, 18]
-      ];
-      
-      towerPositions.forEach(([tx, tz]) => {
-        // Tower base
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 15, 8), stoneMaterial);
-        tower.position.set(tx, 7.5, tz);
-        tower.castShadow = true;
-        castleGroup.add(tower);
-        
-        // Tower roof
-        const towerRoof = new THREE.Mesh(new THREE.ConeGeometry(5, 4, 8), roofMaterial);
-        towerRoof.position.set(tx, 17, tz);
-        towerRoof.castShadow = true;
-        castleGroup.add(towerRoof);
-        
-        // Tower battlements
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          const battlement = new THREE.Mesh(
-            new THREE.BoxGeometry(1.5, 2, 0.8),
-            darkStoneMaterial
-          );
-          battlement.position.set(
-            tx + Math.cos(angle) * 4,
-            15.5,
-            tz + Math.sin(angle) * 4
-          );
-          battlement.rotation.y = angle;
-          castleGroup.add(battlement);
-        }
-      });
-      
-      // Walls connecting towers
-      const wallPositions = [
-        { x: 0, z: -18, rx: 0, length: 32 },
-        { x: 0, z: 18, rx: 0, length: 32 },
-        { x: -18, z: 0, rx: Math.PI / 2, length: 32 },
-        { x: 18, z: 0, rx: Math.PI / 2, length: 32 },
-      ];
-      
-      wallPositions.forEach(({ x: wx, z: wz, rx, length }) => {
-        const wall = new THREE.Mesh(
-          new THREE.BoxGeometry(length, 8, 2),
-          stoneMaterial
-        );
-        wall.position.set(wx, 4, wz);
-        wall.rotation.y = rx;
-        wall.castShadow = true;
-        castleGroup.add(wall);
-        
-        // Wall top walkway
-        const walkway = new THREE.Mesh(
-          new THREE.BoxGeometry(length, 0.5, 3),
-          darkStoneMaterial
-        );
-        walkway.position.set(wx, 8.25, wz);
-        walkway.rotation.y = rx;
-        castleGroup.add(walkway);
-      });
-      
-      // Castle gate
-      const gateFrame = new THREE.Mesh(new THREE.BoxGeometry(6, 8, 3), darkStoneMaterial);
-      gateFrame.position.set(0, 4, -19);
-      castleGroup.add(gateFrame);
-      
-      // Gate opening (dark)
-      const gateOpening = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 6, 4),
-        new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
-      );
-      gateOpening.position.set(0, 3, -19);
-      castleGroup.add(gateOpening);
-      
-      // Gate arch
-      const gateArch = new THREE.Mesh(
-        new THREE.TorusGeometry(2, 0.5, 8, 16, Math.PI),
-        darkStoneMaterial
-      );
-      gateArch.position.set(0, 6, -18);
-      gateArch.rotation.x = Math.PI / 2;
-      castleGroup.add(gateArch);
-      
-      // Torches at gate
-      const torchMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xFF4500, 
-        emissive: 0xFF4500, 
-        emissiveIntensity: 0.8 
-      });
-      [[-3.5, -17], [3.5, -17]].forEach(([ttx, ttz]) => {
-        const torchHolder = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.15, 0.15, 1.5, 8),
-          woodMaterial
-        );
-        torchHolder.position.set(ttx, 5, ttz);
-        castleGroup.add(torchHolder);
-        
-        const flame = new THREE.Mesh(
-          new THREE.SphereGeometry(0.3, 8, 8),
-          torchMaterial
-        );
-        flame.position.set(ttx, 6, ttz);
-        castleGroup.add(flame);
-      });
-      
-      // Inner courtyard (darker ground)
-      const courtyard = new THREE.Mesh(
-        new THREE.CircleGeometry(15, 16),
-        new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.95 })
-      );
-      courtyard.rotation.x = -Math.PI / 2;
-      courtyard.position.y = 1.02;
-      castleGroup.add(courtyard);
-      
-      // Banners on main keep
-      const bannerMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x8B0000, 
-        side: THREE.DoubleSide 
-      });
-      [[6.1, 12, 0], [-6.1, 12, 0], [0, 12, 6.1], [0, 12, -6.1]].forEach(([bx, by, bz]) => {
-        const banner = new THREE.Mesh(new THREE.PlaneGeometry(2, 4), bannerMaterial);
-        banner.position.set(bx, by, bz);
-        if (bx !== 0) banner.rotation.y = Math.PI / 2;
-        castleGroup.add(banner);
-      });
-      
-      castleGroup.position.set(x, 0, z);
-      castleGroup.userData = { type: 'castle', hasCollision: true };
-      scene.add(castleGroup);
-      return castleGroup;
-    };
+//     const createCastle = (x, z) => {
+//       const castleGroup = new THREE.Group();
+//       
+//       // Castle materials
+//       const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
+//       const darkStoneMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.85 });
+//       const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.7 });
+//       const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
+//       
+//       // Castle ground/foundation
+//       const foundation = new THREE.Mesh(
+//         new THREE.CylinderGeometry(25, 28, 1, 8),
+//         new THREE.MeshStandardMaterial({ color: 0x3d3d3d, roughness: 0.95 })
+//       );
+//       foundation.position.y = 0.5;
+//       castleGroup.add(foundation);
+//       
+//       // Main keep (central tower)
+//       const mainKeep = new THREE.Mesh(new THREE.BoxGeometry(12, 18, 12), stoneMaterial);
+//       mainKeep.position.y = 9;
+//       mainKeep.castShadow = true;
+//       castleGroup.add(mainKeep);
+//       
+//       // Main keep roof
+//       const mainRoof = new THREE.Mesh(new THREE.ConeGeometry(9, 6, 4), roofMaterial);
+//       mainRoof.position.y = 21;
+//       mainRoof.rotation.y = Math.PI / 4;
+//       mainRoof.castShadow = true;
+//       castleGroup.add(mainRoof);
+//       
+//       // Corner towers (4)
+//       const towerPositions = [
+//         [-18, -18], [18, -18], [-18, 18], [18, 18]
+//       ];
+//       
+//       towerPositions.forEach(([tx, tz]) => {
+//         // Tower base
+//         const tower = new THREE.Mesh(new THREE.CylinderGeometry(4, 4.5, 15, 8), stoneMaterial);
+//         tower.position.set(tx, 7.5, tz);
+//         tower.castShadow = true;
+//         castleGroup.add(tower);
+//         
+//         // Tower roof
+//         const towerRoof = new THREE.Mesh(new THREE.ConeGeometry(5, 4, 8), roofMaterial);
+//         towerRoof.position.set(tx, 17, tz);
+//         towerRoof.castShadow = true;
+//         castleGroup.add(towerRoof);
+//         
+//         // Tower battlements
+//         for (let i = 0; i < 8; i++) {
+//           const angle = (i / 8) * Math.PI * 2;
+//           const battlement = new THREE.Mesh(
+//             new THREE.BoxGeometry(1.5, 2, 0.8),
+//             darkStoneMaterial
+//           );
+//           battlement.position.set(
+//             tx + Math.cos(angle) * 4,
+//             15.5,
+//             tz + Math.sin(angle) * 4
+//           );
+//           battlement.rotation.y = angle;
+//           castleGroup.add(battlement);
+//         }
+//       });
+//       
+//       // Walls connecting towers
+//       const wallPositions = [
+//         { x: 0, z: -18, rx: 0, length: 32 },
+//         { x: 0, z: 18, rx: 0, length: 32 },
+//         { x: -18, z: 0, rx: Math.PI / 2, length: 32 },
+//         { x: 18, z: 0, rx: Math.PI / 2, length: 32 },
+//       ];
+//       
+//       wallPositions.forEach(({ x: wx, z: wz, rx, length }) => {
+//         const wall = new THREE.Mesh(
+//           new THREE.BoxGeometry(length, 8, 2),
+//           stoneMaterial
+//         );
+//         wall.position.set(wx, 4, wz);
+//         wall.rotation.y = rx;
+//         wall.castShadow = true;
+//         castleGroup.add(wall);
+//         
+//         // Wall top walkway
+//         const walkway = new THREE.Mesh(
+//           new THREE.BoxGeometry(length, 0.5, 3),
+//           darkStoneMaterial
+//         );
+//         walkway.position.set(wx, 8.25, wz);
+//         walkway.rotation.y = rx;
+//         castleGroup.add(walkway);
+//       });
+//       
+//       // Castle gate
+//       const gateFrame = new THREE.Mesh(new THREE.BoxGeometry(6, 8, 3), darkStoneMaterial);
+//       gateFrame.position.set(0, 4, -19);
+//       castleGroup.add(gateFrame);
+//       
+//       // Gate opening (dark)
+//       const gateOpening = new THREE.Mesh(
+//         new THREE.BoxGeometry(4, 6, 4),
+//         new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
+//       );
+//       gateOpening.position.set(0, 3, -19);
+//       castleGroup.add(gateOpening);
+//       
+//       // Gate arch
+//       const gateArch = new THREE.Mesh(
+//         new THREE.TorusGeometry(2, 0.5, 8, 16, Math.PI),
+//         darkStoneMaterial
+//       );
+//       gateArch.position.set(0, 6, -18);
+//       gateArch.rotation.x = Math.PI / 2;
+//       castleGroup.add(gateArch);
+//       
+//       // Torches at gate
+//       const torchMaterial = new THREE.MeshStandardMaterial({ 
+//         color: 0xFF4500, 
+//         emissive: 0xFF4500, 
+//         emissiveIntensity: 0.8 
+//       });
+//       [[-3.5, -17], [3.5, -17]].forEach(([ttx, ttz]) => {
+//         const torchHolder = new THREE.Mesh(
+//           new THREE.CylinderGeometry(0.15, 0.15, 1.5, 8),
+//           woodMaterial
+//         );
+//         torchHolder.position.set(ttx, 5, ttz);
+//         castleGroup.add(torchHolder);
+//         
+//         const flame = new THREE.Mesh(
+//           new THREE.SphereGeometry(0.3, 8, 8),
+//           torchMaterial
+//         );
+//         flame.position.set(ttx, 6, ttz);
+//         castleGroup.add(flame);
+//       });
+//       
+//       // Inner courtyard (darker ground)
+//       const courtyard = new THREE.Mesh(
+//         new THREE.CircleGeometry(15, 16),
+//         new THREE.MeshStandardMaterial({ color: 0x2d2d2d, roughness: 0.95 })
+//       );
+//       courtyard.rotation.x = -Math.PI / 2;
+//       courtyard.position.y = 1.02;
+//       castleGroup.add(courtyard);
+//       
+//       // Banners on main keep
+//       const bannerMaterial = new THREE.MeshStandardMaterial({ 
+//         color: 0x8B0000, 
+//         side: THREE.DoubleSide 
+//       });
+//       [[6.1, 12, 0], [-6.1, 12, 0], [0, 12, 6.1], [0, 12, -6.1]].forEach(([bx, by, bz]) => {
+//         const banner = new THREE.Mesh(new THREE.PlaneGeometry(2, 4), bannerMaterial);
+//         banner.position.set(bx, by, bz);
+//         if (bx !== 0) banner.rotation.y = Math.PI / 2;
+//         castleGroup.add(banner);
+//       });
+//       
+//       castleGroup.position.set(x, 0, z);
+//       castleGroup.userData = { type: 'castle', hasCollision: true };
+//       scene.add(castleGroup);
+//       return castleGroup;
+//     };
     
     // Castle removed - was outside reduced world bounds
     // Castle enemies removed - were at (80, -60), outside ±120 unit bounds
