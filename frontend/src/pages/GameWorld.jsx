@@ -2395,16 +2395,9 @@ const GameWorld = () => {
     // A lively starter town with central square, market, and functional NPCs
     
     // === GROUND & TOWN SQUARE ===
-    const SPAWN_PLATFORM_HEIGHT = 0.5; // Height of raised spawn platform
-    const SPAWN_RADIUS = 30; // Radius of spawn area that uses raised platform
-    
-    // Helper function to get correct Y position (platform height in spawn area, terrain height elsewhere)
+    // All objects now use terrain height (no raised platform)
     const getSpawnAwareHeight = (x, z) => {
-      const distFromCenter = Math.sqrt(x * x + z * z);
-      if (distFromCenter < SPAWN_RADIUS) {
-        return SPAWN_PLATFORM_HEIGHT; // Objects in spawn area sit on raised platform
-      }
-      return getTerrainHeight(x, z); // Objects outside spawn area use terrain height
+      return getTerrainHeight(x, z); // All objects sit on terrain
     };
     
     // Town square circle REMOVED per user request
@@ -2479,7 +2472,8 @@ const GameWorld = () => {
         interactable: false
       };
       
-      fountainGroup.position.set(x, SPAWN_PLATFORM_HEIGHT, z); // Position on raised platform
+      const baseY = getSpawnAwareHeight(x, z);
+      fountainGroup.position.set(x, baseY, z); // Position on terrain
       scene.add(fountainGroup);
       
       // Add collider to selectable objects for collision detection
@@ -2569,7 +2563,8 @@ const GameWorld = () => {
         interactable: true
       };
       
-      stallGroup.position.set(x, SPAWN_PLATFORM_HEIGHT, z); // Position on raised platform
+      const baseY = getSpawnAwareHeight(x, z);
+      stallGroup.position.set(x, baseY, z); // Position on terrain
       stallGroup.rotation.y = rotation;
       scene.add(stallGroup);
       
