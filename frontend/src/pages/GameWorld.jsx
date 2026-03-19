@@ -2753,8 +2753,10 @@ const GameWorld = () => {
       window1.position.set(1.2, 1.5, 1.76);
       houseGroup.add(window1);
       
-      // COLLISION: Add invisible collider box
-      const colliderGeometry = new THREE.BoxGeometry(4.2, 2.5, 3.7);  // Slightly larger than walls
+      // COLLISION: Add invisible collider box (EXACT match to visual walls, no margin)
+      // Reduced from 4.2x3.7 to 4.0x3.5 to match visible building dimensions
+      // This ensures visible gaps are actually passable
+      const colliderGeometry = new THREE.BoxGeometry(4.0, 2.5, 3.5);  // Exact match to wall size
       const colliderMaterial = new THREE.MeshBasicMaterial({ 
         transparent: true, 
         opacity: 0,
@@ -3285,8 +3287,10 @@ const GameWorld = () => {
         buildingGroup.add(rightWindow);
       }
       
-      // COLLISION: Add invisible collider box
-      const colliderGeometry = new THREE.BoxGeometry(width + 0.5, height, depth + 0.5);  // Slightly larger than walls
+      // COLLISION: Add invisible collider box (MINIMAL margin for precise gaps)
+      // Reduced from +0.5 to +0.2 margin to better match visual building dimensions
+      // This ensures visible gaps between buildings are passable
+      const colliderGeometry = new THREE.BoxGeometry(width + 0.2, height, depth + 0.2);  // Minimal margin
       const colliderMaterial = new THREE.MeshBasicMaterial({ 
         transparent: true, 
         opacity: 0,
