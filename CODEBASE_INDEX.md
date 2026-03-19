@@ -201,14 +201,14 @@ Located in: **`GameWorld.jsx`** lines ~5000-6400
 **File**: `frontend/src/systems/WorldAssetFactory.js`  
 **Responsibility**: Create 3D meshes for NPCs, enemies, objects, decorations, player
 
-**Key Function**:
+**Key Functions**:
 - `createWorldAsset(data, getTerrainHeight)` - Universal mesh creator
 - `createEnemyMesh(enemyData, x, z, enemyId, getTerrainHeight)` - Enemy mesh factory
-- `createPlayerMesh(characterData)` - Player character factory
-- `createNPCMesh(config, x, z, getTerrainHeight)` - Generic NPC factory
-- `createTrainerMesh(trainerClass, name, x, z, getTerrainHeight)` - Trainer factory
-- `createVendorMesh(name, vendorType, x, z, getTerrainHeight)` - Vendor factory
-- `createQuestGiverMesh(name, npcId, x, z, getTerrainHeight)` - Quest giver factory
+- `createPlayerMesh(characterData)` - Player character factory (extracted in refactor!)
+- `createNPCMesh(config, x, z, getTerrainHeight)` - Generic NPC factory (extracted in refactor!)
+- `createTrainerMesh(trainerClass, name, x, z, getTerrainHeight)` - Trainer factory (extracted in refactor!)
+- `createVendorMesh(name, vendorType, x, z, getTerrainHeight)` - Vendor factory (extracted in refactor!)
+- `createQuestGiverMesh(name, npcId, x, z, getTerrainHeight)` - Quest giver factory (extracted in refactor!)
 
 **Supported Types**:
 - NPCs: Guard, Trainer, Vendor, Quest Giver
@@ -217,6 +217,139 @@ Located in: **`GameWorld.jsx`** lines ~5000-6400
 - Decorations: Benches, Market Stalls, Signs
 - Enemies: Visual representation (cube with icon + health bar)
 - Player: Procedural humanoid with animation pivots
+
+---
+
+### 💀 Death & Resurrection System
+**File**: `frontend/src/systems/DeathResurrectionSystem.js`  
+**Responsibility**: Player death mechanics, ghost mode, corpse revival
+
+**Key Functions**:
+- `handlePlayerDeath()` - Player dies, drops combat, shows dialog
+- `handleReleaseCorpse()` - Become ghost, teleport to graveyard
+- `handlePlayerRevive()` - Revive at corpse with 50% HP/mana
+- `isNearCorpse()` - Check proximity for revival
+
+**Constants**:
+- `GRAVEYARD_POSITION` - Ghost spawn location
+- `CORPSE_REVIVE_RADIUS` - Distance to allow revival
+
+**Death Flow**:
+1. Player HP reaches 0 → `handlePlayerDeath()`
+2. Show release dialog → Player clicks "Release Corpse"
+3. `handleReleaseCorpse()` → Ghost mode, teleport to graveyard
+4. Player runs back to corpse → Show revive dialog when close
+5. `handlePlayerRevive()` → Full revival with 50% HP/mana
+
+---
+
+### 🎁 Loot System
+**File**: `frontend/src/systems/LootSystem.js`  
+**Responsibility**: Loot generation, corpse management, item pickup
+
+**Key Functions**:
+- `transformToLootableCorpse()` - Convert enemy to lootable corpse
+- `createLootSparkles()` - Animated sparkle effect for corpses
+- `applyLootItemPickup()` - Pick up single item from corpse
+- `applyLootAllPickup()` - Pick up all items from corpse
+- `cleanupCorpse()` - Remove corpse from scene
+
+**Constants**:
+- `CORPSE_DESPAWN_TIME` - Time before corpse despawns (2 minutes)
+- `RESPAWN_TIME` - Time before enemy respawns (2 minutes)
+
+**Loot Flow**:
+1. Enemy dies → `transformToLootableCorpse()`
+2. Corpse created with sparkles → 2-minute timer starts
+3. Player loots items → `applyLootItemPickup()` or `applyLootAllPickup()`
+4. Corpse despawns → Enemy respawns at original position
+
+---
+
+### 📜 Quest Progress System
+**File**: `frontend/src/systems/QuestProgressSystem.js`  
+**Responsibility**: Track quest objectives, kill counts, completion detection
+
+**Key Functions**:
+- `updateQuestListForEnemyKill()` - Update kill objectives when enemy dies
+- `checkKillObjective()` - Check if kill matches quest objective
+- `updateKillObjective()` - Increment kill count
+- `checkQuestCompletion()` - Check if all objectives complete
+
+**Quest Types Supported**:
+- Kill objectives (kill X enemies of type Y)
+- Custom enemies (by name or type)
+- NPC-assigned quests (require quest giver)
+
+**Integration**:
+- Called from `handleEnemyDeath()` in GameWorld
+- Updates both active quests and custom quests
+- Shows notifications on objective progress
+
+---
+
+### ⏱️ Spell Cooldown System
+**File**: `frontend/src/systems/SpellCooldownSystem.js`  
+**Responsibility**: Manage spell and global cooldowns
+
+**Key Functions**:
+- `startSpellCooldown()` - Start individual spell cooldown
+- `startGlobalCooldown()` - Start global cooldown (GCD)
+- `updateSpellCooldowns()` - Tick down all cooldowns
+- `isSpellOnCooldown()` - Check if spell is on cooldown
+
+**Constants**:
+- `COOLDOWN_TICK_INTERVAL` - Update frequency (100ms)
+- `COOLDOWN_TICK_AMOUNT` - Amount to reduce per tick (0.1s)
+
+**WoW-Style Cooldowns**:
+- Individual spell cooldowns (e.g., 5s, 10s, 30s)
+- Global cooldown (GCD) - 1.5s after most spells
+- Both cooldowns run simultaneously
+
+---
+
+### 🛠️ World Setup
+**File**: `frontend/src/systems/WorldSetup.js`  
+**Responsibility**: Pure Three.js scene/camera/renderer/lighting setup
+
+**Key Functions**:
+- `createGameScene()` - Scene with background and fog
+- `createGameCamera()` - Perspective camera configuration
+- `createGameRenderer(container)` - WebGL renderer with tone mapping
+- `setupWorldLighting(scene)` - All lighting (ambient, directional, fill, hemisphere)
+
+**Lighting Configuration**:
+- Ambient light (soft base illumination)
+- Directional light (sun, with shadows)
+- Fill lights (reduce harsh shadows)
+- Hemisphere light (sky/ground color gradient)
+
+**Extracted in Refactor**:
+- Pure setup functions with no state dependencies
+- Deterministic, side-effect-free
+- Easy to test and reuse
+
+---
+
+### ⌨️ Editor Input Handler
+**File**: `frontend/src/systems/EditorInputHandler.js`  
+**Responsibility**: Editor-specific keyboard shortcuts
+
+**Key Functions**:
+- Handles F1-F7 editor toggles
+- Handles Ctrl+S world save
+- Integrates with main InputSystem
+
+**Editor Shortcuts**:
+- F1: World Editor (object placement)
+- F2: Terrain Editor (sculpting)
+- F3: Enemy Editor (spawning)
+- F4: Item Database Editor
+- F5: Map Editor Mode (top-down camera)
+- F6: Flight Mode (in map editor)
+- F7: Quest Maker
+- Ctrl+S: Save World
 
 ---
 
@@ -389,18 +522,24 @@ User logs in
 ```
 /app/frontend/src/
 ├── pages/
-│   └── GameWorld.jsx              ⚠️ MONOLITH (7165 lines)
-│       Owns: Game loop, scene setup, ALL coordination
+│   └── GameWorld.jsx              ✅ COORDINATOR (6303 lines, -862 from refactor)
+│       Owns: Game loop, system coordination, state management
 │
-├── systems/                        ✅ Well-separated logic
+├── systems/                        ✅ Well-separated logic (Refactored!)
 │   ├── CombatSystem.js            Combat calculations, XP, damage text
 │   ├── EnemyAISystem.js           AI behavior, patrol, aggro, chase
 │   ├── PlayerMovementSystem.js    WASD, jump, terrain following
 │   ├── CameraSystem.js            Third-person camera, zoom, rotation
 │   ├── InputSystem.js             Keyboard handler factory
+│   ├── EditorInputHandler.js      🆕 Editor-specific keyboard shortcuts
 │   ├── TerrainSystem.js           Height queries, water detection
-│   ├── WorldAssetFactory.js       Mesh creation for NPCs/objects
-│   └── WorldObjectSystem.js       Save/load normalization
+│   ├── WorldAssetFactory.js       NPC/enemy/player mesh creation (expanded!)
+│   ├── WorldObjectSystem.js       Save/load normalization
+│   ├── WorldSetup.js              🆕 Scene/camera/renderer/lighting setup
+│   ├── DeathResurrectionSystem.js 🆕 Player death, ghost mode, revival
+│   ├── LootSystem.js              🆕 Loot generation, corpses, pickup
+│   ├── QuestProgressSystem.js     🆕 Quest kill tracking, objectives
+│   └── SpellCooldownSystem.js     🆕 Spell & GCD cooldown management
 │
 ├── components/
 │   ├── hud/                        HUD overlays
@@ -761,25 +900,30 @@ const terrainHeight = getTerrainHeight(worldX, worldZ);
 
 ### ⚠️ Critical Risk Areas
 
-#### 1. **GameWorld.jsx Monolith (7165 lines)**
-**Risk Level**: 🔴 **HIGH**
+#### 1. **GameWorld.jsx Coordinator (6303 lines)**
+**Risk Level**: 🟡 **MEDIUM** (Improved from HIGH)
 
-**Problems**:
-- Single file handles entire game coordination
-- 50+ React state variables
-- 100+ useRef variables (mostly closure fixes)
-- Massive animation loop function (800+ lines)
-- Event handlers scattered throughout
-- High bug introduction risk on any change
-- Difficult to test individual systems
+**Progress**:
+- ✅ Reduced from 7165 to 6303 lines (-862 lines, 12%)
+- ✅ Complex logic extracted to systems
+- ✅ Now acts as coordinator, not owner of logic
 
-**Impact**: Any change has high chance of breaking unrelated features
+**Remaining Complexity**:
+- Still large due to coordinator responsibilities
+- ~500 lines of UI rendering (JSX)
+- ~2000 lines of hardcoded world content (starter village)
+- ~1100 lines for main animation loop
+- ~150 lines of state sync (React pattern)
+
+**Current State**: Much more maintainable - changes to game logic now happen in specialized systems
 
 **Mitigation**:
-- Always test thoroughly with frontend testing agent after changes
+- ✅ Systems are independently testable
+- ✅ Clear section comments mark responsibility zones
+- ✅ See `/app/REMAINING_COORDINATION_ZONES.md` for full breakdown
+- Always test with frontend testing agent after changes
 - Keep changes small and focused
 - Use Find (Ctrl+F) extensively to locate code sections
-- Read surrounding context before editing
 
 ---
 
@@ -882,36 +1026,60 @@ scene.remove(mesh);
 ### 📝 Code Quality Notes
 
 **Strengths**:
-- ✅ Good system extraction (Combat, AI, Movement, Camera)
+- ✅ Excellent system extraction (Combat, AI, Movement, Camera, Death, Loot, Quests, Cooldowns)
 - ✅ Clear data file separation (enemies, items, spells)
 - ✅ Comprehensive component library (panels, HUD, editors)
 - ✅ Zustand store is well-organized
 - ✅ Backend API is RESTful and clear
+- ✅ **NEW**: GameWorld transitioned to coordinator pattern
+
+**Improvements from Refactoring**:
+- ✅ 862 lines extracted from GameWorld (-12%)
+- ✅ 7 new system files created
+- ✅ Clear responsibility separation
+- ✅ Systems are independently testable
 
 **Weaknesses**:
-- ⚠️ GameWorld.jsx is too large (needs refactoring)
-- ⚠️ Too many closure-fix refs (symptom of complexity)
-- ⚠️ Some game logic still in GameWorld (should be in systems)
+- ⚠️ GameWorld.jsx still large (but now as coordinator, not monolith)
+- ⚠️ Many closure-fix refs (symptom of React patterns, not bad architecture)
+- ⚠️ Hardcoded world content in GameWorld (~2000 lines)
 - ⚠️ Backend server.py is monolithic (low priority)
 
 ---
 
 ### 🔮 Future Refactoring Recommendations
 
-*See separate analysis document for detailed refactoring targets.*
+**See `/app/REMAINING_COORDINATION_ZONES.md` for detailed analysis**
 
-**High Priority**:
-1. Extract world initialization logic from GameWorld.jsx
-2. Extract NPC/enemy mesh creation to WorldAssetFactory
-3. Consolidate event handlers into modules
+**Safe to Extract (Low Risk, Medium Value)**:
+1. Player animation logic → `PlayerAnimationSystem.js` (~70 lines)
+2. Auto-attack logic → Expand `CombatSystem.js` (~85 lines)
+3. Damage text & sparkle animations → Animation helpers (~50 lines)
 
-**Medium Priority**:
-4. UI state management with useReducer or Context
-5. Break animation loop into smaller update functions
+**Medium Risk (Consider Carefully)**:
+4. Hardcoded world content → `StarterVillageBuilder.js` (~1950 lines)
+   - High effort, medium value
+   - Only do if world content grows significantly
 
-**Low Priority**:
-6. Backend: Split server.py into route modules
-7. Add unit tests for systems
+**High Risk (Do Not Refactor Casually)**:
+5. Spell casting logic (~240 lines)
+   - Complex with many spell interactions
+   - Only refactor if building proper spell effect framework
+6. World initialization bootstrap (terrain, DB loading)
+   - Attempted in "Pass 2" and deferred due to high coupling
+7. Main animation loop (~1100 lines)
+   - Inherently monolithic - must access all game state
+   - Can extract individual update functions, but loop must stay
+
+**Completed Extractions** ✅:
+- ✅ P1: NPC/Enemy Mesh Creation → WorldAssetFactory
+- ✅ P1: Player Mesh Creation → WorldAssetFactory  
+- ✅ P0 (Pass 1): Scene/Lighting Setup → WorldSetup
+- ✅ Editor Input Handling → EditorInputHandler
+- ✅ Death/Resurrection → DeathResurrectionSystem
+- ✅ Loot Generation/Pickup → LootSystem
+- ✅ Quest Kill Tracking → QuestProgressSystem
+- ✅ Spell Cooldowns → SpellCooldownSystem
 
 ---
 

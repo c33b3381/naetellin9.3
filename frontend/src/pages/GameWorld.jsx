@@ -173,8 +173,25 @@ const LoadingSpinner = () => (
   </div>
 );
 
+/**
+ * GameWorld.jsx - Main Game Coordinator
+ * 
+ * This file acts as the central coordinator for the entire RPG game.
+ * Most game mechanics have been extracted into specialized systems (/systems/*.js),
+ * and this component's role is to:
+ *   - Initialize the 3D world (scene, camera, renderer, lighting)
+ *   - Coordinate all game systems (combat, AI, movement, input, quests, etc.)
+ *   - Manage top-level game state and UI panels
+ *   - Run the main animation loop (60 FPS game loop)
+ * 
+ * After significant refactoring, this file has been reduced from 7165 to 6303 lines.
+ * It remains large due to its coordinator responsibilities, but much of the complex
+ * logic now lives in dedicated system files.
+ */
+
 // Floating damage text component data
 const GameWorld = () => {
+  // ==================== REFS: Three.js Core ====================
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -183,6 +200,7 @@ const GameWorld = () => {
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
   
+  // ==================== REFS: Game Objects ====================
   // Multiplayer - other players
   const otherPlayersRef = useRef({});
   const damageTextsRef = useRef([]);
@@ -197,12 +215,14 @@ const GameWorld = () => {
     animationTime: 0
   });
   
+  // ==================== REFS: System State (from extracted systems) ====================
   // WoW-style camera controls - using centralized system
   const cameraState = useRef(createCameraState());
   
   // Movement state - using centralized system
   const movementState = useRef(createMovementState());
   
+  // ==================== STATE: Selection & Targeting ====================
   // Selection state
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [targetHealthUpdate, setTargetHealthUpdate] = useState(0); // Force re-render on target HP change
@@ -315,6 +335,7 @@ const GameWorld = () => {
   
   // ==================== END EXPERIENCE & LEVELING SYSTEM ====================
   
+  // ==================== SYNC: State → Refs (Closure Fix Pattern) ====================
   // Keep refs in sync with state for stable access in event handlers
   useEffect(() => {
     playerLevelRef.current = playerLevel;
@@ -878,6 +899,7 @@ const GameWorld = () => {
   
   // ==================== END DEATH & RESURRECTION SYSTEM ====================
   
+  // ==================== CALLBACKS: Quest Progress ====================
   // ==================== QUEST KILL TRACKING ====================
   // Update quest progress when an enemy is killed - using QuestProgressSystem
   const updateQuestKillProgress = useCallback((enemyName, enemyType, customName) => {
@@ -913,6 +935,7 @@ const GameWorld = () => {
   }, [activeQuests, customQuests, addNotification]);
   // ==================== END QUEST KILL TRACKING ====================
 
+  // ==================== CALLBACKS: Enemy Death & Loot ====================
   // Handle enemy death - create lootable corpse
   const handleEnemyDeath = useCallback((enemy, enemyId) => {
     // Calculate XP based on level difference using mob difficulty system
@@ -1251,6 +1274,7 @@ const GameWorld = () => {
   
   // ==================== END ATTACK ANIMATION SYSTEM ====================
   
+  // ==================== CALLBACKS: Combat & Auto-Attack ====================
   // WoW-Style Auto-Attack System
   const performAutoAttack = useCallback(() => {
     const target = selectedTargetRef.current;
@@ -1340,7 +1364,7 @@ const GameWorld = () => {
     }
   }, [handleEnemyDeath, playAttackAnimation]);
   
-  // Handle enemy death
+  // ==================== CALLBACKS: World Editor ====================
   // World Editor handlers
   const handlePlaceObject = useCallback((objectData) => {
     setPendingPlacement(objectData);
@@ -1370,6 +1394,7 @@ const GameWorld = () => {
     }
   }, [addNotification, deleteWorldObject]);
 
+  // ==================== CALLBACKS: Quest Maker ====================
   // Quest Maker handlers
   const handleSaveQuest = useCallback(async (quest) => {
     try {
@@ -1466,6 +1491,7 @@ const GameWorld = () => {
     }
   }, [removeQuestFromNPC]);
   
+  // ==================== CALLBACKS: Vendor System ====================
   // Handle selling items to vendor
   const handleSellItem = useCallback((item, slotIndex, sellPrice) => {
     // Remove item from backpack (bag 0)
@@ -1473,6 +1499,7 @@ const GameWorld = () => {
     addNotification(`Sold ${item.name} for ${sellPrice} copper`, 'success');
   }, [removeItemFromBag, addNotification]);
   
+  // ==================== EFFECTS: Data Loading ====================
   // Load custom quests on mount
   useEffect(() => {
     fetchCustomQuests().then(quests => {
@@ -1480,6 +1507,7 @@ const GameWorld = () => {
     });
   }, [fetchCustomQuests]);
 
+  // ==================== CALLBACKS: Logout & Save ====================
   // Handle logout with comprehensive world save
   const handleLogout = useCallback(async () => {
     addNotification('Saving all game data...', 'info');
@@ -1531,6 +1559,7 @@ const GameWorld = () => {
     addNotification('Game saved! Logging out...', 'success');
   }, [addNotification, logout, placedEnemies, currentZone, updatePosition]);
 
+  // ==================== CALLBACKS: World Import/Export ====================
   const handleLoadWorld = useCallback(async (worldData) => {
     if (!sceneRef.current) return;
     
@@ -1552,7 +1581,7 @@ const GameWorld = () => {
     setPlacedObjects(worldData.objects || []);
   }, [addNotification, currentZone]);
   
-  
+  // ==================== CALLBACKS: Enemy Placement & Management ====================
   // Function to create an enemy mesh - now using WorldAssetFactory
   // Wrapper to maintain compatibility with existing code
   const createEnemyMesh = useCallback((x, z, enemyData, enemyId) => {
@@ -1658,6 +1687,7 @@ const GameWorld = () => {
     addNotification('Enemy removed', 'success');
   }, [addNotification]);
   
+  // ==================== CALLBACKS: Spell Book & Action Bar ====================
   // Spell Book handlers - now saves to server
   const handleLearnSpell = useCallback((spellId) => {
     if (!learnedSpells.includes(spellId)) {
@@ -1696,6 +1726,7 @@ const GameWorld = () => {
     }
   }, [learnSpell, addNotification]);
   
+  // ==================== CALLBACKS: Quest Management ====================
   // Quest handlers
   const handleAcceptQuest = useCallback((quest) => {
     // Add quest to active quests
@@ -1754,6 +1785,7 @@ const GameWorld = () => {
     setTrackedQuestId(prev => prev === questId ? null : questId);
   }, []);
   
+  // ==================== CALLBACKS: Spell Casting ====================
   // Cast spell function - updated to use WARRIOR_SPELLS as well
   const handleCastSpell = useCallback((spellId) => {
     const spell = SPELLS[spellId] || WARRIOR_SPELLS[spellId];
@@ -2357,6 +2389,7 @@ const GameWorld = () => {
     createZonePortal(0, 95, 'crystal_caves', 'Crystal Caves');
     createZonePortal(0, -95, 'frozen_peaks', 'Frozen Peaks');
     
+    // ==================== WORLD CONTENT: Starter Village ====================
     // ==================== OAKVALE TOWN CENTER ====================
     // A lively starter town with central square, market, and functional NPCs
     
@@ -5011,6 +5044,7 @@ const GameWorld = () => {
       }
     };
     
+    // ==================== INPUT HANDLERS (InputSystem) ====================
     // Keyboard controls - using InputSystem
     const handleKeyDown = createKeyDownHandler({
       refs: {
@@ -5101,6 +5135,7 @@ const GameWorld = () => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     
+    // ==================== MAIN ANIMATION LOOP (60 FPS Game Loop) ====================
     // Animation loop
     const clock = new THREE.Clock();
     let lastPlayerPos = new THREE.Vector3(0, 0, 0);
@@ -5618,6 +5653,7 @@ const GameWorld = () => {
     };
     animate();
     
+    // ==================== WINDOW EVENT HANDLERS ====================
     // Handle resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -5626,6 +5662,7 @@ const GameWorld = () => {
     };
     window.addEventListener('resize', handleResize);
     
+    // ==================== CLEANUP ====================
     // Cleanup
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -5647,6 +5684,7 @@ const GameWorld = () => {
     };
   }, [ready, character]); // REMOVED selectedTarget - it was causing scene recreation on every click!
 
+  // ==================== UI RENDERING ====================
   if (!player && !ready) {
     return <LoadingSpinner />;
   }
