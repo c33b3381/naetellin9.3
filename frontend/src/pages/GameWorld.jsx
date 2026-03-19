@@ -62,6 +62,7 @@ import {
   handlePlayerRevive as deathSystemHandlePlayerRevive,
   isNearCorpse
 } from '../systems/DeathResurrectionSystem';
+import { updateQuestListForEnemyKill } from '../systems/QuestProgressSystem';
 import {
   SELECTABLE_TYPES,
   normalizeObjectForSave,
@@ -877,112 +878,38 @@ const GameWorld = () => {
   // ==================== END DEATH & RESURRECTION SYSTEM ====================
   
   // ==================== QUEST KILL TRACKING ====================
-  // Update quest progress when an enemy is killed
+  // Update quest progress when an enemy is killed - using QuestProgressSystem
   const updateQuestKillProgress = useCallback((enemyName, enemyType, customName) => {
-    // Check both active quests and custom quests
-    let questUpdated = false;
+    // Update active quests (predefined quests)
+    const activeResult = updateQuestListForEnemyKill(
+      activeQuests,
+      enemyName,
+      enemyType,
+      customName,
+      addNotification,
+      false // No NPC requirement for active quests
+    );
     
-    // Names to match against (in order of priority)
-    const namesToMatch = [
-      customName?.toLowerCase(),
-      enemyName?.toLowerCase(),
-      enemyType?.toLowerCase()
-    ].filter(Boolean);
+    if (activeResult.anyUpdated) {
+      setActiveQuests(activeResult.updatedQuests);
+    }
     
-    // Update active quests (predefined quests like "Goblins in the Land!")
-    setActiveQuests(prev => prev.map(quest => {
-      if (!quest.objectives) return quest;
-      
-      const updatedObjectives = quest.objectives.map(obj => {
-        // Handle kill objectives (check type === 'kill' OR if target exists for legacy support)
-        const isKillObjective = obj.type === 'kill' || (obj.target && obj.description?.toLowerCase().includes('kill'));
-        if (!isKillObjective) return obj;
-        
-        const targetLower = obj.target?.toLowerCase() || '';
-        const targetIdLower = obj.targetId?.toLowerCase() || '';
-        
-        // Check if any name matches
-        const isMatch = namesToMatch.some(name => 
-          name === targetLower || 
-          name === targetIdLower ||
-          targetLower.includes(name) ||
-          name.includes(targetLower)
-        );
-        
-        if (isMatch && (obj.current || 0) < obj.required) {
-          questUpdated = true;
-          const newCurrent = (obj.current || 0) + 1;
-          
-          // Notify player of progress
-          addNotification(`Quest Progress: ${obj.target || 'Enemy'} ${newCurrent}/${obj.required}`, 'quest');
-          
-          // Check if objective is now complete
-          if (newCurrent >= obj.required) {
-            addNotification(`Objective Complete: Kill ${obj.required} ${obj.target || 'enemies'}`, 'success');
-          }
-          
-          return { ...obj, current: newCurrent };
-        }
-        return obj;
-      });
-      
-      // Check if all objectives are complete
-      const allComplete = updatedObjectives.every(obj => (obj.current || 0) >= obj.required);
-      if (allComplete && !quest.isComplete) {
-        addNotification(`Quest "${quest.name}" is ready to turn in!`, 'success');
-        return { ...quest, objectives: updatedObjectives, isComplete: true };
-      }
-      
-      return { ...quest, objectives: updatedObjectives };
-    }));
+    // Update custom quests (player-created quests - require NPC assignment)
+    const customResult = updateQuestListForEnemyKill(
+      customQuests,
+      enemyName,
+      enemyType,
+      customName,
+      addNotification,
+      true // Require npc_id for custom quests
+    );
     
-    // Update custom quests (player-created quests from Quest Maker)
-    setCustomQuests(prev => prev.map(quest => {
-      if (!quest.objectives || !quest.npc_id) return quest; // Only update assigned quests
-      
-      const updatedObjectives = quest.objectives.map(obj => {
-        if (obj.type !== 'kill') return obj;
-        
-        const targetLower = obj.target?.toLowerCase() || '';
-        const targetIdLower = obj.targetId?.toLowerCase() || '';
-        
-        // Check if any name matches
-        const isMatch = namesToMatch.some(name => 
-          name === targetLower || 
-          name === targetIdLower ||
-          targetLower.includes(name) ||
-          name.includes(targetLower)
-        );
-        
-        if (isMatch && (obj.current || 0) < obj.required) {
-          questUpdated = true;
-          const newCurrent = (obj.current || 0) + 1;
-          
-          // Notify player of progress
-          addNotification(`Quest Progress: ${obj.target} ${newCurrent}/${obj.required}`, 'quest');
-          
-          // Check if objective is now complete
-          if (newCurrent >= obj.required) {
-            addNotification(`Objective Complete: Kill ${obj.required} ${obj.target}`, 'success');
-          }
-          
-          return { ...obj, current: newCurrent };
-        }
-        return obj;
-      });
-      
-      // Check if all objectives are complete
-      const allComplete = updatedObjectives.every(obj => (obj.current || 0) >= obj.required);
-      if (allComplete && !quest.isComplete) {
-        addNotification(`Quest "${quest.name}" is ready to turn in!`, 'success');
-        return { ...quest, objectives: updatedObjectives, isComplete: true };
-      }
-      
-      return { ...quest, objectives: updatedObjectives };
-    }));
+    if (customResult.anyUpdated) {
+      setCustomQuests(customResult.updatedQuests);
+    }
     
-    return questUpdated;
-  }, [addNotification]);
+    return activeResult.anyUpdated || customResult.anyUpdated;
+  }, [activeQuests, customQuests, addNotification]);
   // ==================== END QUEST KILL TRACKING ====================
 
   // Handle enemy death - create lootable corpse
