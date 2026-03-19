@@ -171,76 +171,78 @@ export const getTerrainHeightAtPosition = (scene, x, z, fallbackGetHeight) => {
 /**
  * Check for collision with buildings/obstacles in a specific direction
  * Uses raycasting to detect nearby obstacles
+ * OPTIMIZED: Single height check, early exit on collision
  * 
  * @param {THREE.Object3D} player - Player mesh/group
  * @param {THREE.Scene} scene - The scene
  * @param {THREE.Vector3} direction - Direction to check (not normalized, will be used as-is)
- * @param {number} checkRadius - Radius to check for collisions (default 0.9)
+ * @param {number} checkRadius - Radius to check for collisions (default 1.0, increased for less sticky feel)
  * @returns {boolean} True if collision detected in that direction
  */
-export const checkBuildingCollisionInDirection = (player, scene, direction, checkRadius = 0.9) => {
+export const checkBuildingCollisionInDirection = (player, scene, direction, checkRadius = 1.0) => {
   if (!player || !scene) return false;
   
   const raycaster = new THREE.Raycaster();
   
-  // Check at multiple heights (waist and chest) for better coverage
-  const heights = [0.5, 1.2]; // Waist and chest height
+  // Single height check at chest level (waist check removed for performance)
+  const playerPos = player.position.clone();
+  playerPos.y += 1.0; // Chest height
   
-  for (const heightOffset of heights) {
-    const playerPos = player.position.clone();
-    playerPos.y += heightOffset;
+  raycaster.set(playerPos, direction);
+  
+  // Raycast against all scene children recursively
+  const intersects = raycaster.intersectObjects(scene.children, true);
+  
+  for (const intersect of intersects) {
+    const obj = intersect.object;
     
-    raycaster.set(playerPos, direction);
+    // Early exit if beyond check radius
+    if (intersect.distance >= checkRadius) {
+      break; // Intersects are sorted by distance
+    }
     
-    // Raycast against all scene children recursively
-    const intersects = raycaster.intersectObjects(scene.children, true);
+    // Skip terrain, player, water, and other non-solid objects
+    if (obj.name === 'terrain' || 
+        obj.name === 'brushIndicator' ||
+        obj.name?.includes('water') ||
+        obj.name?.includes('player') ||
+        obj.parent === player) {
+      continue;
+    }
     
-    for (const intersect of intersects) {
-      const obj = intersect.object;
+    // Skip decorative/non-blocking child meshes
+    if (obj.name === 'door' ||
+        obj.name?.includes('window') ||
+        obj.name?.includes('roof') ||
+        obj.name?.includes('banner') ||
+        obj.name?.includes('torch') ||
+        obj.name?.includes('flame') ||
+        obj.name?.includes('courtyard')) {
+      continue;
+    }
+    
+    // Check if this object or its parent is marked as collidable/building
+    let currentObj = obj;
+    let isCollidable = false;
+    
+    while (currentObj && !isCollidable) {
+      const userData = currentObj.userData || {};
       
-      // Skip terrain, player, water, and other non-solid objects
-      if (obj.name === 'terrain' || 
-          obj.name === 'brushIndicator' ||
-          obj.name?.includes('water') ||
-          obj.name?.includes('player') ||
-          obj.parent === player) {
-        continue;
+      // Check for collision markers
+      if (userData.hasCollision || 
+          userData.type === 'building' || 
+          userData.type === 'castle' ||
+          currentObj.name === 'collider') {
+        isCollidable = true;
+        break;
       }
       
-      // Skip decorative/non-blocking child meshes
-      if (obj.name === 'door' ||
-          obj.name?.includes('window') ||
-          obj.name?.includes('roof') ||
-          obj.name?.includes('banner') ||
-          obj.name?.includes('torch') ||
-          obj.name?.includes('flame') ||
-          obj.name?.includes('courtyard')) {
-        continue;
-      }
-      
-      // Check if this object or its parent is marked as collidable/building
-      let currentObj = obj;
-      let isCollidable = false;
-      
-      while (currentObj && !isCollidable) {
-        const userData = currentObj.userData || {};
-        
-        // Check for collision markers
-        if (userData.hasCollision || 
-            userData.type === 'building' || 
-            userData.type === 'castle' ||
-            currentObj.name === 'collider') {
-          isCollidable = true;
-          break;
-        }
-        
-        currentObj = currentObj.parent;
-      }
-      
-      // If collidable and within check radius, collision detected
-      if (isCollidable && intersect.distance < checkRadius) {
-        return true;
-      }
+      currentObj = currentObj.parent;
+    }
+    
+    // If collidable and within check radius, collision detected
+    if (isCollidable) {
+      return true;
     }
   }
   
@@ -253,10 +255,10 @@ export const checkBuildingCollisionInDirection = (player, scene, direction, chec
  * 
  * @param {THREE.Object3D} player - Player mesh/group
  * @param {THREE.Scene} scene - The scene
- * @param {number} checkRadius - Radius to check for collisions (default 0.9)
+ * @param {number} checkRadius - Radius to check for collisions (default 1.0)
  * @returns {boolean} True if collision detected
  */
-export const checkBuildingCollision = (player, scene, checkRadius = 0.9) => {
+export const checkBuildingCollision = (player, scene, checkRadius = 1.0) => {
   if (!player || !scene) return false;
   
   // Check 8 directions around player
@@ -354,9 +356,9 @@ export const updatePlayerMovement = (
     if (Math.abs(deltaX) > 0.001) {
       player.position.x += deltaX;
       
-      // Check collision in X direction
+      // Check collision in X direction (1.0 unit radius for less sticky feel)
       const xDirection = new THREE.Vector3(Math.sign(deltaX), 0, 0);
-      if (checkBuildingCollisionInDirection(player, scene, xDirection, 0.9)) {
+      if (checkBuildingCollisionInDirection(player, scene, xDirection, 1.0)) {
         // X-axis collision - revert X only
         player.position.x = lastPlayerPos.x;
       }
@@ -366,9 +368,9 @@ export const updatePlayerMovement = (
     if (Math.abs(deltaZ) > 0.001) {
       player.position.z += deltaZ;
       
-      // Check collision in Z direction
+      // Check collision in Z direction (1.0 unit radius for less sticky feel)
       const zDirection = new THREE.Vector3(0, 0, Math.sign(deltaZ));
-      if (checkBuildingCollisionInDirection(player, scene, zDirection, 0.9)) {
+      if (checkBuildingCollisionInDirection(player, scene, zDirection, 1.0)) {
         // Z-axis collision - revert Z only
         player.position.z = lastPlayerPos.z;
       }
