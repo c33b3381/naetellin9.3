@@ -2121,7 +2121,7 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
-    const TERRAIN_VERSION = 3; // Increment when terrain generation changes (v3: Usability overhaul - flatter terrain + spawn area)
+    const TERRAIN_VERSION = 4; // Increment when terrain generation changes (v4: Ultra-flat terrain for better gameplay visibility)
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();

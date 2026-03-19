@@ -20,16 +20,16 @@ export const TERRAIN_SCALES = {
   detail: 0.05,     // Frequency stays same
 };
 
-// Terrain amplitude multipliers (REDUCED for usability overhaul)
+// Terrain amplitude multipliers (FLATTENED for gameplay)
 export const TERRAIN_AMPLITUDES = {
-  base: 3,          // Reduced from 8 (base rolling terrain)
-  hill: 5,          // Reduced from 12 (larger hills)
-  detail: 0.2,      // Reduced from 0.5 (small bumps)
+  base: 0.8,        // Dramatically reduced for nearly flat terrain
+  hill: 1.5,        // Very gentle rolling hills only
+  detail: 0.05,     // Minimal surface detail
 };
 
-// Village flattening (EXPANDED for larger stable spawn area)
-export const VILLAGE_FLATTEN_RADIUS = 60;    // Increased from 40
-export const VILLAGE_TARGET_HEIGHT = 0.5;    // Target height for spawn area
+// Village flattening (EXPANDED for completely flat spawn area)
+export const VILLAGE_FLATTEN_RADIUS = 100;   // Large flat area around spawn
+export const VILLAGE_TARGET_HEIGHT = 0.3;    // Very flat target height
 export const PATH_WIDTH = 3;
 
 // Water body definitions
@@ -239,20 +239,20 @@ export const getTerrainHeight = (x, z) => {
     height *= 0.5;  // Changed from 0.3 to 0.5 (less extreme)
   }
   
-  // Zone-specific terrain modifications (REDUCED for usability)
-  // Frozen peaks - more mountainous (REDUCED from +15 to +8)
+  // Zone-specific terrain modifications (MINIMAL for flat gameplay)
+  // Frozen peaks - slightly more elevation (REDUCED significantly)
   if (z < -100) {
-    height += terrainNoise.fbm(x * 0.02, z * 0.02, 3, 2.0, 0.7) * 8;
+    height += terrainNoise.fbm(x * 0.02, z * 0.02, 3, 2.0, 0.7) * 3;
   }
   
-  // Scorched plains - flatter with some dunes (REDUCED from +3 to +2)
+  // Scorched plains - very flat with tiny dunes
   if (x < -100) {
-    height = height * 0.5 + terrainNoise.noise2D(x * 0.03, z * 0.03) * 2;
+    height = height * 0.3 + terrainNoise.noise2D(x * 0.03, z * 0.03) * 0.5;
   }
   
-  // Crystal caves - rolling with some plateaus (gentler steps)
+  // Crystal caves - minimal elevation variation
   if (z > 100) {
-    height = Math.floor(height / 2) * 2 + (height % 2) * 0.5;  // Changed from /3 to /2
+    height = Math.floor(height / 3) * 3 + (height % 3) * 0.3;
   }
   
   return Math.max(0, height);
