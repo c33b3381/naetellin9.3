@@ -174,11 +174,11 @@ export const getTerrainHeightAtPosition = (scene, x, z, fallbackGetHeight) => {
  * 
  * @param {THREE.Object3D} player - Player mesh/group
  * @param {THREE.Scene} scene - The scene
- * @param {THREE.Vector3} direction - Direction to check (normalized)
- * @param {number} checkRadius - Radius to check for collisions
+ * @param {THREE.Vector3} direction - Direction to check (not normalized, will be used as-is)
+ * @param {number} checkRadius - Radius to check for collisions (default 0.9)
  * @returns {boolean} True if collision detected in that direction
  */
-export const checkBuildingCollisionInDirection = (player, scene, direction, checkRadius = 1.0) => {
+export const checkBuildingCollisionInDirection = (player, scene, direction, checkRadius = 0.9) => {
   if (!player || !scene) return false;
   
   const raycaster = new THREE.Raycaster();
@@ -204,6 +204,17 @@ export const checkBuildingCollisionInDirection = (player, scene, direction, chec
           obj.name?.includes('water') ||
           obj.name?.includes('player') ||
           obj.parent === player) {
+        continue;
+      }
+      
+      // Skip decorative/non-blocking child meshes
+      if (obj.name === 'door' ||
+          obj.name?.includes('window') ||
+          obj.name?.includes('roof') ||
+          obj.name?.includes('banner') ||
+          obj.name?.includes('torch') ||
+          obj.name?.includes('flame') ||
+          obj.name?.includes('courtyard')) {
         continue;
       }
       
@@ -242,10 +253,10 @@ export const checkBuildingCollisionInDirection = (player, scene, direction, chec
  * 
  * @param {THREE.Object3D} player - Player mesh/group
  * @param {THREE.Scene} scene - The scene
- * @param {number} checkRadius - Radius to check for collisions (default 1.0)
+ * @param {number} checkRadius - Radius to check for collisions (default 0.9)
  * @returns {boolean} True if collision detected
  */
-export const checkBuildingCollision = (player, scene, checkRadius = 1.0) => {
+export const checkBuildingCollision = (player, scene, checkRadius = 0.9) => {
   if (!player || !scene) return false;
   
   // Check 8 directions around player
@@ -340,23 +351,27 @@ export const updatePlayerMovement = (
     const deltaZ = rotatedDirection.z * moveSpeed;
     
     // Test X-axis movement
-    player.position.x += deltaX;
-    
-    // Check collision in X direction
-    const xDirection = new THREE.Vector3(Math.sign(deltaX), 0, 0).normalize();
-    if (Math.abs(deltaX) > 0.001 && checkBuildingCollisionInDirection(player, scene, xDirection, 1.0)) {
-      // X-axis collision - revert X only
-      player.position.x = lastPlayerPos.x;
+    if (Math.abs(deltaX) > 0.001) {
+      player.position.x += deltaX;
+      
+      // Check collision in X direction
+      const xDirection = new THREE.Vector3(Math.sign(deltaX), 0, 0);
+      if (checkBuildingCollisionInDirection(player, scene, xDirection, 0.9)) {
+        // X-axis collision - revert X only
+        player.position.x = lastPlayerPos.x;
+      }
     }
     
     // Test Z-axis movement
-    player.position.z += deltaZ;
-    
-    // Check collision in Z direction
-    const zDirection = new THREE.Vector3(0, 0, Math.sign(deltaZ)).normalize();
-    if (Math.abs(deltaZ) > 0.001 && checkBuildingCollisionInDirection(player, scene, zDirection, 1.0)) {
-      // Z-axis collision - revert Z only
-      player.position.z = lastPlayerPos.z;
+    if (Math.abs(deltaZ) > 0.001) {
+      player.position.z += deltaZ;
+      
+      // Check collision in Z direction
+      const zDirection = new THREE.Vector3(0, 0, Math.sign(deltaZ));
+      if (checkBuildingCollisionInDirection(player, scene, zDirection, 0.9)) {
+        // Z-axis collision - revert Z only
+        player.position.z = lastPlayerPos.z;
+      }
     }
     
     // Check if we actually moved (at least one axis succeeded)
