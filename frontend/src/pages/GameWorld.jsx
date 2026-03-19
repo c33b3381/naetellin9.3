@@ -53,6 +53,7 @@ import {
   createVendorMesh,
   createQuestGiverMesh
 } from '../systems/WorldAssetFactory';
+import { createGameScene, createGameCamera, createGameRenderer, setupWorldLighting } from '../systems/WorldSetup';
 import {
   SELECTABLE_TYPES,
   normalizeObjectForSave,
@@ -2298,87 +2299,20 @@ const GameWorld = () => {
   useEffect(() => {
     if (!containerRef.current || !ready) return;
     
-    // Scene
-    const scene = new THREE.Scene();
-    
-    // Improved sky color - slightly warmer and brighter for fantasy feel
-    const skyColor = new THREE.Color(0x8ecae6); // Lighter, warmer sky blue
-    scene.background = skyColor;
-    
-    // Improved fog - starts further out and extends longer for better depth perception
-    // Slight gradient toward horizon color
-    scene.fog = new THREE.Fog(0xa8d4e6, 80, 250);
+    // Scene setup using helper functions
+    const scene = createGameScene();
     sceneRef.current = scene;
     
-    // Camera
-    const camera = new THREE.PerspectiveCamera(
-      55,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
+    // Camera setup
+    const camera = createGameCamera();
     cameraRef.current = camera;
     
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
-    // Tone mapping for more natural, pleasing colors
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    
-    containerRef.current.appendChild(renderer.domElement);
+    // Renderer setup
+    const renderer = createGameRenderer(containerRef.current);
     rendererRef.current = renderer;
     
-    // ==================== IMPROVED WORLD LIGHTING ====================
-    // Designed for stylized fantasy look with good depth and readability
-    
-    // Ambient light - provides base illumination so shadows aren't pitch black
-    // Lower intensity since hemisphere light handles most ambient
-    const ambientLight = new THREE.AmbientLight(0xfff8f0, 0.25);
-    scene.add(ambientLight);
-    
-    // Main directional light - acts as the sun
-    // Warm color (golden hour feel) at an angle that creates readable shadows
-    const directionalLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
-    directionalLight.position.set(50, 80, 30); // Higher and more angled for longer shadows
-    directionalLight.castShadow = true;
-    
-    // Shadow map configuration - higher quality for better depth
-    directionalLight.shadow.mapSize.width = 4096;
-    directionalLight.shadow.mapSize.height = 4096;
-    directionalLight.shadow.camera.near = 1;
-    directionalLight.shadow.camera.far = 200;
-    
-    // Larger shadow frustum to cover more of the visible world
-    directionalLight.shadow.camera.left = -100;
-    directionalLight.shadow.camera.right = 100;
-    directionalLight.shadow.camera.top = 100;
-    directionalLight.shadow.camera.bottom = -100;
-    
-    // Softer shadow edges
-    directionalLight.shadow.radius = 2;
-    directionalLight.shadow.bias = -0.0005;
-    
-    scene.add(directionalLight);
-    
-    // Secondary fill light - subtle light from opposite side to reduce harsh shadows
-    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.3);
-    fillLight.position.set(-30, 40, -20);
-    fillLight.castShadow = false; // No shadows from fill light
-    scene.add(fillLight);
-    
-    // Hemisphere light - sky color above, ground bounce below
-    // Creates natural ambient lighting gradient
-    const hemisphereLight = new THREE.HemisphereLight(
-      0x87CEEB, // Sky color - light blue
-      0x3d6b3d, // Ground color - forest green (bounce light from grass)
-      0.5       // Intensity
-    );
-    scene.add(hemisphereLight);
+    // Lighting setup
+    setupWorldLighting(scene);
     
     // ==================== TERRAIN WITH HILLS AND WATER ====================
     

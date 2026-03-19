@@ -199,10 +199,16 @@ Located in: **`GameWorld.jsx`** lines ~5000-6400
 
 ### 🎨 World Asset Factory
 **File**: `frontend/src/systems/WorldAssetFactory.js`  
-**Responsibility**: Create 3D meshes for NPCs, enemies, objects, decorations
+**Responsibility**: Create 3D meshes for NPCs, enemies, objects, decorations, player
 
 **Key Function**:
 - `createWorldAsset(data, getTerrainHeight)` - Universal mesh creator
+- `createEnemyMesh(enemyData, x, z, enemyId, getTerrainHeight)` - Enemy mesh factory
+- `createPlayerMesh(characterData)` - Player character factory
+- `createNPCMesh(config, x, z, getTerrainHeight)` - Generic NPC factory
+- `createTrainerMesh(trainerClass, name, x, z, getTerrainHeight)` - Trainer factory
+- `createVendorMesh(name, vendorType, x, z, getTerrainHeight)` - Vendor factory
+- `createQuestGiverMesh(name, npcId, x, z, getTerrainHeight)` - Quest giver factory
 
 **Supported Types**:
 - NPCs: Guard, Trainer, Vendor, Quest Giver
@@ -210,6 +216,19 @@ Located in: **`GameWorld.jsx`** lines ~5000-6400
 - Nature: Trees, Rocks, Fountains
 - Decorations: Benches, Market Stalls, Signs
 - Enemies: Visual representation (cube with icon + health bar)
+- Player: Procedural humanoid with animation pivots
+
+---
+
+### 🛠️ World Setup
+**File**: `frontend/src/systems/WorldSetup.js`  
+**Responsibility**: Pure Three.js scene/camera/renderer/lighting setup
+
+**Key Functions**:
+- `createGameScene()` - Scene with background and fog
+- `createGameCamera()` - Perspective camera configuration
+- `createGameRenderer(container)` - WebGL renderer with tone mapping
+- `setupWorldLighting(scene)` - All lighting (ambient, directional, fill, hemisphere)
 
 ---
 

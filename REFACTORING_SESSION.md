@@ -2,7 +2,7 @@
 
 ## Session Date: December 19, 2025
 
-### Refactors Completed: 3
+### Refactors Completed: 4 (Pass 1 of P0 Complete)
 
 ---
 
@@ -161,6 +161,132 @@
 - Quest Giver NPC extraction ✅
 
 **All visual entity creation now consolidated in WorldAssetFactory.js**
+
+---
+
+## Refactor #4: Pure Setup Helpers Extraction (P0 - Pass 1)
+
+**Target**: P0 - World Initialization (Pass 1: Pure Setup Only)  
+**Risk Level**: 🟢 LOW  
+**Status**: ✅ COMPLETED
+
+### What Changed
+- **Extracted**: 4 pure setup helper functions (~66 lines)
+  1. `createGameScene()` - Scene with background + fog
+  2. `createGameCamera()` - Perspective camera configuration
+  3. `createGameRenderer(container)` - WebGL renderer + tone mapping
+  4. `setupWorldLighting(scene)` - All 4 lights (ambient, directional, fill, hemisphere)
+- **From**: `GameWorld.jsx` lines 2301-2381
+- **To**: New file `WorldSetup.js` (162 lines with JSDoc)
+
+### Files Modified
+1. `/app/frontend/src/systems/WorldSetup.js`
+   - Created new file for pure setup helpers
+   - Added 5 exports with comprehensive documentation
+   
+2. `/app/frontend/src/pages/GameWorld.jsx`
+   - Imported WorldSetup functions
+   - Replaced 80-line inline setup with 14-line function calls
+   - **Reduction**: 6670 → 6604 lines (-66 lines)
+
+### Why It's Safe
+✅ **Pure function extraction**: Deterministic THREE.js object creation only  
+✅ **No state dependencies**: No useState, useRef, Zustand access  
+✅ **No side effects**: Beyond creating objects and DOM append  
+✅ **Order-independent**: Scene/camera/renderer/lights can be created in any order  
+✅ **No gameplay logic**: Zero impact on combat, AI, quests, inventory, movement  
+✅ **No backend calls**: No async operations, no save/load  
+✅ **No event listeners**: No input handling modifications  
+✅ **Easy verification**: Visual check only (lighting should look identical)  
+
+### Before/After Responsibility
+**Before**:
+- GameWorld.jsx: Inline Three.js setup + everything else
+
+**After**:
+- WorldSetup.js: Pure scene/camera/renderer/lighting setup (factory functions)
+- GameWorld.jsx: Calls setup helpers + manages game coordination
+
+**Pattern**: Setup helpers vs. Game orchestration
+
+---
+
+### Pass 2 Analysis: Should We Continue?
+
+**Examined**: Terrain generation, world object loading, enemy spawning (lines 2317-2450+)
+
+**Hidden Dependencies Found**:
+🔴 **Terrain Generation**:
+- Depends on `getTerrainHeight()` from TerrainSystem
+- Depends on `getTerrainColor()` from TerrainSystem
+- Depends on `fetchTerrain()`, `saveTerrain()` from Zustand store
+- Depends on `token` from Zustand store
+- Mutates refs: `terrainGeometryRef`, `terrainMeshRef` (used by terrain editor)
+- Async operations with complex error handling
+- Version checking for regeneration logic
+- Adds to scene (needs scene ref)
+- Sets up geometry attributes used later for raycasting/editing
+
+🔴 **World Object Loading** (not examined in detail yet):
+- Likely has backend API dependencies
+- Likely mutates scene and refs
+- Likely has sequencing dependencies (must come after terrain)
+
+🔴 **Enemy Spawning**:
+- Must come after terrain exists
+- Uses backend API
+- Mutates scene and refs
+
+**Risk Assessment for Pass 2**: 🟠 **MEDIUM-HIGH RISK**
+
+**Decision**: ❌ **STOP AFTER PASS 1**
+
+**Reasons NOT to proceed with Pass 2**:
+1. ❌ Terrain generation tightly coupled to TerrainSystem, Zustand, and refs
+2. ❌ Async operations with complex error handling
+3. ❌ Order matters - terrain must exist before objects/enemies
+4. ❌ Refs mutated and used by terrain editor (cross-system coupling)
+5. ❌ Would require extracting significant logic, not just setup
+6. ❌ Could introduce subtle timing bugs in initialization sequence
+7. ❌ Save/load coupling makes it harder to test independently
+
+**Why Pass 1 Alone is Valuable**:
+✅ Cleaner separation of pure setup vs. complex initialization  
+✅ 66 lines removed with zero risk  
+✅ WorldSetup.js is reusable and testable  
+✅ Establishes pattern for future extractions  
+✅ No behavior changes  
+✅ Easy to verify (visual check only)  
+
+**What Remains in GameWorld** (for future individual extractions):
+- Terrain generation + loading (complex, coupled to TerrainSystem + Zustand)
+- World objects loading (backend dependent, sequencing dependent)
+- Enemy spawning (backend dependent, sequencing dependent)
+- Player creation + positioning (state dependent)
+- Event listener setup (input dependent)
+- Animation loop setup (refs dependent)
+
+**Recommendation**: Tackle these individually in future refactors, not as one big "bootstrap" extraction.
+
+---
+
+## Cumulative Impact (After 4 Refactors)
+
+### Line Count Reduction
+- **Starting**: GameWorld.jsx = 7165 lines
+- **After Refactor #1** (Enemy): 7081 lines (-84)
+- **After Refactor #2** (Player): 6890 lines (-191)
+- **After Refactor #3** (NPCs): 6670 lines (-220)
+- **After Refactor #4** (Setup): 6604 lines (-66)
+- **Total Reduction**: **-561 lines (7.8%)**
+
+### New Files Created
+- **WorldAssetFactory.js**: 3059 lines (entity mesh creation)
+- **WorldSetup.js**: 162 lines (pure setup helpers)
+
+### Refactoring Targets Status
+✅ **P1 - NPC/Enemy Mesh Creation**: COMPLETE (Refactors #1-3)
+🟡 **P0 - World Initialization**: Pass 1 COMPLETE, Pass 2 DEFERRED
 
 ---
 
