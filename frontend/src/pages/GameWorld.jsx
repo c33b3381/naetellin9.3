@@ -6473,8 +6473,27 @@ const GameWorld = () => {
           }
         }}
       />
+
+      {/* Player Coordinates Display - For debugging and screenshot location identification */}
+      <div className="absolute top-20 right-4 z-30 pointer-events-none">
+        <div className="bg-[#0c0a09]/80 backdrop-blur-sm border border-[#44403c] px-3 py-2 rounded-lg shadow-lg">
+          <p className="text-[#a8a29e] text-xs font-semibold mb-1 tracking-wider">COORDINATES</p>
+          <div className="space-y-0.5">
+            <p className="text-white text-sm font-mono">
+              <span className="text-[#fbbf24]">X:</span> {playerRef.current?.position?.x?.toFixed(1) ?? '--'}
+            </p>
+            <p className="text-white text-sm font-mono">
+              <span className="text-[#fbbf24]">Z:</span> {playerRef.current?.position?.z?.toFixed(1) ?? '--'}
+            </p>
+            <p className="text-white text-sm font-mono">
+              <span className="text-[#a8a29e]">Y:</span> {playerRef.current?.position?.y?.toFixed(1) ?? '--'}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default GameWorld;
+
