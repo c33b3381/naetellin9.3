@@ -1,322 +1,929 @@
-# Quest of Honor - Codebase Index & Architecture
+# 🎮 Quest Of Honor - Codebase Index
 
-## Overview
-A WoW-inspired RPG game built with React/Three.js frontend and FastAPI/MongoDB backend.
-
----
-
-## 📊 File Size Analysis
-
-| File | Lines | Status |
-|------|-------|--------|
-| `GameWorld.jsx` | 9,456 | ⚠️ CRITICAL - Needs splitting |
-| `WorldEditor.jsx` | 1,279 | ⚠️ Large but focused |
-| `LootPanel.jsx` | 949 | Contains LOOT_ITEMS database |
-| `QuestMaker.jsx` | 743 | Quest creation UI |
-| `EnemyEditor.jsx` | 723 | Contains ENEMY_DATABASE |
-| `QuestDialog.jsx` | 549 | Quest interaction UI |
-| `ItemDatabaseEditor.jsx` | 529 | Item editing UI |
-| `TrainerPanel.jsx` | 505 | Contains WARRIOR_SPELLS |
-| `SpellBook.jsx` | 427 | Spell system |
-| `VendorPanel.jsx` | 365 | Vendor buy/sell UI |
-| `server.py` | 1,234 | Backend API |
+> **Purpose**: This document serves as a map to help you quickly understand the RPG codebase architecture, find where systems live, and safely make common changes. Focus is on developer workflow and practical guidance.
 
 ---
 
-## 📁 Project Structure
+## 📋 Table of Contents
+
+1. [Project Overview](#project-overview)
+2. [Core Gameplay Loop](#core-gameplay-loop)
+3. [System Overviews](#system-overviews)
+4. [Data Flow & State Management](#data-flow--state-management)
+5. [File Ownership Map](#file-ownership-map)
+6. [How-To Guides](#how-to-guides)
+7. [Known Issues & Risk Areas](#known-issues--risk-areas)
+
+---
+
+## Project Overview
+
+**Type**: Single-player 3D MMORPG (WoW-style)  
+**Tech Stack**: 
+- **Frontend**: React 18, Three.js, @react-three/fiber, Zustand, TailwindCSS, Lucide Icons
+- **Backend**: FastAPI (Python), MongoDB (Motor for async), JWT auth
+- **Architecture**: Monolithic frontend component (`GameWorld.jsx`) + RESTful API backend
+
+**Current State**: Fully functional RPG with:
+- Custom animated player character (procedural humanoid)
+- Detailed "Oakvale Village" starting zone
+- Castle with enemies and boss
+- Combat system with leveling (1-20)
+- Quest system (predefined + custom)
+- Loot system with 5 rarity tiers
+- Death/resurrection mechanics
+- World/terrain/enemy editors (F1/F2/F3 keys)
+
+---
+
+## Core Gameplay Loop
+
+### Primary Flow
+```
+Player Login
+  ↓
+Character Selection/Creation
+  ↓
+Spawn in Oakvale Village (x:0, z:0)
+  ↓
+WASD Movement + Camera Control (Right-click drag)
+  ↓
+Click to Select Target (NPCs, Enemies, Objects)
+  ↓
+Double-click to Interact (Quests, Training, Vendors)
+  ↓
+Combat: Cast Spells (1-6 keys) → Enemy AI Engages → XP/Loot on Kill
+  ↓
+Level Up (1-20) → Learn New Spells → Better Gear
+  ↓
+Death → Release Spirit → Run to Corpse → Revive
+```
+
+### Game Loop (60 FPS)
+Located in: **`GameWorld.jsx`** lines ~5000-6400
+
+**Every Frame:**
+1. Update player movement (PlayerMovementSystem)
+2. Update camera position (CameraSystem)
+3. Update player animations (walk, idle, jump, attack)
+4. Update enemy AI (patrol/chase/combat per enemy)
+5. Update floating damage text sprites
+6. Update health bars (face camera)
+7. Process auto-attack timers
+8. Process global cooldowns
+9. Update loot corpse timers
+10. Handle terrain editing (if active)
+11. Update brush indicator (if terrain editor open)
+12. Render scene
+
+---
+
+## System Overviews
+
+### ⚔️ Combat System
+**File**: `frontend/src/systems/CombatSystem.js`  
+**Responsibility**: Combat calculations, damage text, XP/leveling, mob difficulty
+
+**Key Functions**:
+- `calculateAutoAttackDamage()` - Player melee damage
+- `calculateNpcAttackDamage(baseDamage)` - Enemy damage
+- `calculateXPGain(mobLevel, playerLevel)` - XP rewards
+- `getMobDifficultyColor(mobLevel, playerLevel)` - WoW-style color coding
+- `createDamageText(scene, position, damage, isPlayerDamage)` - Floating combat text
+- `updateEnemyHealthBar(enemyMesh, newHp)` - Health bar visual update
+
+**Constants**:
+- `COMBAT_CONSTANTS` - Attack speeds, GCD, combat timeout
+- `XP_THRESHOLDS` - Cumulative XP per level (1-20)
+- `MAX_LEVEL` = 20
+
+**Combat State** (managed in GameWorld.jsx):
+- Player: `currentHealth`, `currentMana`, `isInCombat`, `isAutoAttacking`
+- Enemies: `npcCombatStateRef` (Map of combat states per enemy ID)
+
+---
+
+### 🤖 Enemy AI System
+**File**: `frontend/src/systems/EnemyAISystem.js`  
+**Responsibility**: Enemy behavior, patrol, aggro, chase, leash, reset
+
+**Key Functions**:
+- `createPatrolData(timestamp)` - Initialize patrol state
+- `createCombatState(enemyMesh)` - Initialize combat state
+- `updatePatrol(enemyMesh, patrolData, delta, ...)` - Move enemy on patrol path
+- `shouldAggro(enemyMesh, player, combatState, ...)` - Check aggro range
+- `shouldLeash(enemyMesh, player, combatState)` - Check if too far from spawn
+- `chasePlayer(enemyMesh, player, enemyId, delta, ...)` - Pursue player
+- `maintainSpreadPosition(...)` - Position around player (prevent stacking)
+- `moveToSpawn(enemyMesh, combatState, delta, ...)` - Return to spawn on reset
+- `resetEnemyHealth(enemyMesh)` - Full HP restore
+
+**AI States**:
+- **Patrol** - Follow waypoint pattern
+- **Combat** - Chase player, maintain spread position, attack in range
+- **Reset/Leash** - Return to spawn, restore HP
+
+**Patrol Patterns**: Circle, Figure-8, Triangle, Line, Diamond, Zigzag, Square
+
+**Constants**:
+- `AGGRO_RANGE` = 8 units
+- `LEASH_RANGE` = 40 units
+- `MELEE_RANGE` = 5 units
+- `PATROL_SPEED` = 2 units/sec
+- `CHASE_SPEED` = 4 units/sec
+- `RETURN_SPEED` = 6 units/sec
+
+---
+
+### 🏃 Player Movement System
+**File**: `frontend/src/systems/PlayerMovementSystem.js`  
+**Responsibility**: WASD movement, jump, gravity, terrain following, world bounds
+
+**Key Functions**:
+- `createMovementState()` - Initialize movement state
+- `handleMovementKeyDown(e, movementState)` - Process WASD/Arrow/Space input
+- `handleMovementKeyUp(e, movementState)` - Release keys
+- `updatePlayerMovement(player, movementState, cameraState, scene, delta, lastPlayerPos, options)` - Main update
+- `calculateMovementDirection(movement, cameraState)` - Direction vector from input
+- `getTerrainHeightAtPosition(scene, x, z, fallback)` - Raycast for height
+
+**Movement Features**:
+- Camera-relative movement (WASD rotated by camera yaw)
+- Jump physics with gravity
+- Smooth terrain following (not jumping)
+- Water slowdown (30% speed reduction)
+- Auto-run toggle (NumLock)
+- Both mouse buttons = move forward
+- World bounds clamping (±290 units)
+- Teleport detection & revert (prevents >50 unit jumps)
+
+---
+
+### 📷 Camera System
+**File**: `frontend/src/systems/CameraSystem.js`  
+**Responsibility**: WoW-style third-person camera, zoom, rotation
+
+**Key Functions**:
+- `createCameraState()` - Initialize camera state
+- `handleCameraMouseDown/Up/Move/Wheel(e, cameraState, ...)` - Input handling
+- `updateCamera(camera, player, cameraState, isMapEditorMode, ...)` - Position camera each frame
+
+**Camera Modes**:
+1. **Normal Mode**: Follow player, right-click drag to rotate, scroll to zoom
+2. **Map Editor Mode (F5)**: Detach from player, top-down view, pan with WASD/Ctrl+RMB
+
+**Camera Constraints**:
+- Distance: 5-30 units from player
+- Pitch: 0.2 to 1.5 radians
+- Smooth movement with lerp
+
+---
+
+### 🌍 Terrain System
+**File**: `frontend/src/systems/TerrainSystem.js`  
+**Responsibility**: Procedural terrain generation, height/color queries, water detection
+
+**Key Functions**:
+- `getTerrainHeight(x, z)` - Get Y height at world position
+- `isInWater(x, z)` - Check if position is in water
+- `getWaterDepth(x, z)` - Calculate water depth
+- `getTerrainColor(x, z)` - Get terrain color (for visual consistency)
+
+**Terrain Generation** (in GameWorld.jsx):
+- 600×600 world size, 200×200 segments
+- Multi-octave Perlin noise
+- Height-based coloring (water, grass, rock, snow)
+- Editable via Terrain Editor (F2)
+
+---
+
+### 🎨 World Asset Factory
+**File**: `frontend/src/systems/WorldAssetFactory.js`  
+**Responsibility**: Create 3D meshes for NPCs, enemies, objects, decorations
+
+**Key Function**:
+- `createWorldAsset(data, getTerrainHeight)` - Universal mesh creator
+
+**Supported Types**:
+- NPCs: Guard, Trainer, Vendor, Quest Giver
+- Buildings: Houses, Towers, Castles
+- Nature: Trees, Rocks, Fountains
+- Decorations: Benches, Market Stalls, Signs
+- Enemies: Visual representation (cube with icon + health bar)
+
+---
+
+### 🎮 Input System
+**File**: `frontend/src/systems/InputSystem.js`  
+**Responsibility**: Centralized keyboard event handling, key handler registration
+
+**Key Functions**:
+- `createKeyDownHandler(refs)` - Create main keydown handler
+- `createKeyUpHandler(refs)` - Create main keyup handler
+- `registerKeyboardHandlers(keyDown, keyUp)` - Attach to window
+- `unregisterKeyboardHandlers(keyDown, keyUp)` - Cleanup
+
+**Keyboard Layout**:
+- **WASD** - Movement
+- **Space** - Jump
+- **NumLock** - Auto-run toggle
+- **Tab** - Target nearest enemy
+- **1-6** - Cast spells from action bar
+- **P** - Open spell book
+- **M** - World map
+- **C** - Character panel
+- **L** - Quest log
+- **Escape** - Close panels/deselect
+- **F1** - World Editor
+- **F2** - Terrain Editor
+- **F3** - Enemy Editor
+- **F4** - Item Database Editor
+- **F5** - Map Editor Mode
+- **F6** - Flight Mode (in map editor)
+- **F7** - Quest Maker
+- **Ctrl+S** - Save world
+
+---
+
+### 🗺️ World Object System
+**File**: `frontend/src/systems/WorldObjectSystem.js`  
+**Responsibility**: Normalize world data for save/load, mesh disposal
+
+**Key Functions**:
+- `normalizeObjectForSave(obj, zone)` - Prepare object for DB save
+- `normalizeEnemyForSave(enemy)` - Prepare enemy for DB save
+- `extractTerrainData(geometryRef)` - Extract heightmap + colors
+- `processLoadedWorldObject(obj, getTerrainHeight)` - Reconstruct from DB
+- `disposeMeshTree(mesh)` - Clean up Three.js memory
+
+---
+
+## Data Flow & State Management
+
+### State Architecture
 
 ```
-/app/
-├── backend/
-│   ├── server.py              # Main FastAPI server (ALL routes)
-│   ├── .env                   # MongoDB URL, JWT secret
-│   └── tests/
-│       └── test_api.py        # API tests
+┌─────────────────────────────────────────────────────────────┐
+│                    Zustand Store                             │
+│                 (gameStore.js - 800 lines)                   │
+│                                                              │
+│  - Auth State (token, playerId, isAuthenticated)            │
+│  - Player Data (character, skills, inventory, equipment)    │
+│  - Game State (position, copper, learned_spells, etc.)      │
+│  - UI State (activePanel, notifications, error)             │
+│  - Bag System (backpack, bags[4])                           │
+│  - Quest State (active, completed, available)               │
+│                                                              │
+│  Actions: register, login, fetchPlayer, updatePosition,     │
+│           learnSpell, saveActionBar, addItemToBag, etc.     │
+└─────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────┐
+│               GameWorld.jsx (7165 lines)                     │
+│                  React Component State                       │
+│                                                              │
+│  Local UI State:                                            │
+│  - selectedTarget (current target)                          │
+│  - isEditorOpen, isTerrainEditorOpen, etc. (20+ panels)    │
+│  - placedObjects, placedEnemies (editor state)             │
+│  - combatLog, spellCooldowns, currentHealth/Mana           │
+│  - playerLevel, currentXP (synced to store)                │
+│  - isDead, isGhost, corpsePosition (death system)          │
+│                                                              │
+│  Refs (for game loop/event handlers):                       │
+│  - sceneRef, cameraRef, rendererRef, playerRef             │
+│  - cameraState, movementState (from systems)               │
+│  - npcCombatStateRef, enemyPatrolDataRef                   │
+│  - 50+ closure-fix refs (isXxxOpenRef)                     │
+└─────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend API                               │
+│                 (server.py - 1235 lines)                     │
+│                                                              │
+│  MongoDB Collections:                                        │
+│  - players: User accounts, character data, inventory        │
+│  - terrain: Heightmap and color data                        │
+│  - world_objects: NPCs, buildings, decorations              │
+│  - placed_enemies: Enemy spawns                             │
+│  - paths: Path node data                                    │
+│  - custom_quests: Player-created quests                     │
+│  - global_quests: Shared quest database                     │
+│                                                              │
+│  Endpoints: /api/auth/*, /api/player/*, /api/world/*,       │
+│             /api/quests/*, /api/combat/*, /api/terrain/*    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Save Flow
+
+**Player Position** (auto-save every movement):
+```
+PlayerMovementSystem.updatePlayerMovement()
+  → GameWorld animation loop
+  → Debounced call to gameStore.updatePosition()
+  → PUT /api/player/position
+  → MongoDB players.position update
+```
+
+**World State** (manual save via Ctrl+S):
+```
+User presses Ctrl+S
+  → GameWorld.handleSaveWorld()
+  → Collect: terrain, world_objects, placed_enemies, paths, player data
+  → POST /api/player/save-all (comprehensive save)
+  → MongoDB: Update terrain, world_objects, placed_enemies, paths, players
+```
+
+**Spell Learning**:
+```
+TrainerPanel.onTrainSpell(spellId, cost)
+  → GameWorld.handleTrainSpell()
+  → gameStore.learnSpell(spellId, cost)
+  → POST /api/player/learn-spell
+  → MongoDB: $push learned_spells, $inc copper
+  → Update Zustand store
+```
+
+### Load Flow
+
+**Initial Load**:
+```
+User logs in
+  → gameStore.login()
+  → POST /api/auth/login (get token)
+  → gameStore.fetchPlayer()
+  → GET /api/player/me (full player data)
+  → Update Zustand store
+  → GameWorld renders
+  → useEffect: Load terrain, world objects, enemies
+  → GET /api/terrain, /api/world/objects, /api/world/enemies
+  → Reconstruct scene with loaded data
+```
+
+---
+
+## File Ownership Map
+
+### 🗂️ Frontend Structure
+
+```
+/app/frontend/src/
+├── pages/
+│   └── GameWorld.jsx              ⚠️ MONOLITH (7165 lines)
+│       Owns: Game loop, scene setup, ALL coordination
 │
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── GameWorld.jsx      # ⚠️ MONOLITHIC - Main game (9,456 lines)
-│   │   │   ├── CharacterCreation.jsx
-│   │   │   └── LandingPage.jsx
-│   │   │
-│   │   ├── components/
-│   │   │   ├── game/              # Game-specific components
-│   │   │   │   ├── ActionBar.jsx      # Spell action bar
-│   │   │   │   ├── BagBar.jsx         # Inventory bag bar
-│   │   │   │   ├── BagPanel.jsx       # Individual bag contents
-│   │   │   │   ├── Buildings.jsx      # Building meshes (UNUSED?)
-│   │   │   │   ├── EnemyEditor.jsx    # F3 Enemy editor + ENEMY_DATABASE
-│   │   │   │   ├── GameScene.jsx      # Basic scene setup (UNUSED?)
-│   │   │   │   ├── ItemDatabaseEditor.jsx  # Item editor
-│   │   │   │   ├── LootPanel.jsx      # Loot window + LOOT_ITEMS database
-│   │   │   │   ├── Monsters.jsx       # Monster spawns (UNUSED?)
-│   │   │   │   ├── NPCs.jsx           # NPC definitions (UNUSED?)
-│   │   │   │   ├── Player.jsx         # Player mesh (UNUSED?)
-│   │   │   │   ├── QuestDialog.jsx    # Quest accept/turn-in UI
-│   │   │   │   ├── QuestLog.jsx       # Quest tracking (L key)
-│   │   │   │   ├── QuestMaker.jsx     # F7 Quest creation tool
-│   │   │   │   ├── Resources.jsx      # Resource nodes (UNUSED?)
-│   │   │   │   ├── SpellBook.jsx      # Spell definitions + UI
-│   │   │   │   ├── Terrain.jsx        # Terrain generation (UNUSED?)
-│   │   │   │   ├── TerrainEditor.jsx  # F2 Terrain tools
-│   │   │   │   ├── TrainerPanel.jsx   # Skill trainer + WARRIOR_SPELLS
-│   │   │   │   ├── VendorPanel.jsx    # Buy/sell interface
-│   │   │   │   └── WorldEditor.jsx    # F1 Object placement tool
-│   │   │   │
-│   │   │   ├── hud/               # Heads-up display
-│   │   │   │   ├── HUD.jsx            # Main HUD container
-│   │   │   │   ├── Minimap.jsx        # Corner minimap
-│   │   │   │   ├── WorldMap.jsx       # Full world map (M key)
-│   │   │   │   └── ChatBox.jsx        # Chat interface
-│   │   │   │
-│   │   │   ├── panels/            # Character panels
-│   │   │   │   ├── CharacterPanel.jsx # Stats/equipment (C key)
-│   │   │   │   ├── InventoryPanel.jsx # Inventory view
-│   │   │   │   ├── QuestPanel.jsx     # Quest list panel
-│   │   │   │   └── SkillsPanel.jsx    # Skills view
-│   │   │   │
-│   │   │   └── ui/                # Shadcn UI components
-│   │   │       └── [40+ UI components]
-│   │   │
-│   │   ├── store/
-│   │   │   └── gameStore.js       # Zustand state management
-│   │   │
-│   │   ├── hooks/
-│   │   │   └── use-toast.js       # Toast notifications
-│   │   │
-│   │   └── lib/
-│   │       └── utils.js           # Utility functions
+├── systems/                        ✅ Well-separated logic
+│   ├── CombatSystem.js            Combat calculations, XP, damage text
+│   ├── EnemyAISystem.js           AI behavior, patrol, aggro, chase
+│   ├── PlayerMovementSystem.js    WASD, jump, terrain following
+│   ├── CameraSystem.js            Third-person camera, zoom, rotation
+│   ├── InputSystem.js             Keyboard handler factory
+│   ├── TerrainSystem.js           Height queries, water detection
+│   ├── WorldAssetFactory.js       Mesh creation for NPCs/objects
+│   └── WorldObjectSystem.js       Save/load normalization
+│
+├── components/
+│   ├── hud/                        HUD overlays
+│   │   ├── HUD.jsx                Player HP/MP, XP bar, menu buttons
+│   │   ├── Minimap.jsx            Top-down minimap
+│   │   ├── WorldMap.jsx           Full-screen map (M key)
+│   │   └── ChatBox.jsx            Chat UI (not implemented)
 │   │
-│   └── .env                   # Backend URL
+│   ├── panels/                     Main panels (I, C, K, etc.)
+│   │   ├── CharacterPanel.jsx     Stats, equipment slots
+│   │   ├── InventoryPanel.jsx     Bag contents
+│   │   ├── SkillsPanel.jsx        Skill levels
+│   │   └── QuestPanel.jsx         Quest list
+│   │
+│   ├── game/                       Game-specific UI
+│   │   ├── ActionBar.jsx          Spell bar (1-6)
+│   │   ├── SpellBook.jsx          Spell browser (P key)
+│   │   ├── TrainerPanel.jsx       Spell trainer dialog
+│   │   ├── QuestDialog.jsx        Quest giver interaction
+│   │   ├── QuestLog.jsx           Quest tracker (L key)
+│   │   ├── LootPanel.jsx          Corpse loot window
+│   │   ├── VendorPanel.jsx        NPC vendor shop
+│   │   ├── BagBar.jsx             Bag slots UI
+│   │   ├── WorldEditor.jsx        Object placement (F1)
+│   │   ├── TerrainEditor.jsx      Terrain sculpting (F2)
+│   │   ├── EnemyEditor.jsx        Enemy spawner (F3)
+│   │   ├── ItemDatabaseEditor.jsx Item browser (F4)
+│   │   └── QuestMaker.jsx         Custom quest creator (F7)
+│   │
+│   └── ui/                         shadcn/ui components
+│       └── *.jsx                   Button, Dialog, Input, etc.
 │
-└── memory/
-    └── PRD.md                 # Product requirements
+├── data/                           Static game data
+│   ├── enemies.js                 Enemy database (types, stats, icons)
+│   ├── items.js                   Loot items (5 rarity tiers)
+│   ├── spells.js                  Warrior spells (10 abilities)
+│   └── objects.js                 World object definitions
+│
+└── store/
+    └── gameStore.js               🌐 Global state (Zustand)
+```
+
+### 🗂️ Backend Structure
+
+```
+/app/backend/
+├── server.py                       ⚠️ MONOLITH (1235 lines)
+│   All routes: Auth, Player, Combat, Quests, World, Terrain
+│
+├── tests/
+│   ├── test_api.py                API endpoint tests
+│   ├── test_rotation_persistence.py  Object rotation tests
+│   └── test_world_object_system.py   World object tests
+│
+└── requirements.txt               Python dependencies
+```
+
+### 🗃️ MongoDB Collections
+
+| Collection | Purpose | Key Fields |
+|------------|---------|------------|
+| `players` | User accounts, character data | `id`, `username`, `email`, `password_hash`, `character`, `skills`, `inventory`, `equipment`, `position`, `copper`, `learned_spells`, `action_bar`, `combat_level`, `experience` |
+| `terrain` | Terrain heightmap | `terrain_id`, `heightmap[]`, `colors[]`, `world_size`, `segments`, `seed` |
+| `world_objects` | NPCs, buildings, decorations | `id`, `type`, `subType`, `name`, `position`, `rotation`, `scale`, `zone`, `quest_giver`, `global_quest_id` |
+| `placed_enemies` | Enemy spawns | `id`, `type`, `level`, `position`, `hostile`, `maxHealth`, `damage`, `patrolRadius` |
+| `paths` | Path nodes | `zone`, `nodes[]`, `width` |
+| `custom_quests` | Player-created quests | `quest_id`, `creator_id`, `npc_id`, `objectives`, `rewards` |
+| `global_quests` | Shared quest pool | `quest_id`, `is_global`, `assigned_npc_id`, `objectives`, `rewards` |
+
+---
+
+## How-To Guides
+
+### 🎯 How to Add a New Enemy Type
+
+**1. Define enemy in data file:**
+```javascript
+// File: frontend/src/data/enemies.js
+
+export const ENEMY_DATABASE = {
+  tier1: {
+    enemies: {
+      // ADD YOUR ENEMY HERE
+      my_new_enemy: {
+        label: 'My New Enemy',
+        icon: Skull,              // From lucide-react
+        color: '#ff0000',
+        baseLevel: 3,
+        baseHealth: 100,
+        baseDamage: 8,
+        xpReward: 30,
+        goldDrop: [5, 15],
+        description: 'A fearsome new foe'
+      }
+    }
+  }
+};
+```
+
+**2. Add loot table (optional):**
+```javascript
+// File: frontend/src/data/items.js
+
+const ENEMY_LOOT_TABLES = {
+  my_new_enemy: ['bone_fragment', 'leather_scraps', 'minor_health_potion']
+};
+```
+
+**3. Spawn enemy in world:**
+- Open game, press **F3** (Enemy Editor)
+- Select your enemy from the tier dropdown
+- Adjust level, patrol radius
+- Click "Place Enemy Mode"
+- Click terrain to spawn
+- Press **Ctrl+S** to save
+
+**4. Test:**
+- Enemy should patrol and aggro when player approaches
+- Killing it should grant XP and loot
+
+**Files Modified**: `enemies.js`, `items.js` (optional)  
+**No Code Changes Needed** - Enemy AI is handled automatically
+
+---
+
+### 🎁 How to Add a New Loot Item
+
+**1. Define item in data file:**
+```javascript
+// File: frontend/src/data/items.js
+
+export const LOOT_ITEMS = {
+  my_epic_sword: {
+    id: 'my_epic_sword',
+    name: 'Legendary Blade',
+    icon: '⚔️',
+    description: 'A sword of immense power',
+    vendorPrice: 15000,        // 1g 50s (in copper)
+    rarity: 'epic',            // junk, common, uncommon, rare, epic
+    dropChance: 0.01,          // 1%
+    equipment: true,           // Is this equipment?
+    slot: 'weapon',            // weapon, chest, head, etc.
+    stats: { damage: 30, crit: 5 }
+  }
+};
+```
+
+**2. Add to loot table:**
+```javascript
+const ENEMY_LOOT_TABLES = {
+  dragon: ['dragon_scale', 'my_epic_sword', 'ancient_relic']
+};
+```
+
+**3. Test:**
+- Kill enemies that drop from that loot table
+- Item should appear in loot window
+- Stats should show correctly
+
+**Files Modified**: `items.js`
+
+---
+
+### ✨ How to Add a New Spell/Ability
+
+**1. Define spell in data file:**
+```javascript
+// File: frontend/src/data/spells.js
+
+export const WARRIOR_SPELLS = {
+  'warrior_my_spell': {
+    id: 'warrior_my_spell',
+    name: 'My Awesome Ability',
+    icon: Flame,               // From lucide-react
+    description: 'Does something cool',
+    damage: { min: 25, max: 40 },
+    manaCost: 20,
+    cooldown: 10,              // Seconds
+    range: 5,                  // Units
+    type: 'physical',          // physical, fire, frost, etc.
+    cost: 5000,                // Training cost (50 silver)
+    tier: 2,                   // 1-4
+    requiredLevel: 6
+  }
+};
+```
+
+**2. Implement spell effect (if unique):**
+```javascript
+// File: frontend/src/pages/GameWorld.jsx
+// Search for: handleCastSpell function
+
+// Add your custom logic in the spell effect switch:
+case 'warrior_my_spell':
+  // Custom spell behavior here
+  const spellDamage = calculateSpellDamage(spell);
+  // Deal damage, apply effects, etc.
+  break;
+```
+
+**3. Test:**
+- Login, find a trainer (double-click)
+- Train the spell if you meet level requirement
+- Drag to action bar
+- Use on enemies
+
+**Files Modified**: `spells.js`, `GameWorld.jsx` (if custom effect)
+
+---
+
+### 🗺️ How to Add a New Quest
+
+**Option A: Using Quest Maker (In-Game)**
+
+1. Press **F7** in-game → Opens Quest Maker
+2. Fill in quest details:
+   - Name, description, difficulty
+   - Objectives (kill X enemies, collect Y items)
+   - Rewards (XP, gold, items)
+3. Click "Save Quest to Database"
+4. Click "Assign to NPC" → Select an NPC
+5. Quest now available from that NPC
+
+**Option B: Hardcoded Quest (Backend)**
+
+```python
+# File: backend/server.py
+# Search for: AVAILABLE_QUESTS
+
+AVAILABLE_QUESTS = [
+  {
+    "quest_id": "my_new_quest",
+    "name": "My Quest Name",
+    "description": "Quest description here",
+    "objectives": [
+      {
+        "id": "kill_goblins",
+        "description": "Kill Goblins",
+        "required": 10,
+        "type": "kill",
+        "target": "goblin"
+      }
+    ],
+    "rewards": {
+      "xp": {"attack": 200},
+      "items": [{"item_id": "steel_sword", "name": "Steel Sword", "type": "weapon", "quantity": 1}]
+    },
+    "difficulty": "medium"
+  }
+]
+```
+
+**Files Modified**: `server.py` (Option B only)  
+**Testing**: Talk to quest giver, accept quest, complete objectives, turn in
+
+---
+
+### 🏗️ How to Add a New NPC Type
+
+**1. Define NPC visual in WorldAssetFactory:**
+```javascript
+// File: frontend/src/systems/WorldAssetFactory.js
+
+case 'npc_my_type':
+  // Create geometry for your NPC
+  const body = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
+  const bodyMesh = new THREE.Mesh(body, new THREE.MeshStandardMaterial({ color: 0x123456 }));
+  // Add to group, position parts, etc.
+  break;
+```
+
+**2. Add selection handling:**
+```javascript
+// File: frontend/src/pages/GameWorld.jsx
+// Search for: handleDoubleClick function
+
+if (selected.userData.type === 'my_type') {
+  // Handle interaction
+  setMyCustomPanelOpen(true);
+}
+```
+
+**3. Place in world:**
+- Press **F1** (World Editor)
+- Select NPC category, choose your type
+- Place in world
+- **Ctrl+S** to save
+
+**Files Modified**: `WorldAssetFactory.js`, `GameWorld.jsx`
+
+---
+
+### 🎨 How to Modify Terrain
+
+**In-Game Terrain Editor (F2):**
+
+1. Press **F2** → Opens Terrain Editor
+2. Select tool:
+   - **Raise** - Sculpt hills
+   - **Lower** - Carve valleys
+   - **Smooth** - Blend heights
+   - **Paint** - Change colors
+   - **Path** - Create roads (click to add nodes)
+3. Adjust brush size & strength
+4. Click/drag on terrain to edit
+5. **Ctrl+S** to save terrain
+
+**Programmatic Terrain:**
+```javascript
+// File: frontend/src/pages/GameWorld.jsx
+// Search for: createTerrain function
+
+// Modify the Perlin noise parameters:
+const terrainHeight = getTerrainHeight(worldX, worldZ);
+// Apply your own height formula here
+```
+
+**Files Modified**: `GameWorld.jsx` (for procedural changes)
+
+---
+
+### 🔧 How to Debug Common Issues
+
+#### Issue: "Player is stuck in terrain"
+**Cause**: Terrain height mismatch  
+**Fix**:
+1. Check `TerrainSystem.getTerrainHeight(x, z)` is returning correct value
+2. Verify `PlayerMovementSystem.updatePlayerMovement()` is calling terrain height
+3. Add debug log: `console.log('Terrain Y:', terrainY, 'Player Y:', player.position.y)`
+
+#### Issue: "Enemies not attacking"
+**Cause**: Combat state not syncing  
+**Fix**:
+1. Check `npcCombatStateRef.current.get(enemyId)` exists
+2. Verify `AI_CONSTANTS.MELEE_RANGE` is appropriate
+3. Check enemy `userData.hostile === true`
+4. Add log in game loop: `console.log('Enemy combat state:', combatState)`
+
+#### Issue: "Spells not casting"
+**Cause**: Usually cooldown or mana  
+**Fix**:
+1. Check `spellCooldowns[spellId] === 0`
+2. Verify `currentMana >= spell.manaCost`
+3. Check `selectedTarget !== null` (if target required)
+4. Check `globalCooldownRef.current === 0`
+
+#### Issue: "World objects not saving"
+**Cause**: Auth token expired or save endpoint error  
+**Fix**:
+1. Check browser console for 401 errors
+2. Verify `token` in Zustand store is valid
+3. Check backend logs: `tail -n 100 /var/log/supervisor/backend.err.log`
+4. Ensure objects are in `placedObjectsRef.current` before save
+
+---
+
+## Known Issues & Risk Areas
+
+### ⚠️ Critical Risk Areas
+
+#### 1. **GameWorld.jsx Monolith (7165 lines)**
+**Risk Level**: 🔴 **HIGH**
+
+**Problems**:
+- Single file handles entire game coordination
+- 50+ React state variables
+- 100+ useRef variables (mostly closure fixes)
+- Massive animation loop function (800+ lines)
+- Event handlers scattered throughout
+- High bug introduction risk on any change
+- Difficult to test individual systems
+
+**Impact**: Any change has high chance of breaking unrelated features
+
+**Mitigation**:
+- Always test thoroughly with frontend testing agent after changes
+- Keep changes small and focused
+- Use Find (Ctrl+F) extensively to locate code sections
+- Read surrounding context before editing
+
+---
+
+#### 2. **Closure Stale State Issues**
+**Risk Level**: 🟡 **MEDIUM**
+
+**Problem**: 
+- React event handlers capture stale state/props
+- Solution: 50+ `useRef` variables kept in sync with state
+- Pattern: `isXxxOpen` (state) + `isXxxOpenRef` (ref)
+
+**Example**:
+```javascript
+const [isTrainerOpen, setIsTrainerOpen] = useState(false);
+const isTrainerOpenRef = useRef(false);
+
+useEffect(() => {
+  isTrainerOpenRef.current = isTrainerOpen;
+}, [isTrainerOpen]);
+
+// Event handler uses ref instead of state
+const handleKeyDown = (e) => {
+  if (isTrainerOpenRef.current) { /* ... */ }
+};
+```
+
+**If you add new state**: Always create a matching ref and sync it!
+
+---
+
+#### 3. **Position Teleport Bug**
+**Risk Level**: 🟡 **MEDIUM**
+
+**Problem**: Player can randomly teleport if position updates incorrectly
+
+**Prevention** (already implemented):
+```javascript
+// PlayerMovementSystem detects large position jumps
+const posDiff = player.position.distanceTo(lastPlayerPos);
+if (posDiff > 50 && !justTeleportedRef.current) {
+  player.position.copy(lastPlayerPos); // REVERT
+  return { reverted: true };
+}
+```
+
+**If modifying movement**: Never directly set `player.position` without setting `justTeleportedRef.current = true`
+
+---
+
+#### 4. **Memory Leaks (Three.js)**
+**Risk Level**: 🟡 **MEDIUM**
+
+**Problem**: Three.js geometries/materials/textures not disposed
+
+**Current Mitigation**:
+- `WorldObjectSystem.disposeMeshTree(mesh)` - Recursive cleanup
+- Called on: Scene cleanup, object deletion, enemy death
+
+**When adding new meshes**: Always dispose on removal!
+```javascript
+mesh.geometry.dispose();
+mesh.material.dispose();
+scene.remove(mesh);
 ```
 
 ---
 
-## 🎮 GameWorld.jsx Breakdown (9,456 lines)
+#### 5. **Zustand Store Overwrites**
+**Risk Level**: 🟢 **LOW** (but critical when it happens)
 
-This file is the main bottleneck. Here's what's inside:
+**Problem**: Store partialize config only persists auth tokens, not game state
 
-### Section Map
+**What's Persisted**: `token`, `playerId`, `username`, `isAuthenticated`  
+**What's NOT Persisted**: Character data, position, inventory (loaded from backend)
 
-| Lines | Section | Description | Refactor To |
-|-------|---------|-------------|-------------|
-| 29-333 | Terrain Noise Functions | Perlin noise, terrain generation | `hooks/useTerrain.js` |
-| 335-410 | Core Refs & State | ~75 useRef, ~50 useState | Keep in GameWorld |
-| 410-554 | XP/Leveling System | Level calculations, XP gain | `hooks/useExperience.js` |
-| 566-600 | Combat State | Auto-attack, regen, cooldowns | `hooks/useCombat.js` |
-| 618-670 | Panel States | UI panel open/close state | Keep in GameWorld |
-| 677-962 | Notification System | Toast/damage numbers | `hooks/useNotifications.js` |
-| 963-1173 | Death/Resurrection | Ghost mode, corpse run | `hooks/useDeathSystem.js` |
-| 1175-1282 | Quest Kill Tracking | Kill objective updates | `hooks/useQuestTracking.js` |
-| 1622-1694 | Attack Animations | Arm swing animations | `hooks/useAttackAnimation.js` |
-| 2681-3588 | Terrain & Graveyard | Scene geometry creation | `components/game/SceneSetup.jsx` |
-| 3920-6350 | Asset Creation | createWorldAsset (2400+ lines) | `utils/assetFactory.js` |
-| 6360-6520 | World Object Loading | Load from database | `hooks/useWorldObjects.js` |
-| 6530-6720 | Zone Content | Static zone NPCs/objects | `data/zoneContent.js` |
-| 6720-8200 | Controls & Input | Keyboard/mouse handling | `hooks/useControls.js` |
-| 8226-8606 | Enemy AI | Patrol, aggro, combat | `hooks/useEnemyAI.js` |
-| 8607-9456 | Render & JSX | Main render function | Keep in GameWorld |
+**If adding new persistent data**: Add to `partialize` in `gameStore.js`
 
 ---
 
-## 🔌 Backend API Endpoints (server.py)
+### 🐛 Known Bugs (Low Priority)
 
-### Auth Routes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Create account |
-| POST | `/api/auth/login` | Login, get JWT |
+1. **Enemy health bars sometimes don't face camera on spawn**
+   - **Workaround**: Trigger by moving camera
+   - **File**: `EnemyAISystem.js` - `updateHealthBarFacing()`
 
-### Player Routes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/player/me` | Get player data |
-| POST | `/api/player/character` | Create character |
-| PUT | `/api/player/position` | Update position |
-| POST | `/api/player/save-all` | Save all game state |
-| GET | `/api/player/game-state` | Load game state |
+2. **Terrain brush indicator disappears at steep angles**
+   - **Cause**: Raycaster miss at extreme angles
+   - **File**: `GameWorld.jsx` - Animation loop terrain editing section
 
-### Quest Routes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/quests/available` | List available quests |
-| POST | `/api/quests/accept/{id}` | Accept quest |
-| POST | `/api/quests/progress` | Update quest progress |
-| POST | `/api/quests/abandon/{id}` | Abandon quest |
-| GET | `/api/quests/global` | List global quests |
-| POST | `/api/quests/global` | Create global quest |
-| PUT | `/api/quests/global/assign/{id}` | Assign to NPC |
+3. **Loot corpses can stack if killed in same spot**
+   - **Workaround**: Corpses despawn after 2 minutes
+   - **File**: `GameWorld.jsx` - Loot system
 
-### World Routes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/world/objects` | Get placed objects |
-| POST | `/api/world/objects` | Place object |
-| DELETE | `/api/world/objects/{id}` | Remove object |
-| GET | `/api/world/enemies` | Get placed enemies |
-| GET | `/api/terrain` | Get terrain data |
-| POST | `/api/terrain` | Save terrain |
-
-### Inventory/Skills
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/inventory` | Get inventory |
-| POST | `/api/inventory/add` | Add item |
-| POST | `/api/skills/train` | Train skill |
+4. **Map editor camera can clip through terrain**
+   - **Cause**: No collision in map editor mode
+   - **File**: `CameraSystem.js` - Map editor update path
 
 ---
 
-## 🗃️ Database Collections
+### 📝 Code Quality Notes
 
-| Collection | Purpose |
-|------------|---------|
-| `players` | User accounts & characters |
-| `world_objects` | Placed buildings, NPCs, props |
-| `placed_enemies` | Enemy spawns |
-| `global_quests` | Quest database |
-| `custom_quests` | Per-user quests (legacy) |
-| `terrain` | Terrain heightmap |
-| `paths` | Road/path data |
+**Strengths**:
+- ✅ Good system extraction (Combat, AI, Movement, Camera)
+- ✅ Clear data file separation (enemies, items, spells)
+- ✅ Comprehensive component library (panels, HUD, editors)
+- ✅ Zustand store is well-organized
+- ✅ Backend API is RESTful and clear
 
----
-
-## 🎹 Keyboard Controls
-
-| Key | Action |
-|-----|--------|
-| WASD | Movement |
-| Space | Jump |
-| Tab | Target nearest enemy |
-| 1-0 | Action bar spells |
-| F1 | World Editor |
-| F2 | Terrain Editor |
-| F3 | Enemy Editor |
-| F5 | Map Editor Mode |
-| F6 | Flight Mode |
-| F7 | Quest Maker |
-| L | Quest Log |
-| M | World Map |
-| C | Character Panel |
-| B | Bags |
-| P | Spellbook |
+**Weaknesses**:
+- ⚠️ GameWorld.jsx is too large (needs refactoring)
+- ⚠️ Too many closure-fix refs (symptom of complexity)
+- ⚠️ Some game logic still in GameWorld (should be in systems)
+- ⚠️ Backend server.py is monolithic (low priority)
 
 ---
 
-## 🚨 Issues & Technical Debt
+### 🔮 Future Refactoring Recommendations
 
-### Critical
-1. **GameWorld.jsx is 9,456 lines** - Single file contains:
-   - All game logic
-   - All 3D rendering
-   - All UI state
-   - All event handlers
-   
-### High Priority
-2. **Unused Components** - These files exist but aren't used:
-   - `Buildings.jsx` - Rendering done in GameWorld
-   - `Monsters.jsx` - Spawning done in GameWorld
-   - `NPCs.jsx` - NPCs created in GameWorld
-   - `Player.jsx` - Player mesh in GameWorld
-   - `Resources.jsx` - Resources in GameWorld
-   - `Terrain.jsx` - Terrain in GameWorld
-   - `GameScene.jsx` - Scene setup in GameWorld
+*See separate analysis document for detailed refactoring targets.*
 
-3. **Data scattered across files**:
-   - `ENEMY_DATABASE` in EnemyEditor.jsx
-   - `LOOT_ITEMS` in LootPanel.jsx
-   - `WARRIOR_SPELLS` in TrainerPanel.jsx
-   - `OBJECT_CATEGORIES` in WorldEditor.jsx
+**High Priority**:
+1. Extract world initialization logic from GameWorld.jsx
+2. Extract NPC/enemy mesh creation to WorldAssetFactory
+3. Consolidate event handlers into modules
 
-### Medium Priority
-4. **Quest system workaround** - QuestDialog shows all quests instead of NPC-specific
-5. **Wall rotation bug** - Rotation lost on save/load
-6. **Vendor buy not implemented** - Only sell works
+**Medium Priority**:
+4. UI state management with useReducer or Context
+5. Break animation loop into smaller update functions
+
+**Low Priority**:
+6. Backend: Split server.py into route modules
+7. Add unit tests for systems
 
 ---
 
-## 📋 Recommended Refactoring Plan
+## 📚 Additional Resources
 
-### Phase 1: Extract Hooks (Priority: High)
-Create custom hooks to extract logic from GameWorld.jsx:
-
-```
-/frontend/src/hooks/
-├── useExperience.js      # XP, leveling
-├── useCombat.js          # Auto-attack, damage, cooldowns
-├── useDeathSystem.js     # Ghost, corpse, resurrection
-├── useQuestTracking.js   # Kill tracking, objectives
-├── useControls.js        # Keyboard/mouse input
-├── useEnemyAI.js         # Enemy patrol, aggro, combat
-├── useWorldObjects.js    # Load/save placed objects
-├── useNotifications.js   # Toast, damage numbers
-└── useTerrain.js         # Terrain generation
-```
-
-### Phase 2: Extract Utils (Priority: Medium)
-Move pure functions to utilities:
-
-```
-/frontend/src/utils/
-├── assetFactory.js       # createWorldAsset function
-├── terrainNoise.js       # Perlin noise functions
-└── mathHelpers.js        # Vector calculations
-```
-
-### Phase 3: Consolidate Data (Priority: Medium)
-Create centralized data files:
-
-```
-/frontend/src/data/
-├── enemies.js            # ENEMY_DATABASE
-├── items.js              # LOOT_ITEMS
-├── spells.js             # All spell definitions
-├── objects.js            # OBJECT_CATEGORIES
-└── zones.js              # Zone content definitions
-```
-
-### Phase 4: Backend Organization (Priority: Low)
-Split server.py into route modules:
-
-```
-/backend/
-├── server.py             # Main app, middleware
-├── routes/
-│   ├── auth.py           # Auth routes
-│   ├── player.py         # Player routes
-│   ├── quests.py         # Quest routes
-│   ├── world.py          # World object routes
-│   └── inventory.py      # Inventory routes
-├── models/
-│   └── schemas.py        # Pydantic models
-└── utils/
-    └── auth.py           # JWT helpers
-```
+- **Three.js Docs**: https://threejs.org/docs/
+- **React Three Fiber**: https://docs.pmnd.rs/react-three-fiber/
+- **Zustand**: https://github.com/pmndrs/zustand
+- **FastAPI**: https://fastapi.tiangulo.com/
+- **MongoDB Motor**: https://motor.readthedocs.io/
 
 ---
 
-## 🔧 Quick Reference
-
-### Adding a New Object Type
-1. Add to `OBJECT_CATEGORIES` in `WorldEditor.jsx`
-2. Add case in `createWorldAsset` in `GameWorld.jsx` (line ~3920)
-3. Test with F1 World Builder
-
-### Adding a New Enemy
-1. Add to `ENEMY_DATABASE` in `EnemyEditor.jsx`
-2. Place with F3 Enemy Editor
-
-### Adding a New Spell
-1. Add to `WARRIOR_SPELLS` in `TrainerPanel.jsx`
-2. Add to `SPELLS` in `SpellBook.jsx`
-
-### Adding a New Quest
-1. Use F7 Quest Maker in-game
-2. Assign to NPC from Quest Maker UI
+**Last Updated**: December 2025  
+**Maintainer**: Solo Developer  
+**Version**: 1.0.0
 
 ---
 
-*Last Updated: February 2026*
+## Quick Reference Card
+
+| Task | Keyboard Shortcut | File to Edit |
+|------|-------------------|--------------|
+| Add enemy | F3 in-game | `enemies.js` |
+| Add item | - | `items.js` |
+| Add spell | - | `spells.js` |
+| Add NPC type | F1 in-game | `WorldAssetFactory.js` |
+| Create quest | F7 in-game | - |
+| Edit terrain | F2 in-game | - |
+| Debug combat | - | `CombatSystem.js` |
+| Debug AI | - | `EnemyAISystem.js` |
+| Debug movement | - | `PlayerMovementSystem.js` |
+| Modify UI | - | `components/` |
+| Backend API | - | `server.py` |

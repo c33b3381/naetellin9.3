@@ -44,7 +44,7 @@ import {
   calculateAutoAttackDamage,
   calculateNpcAttackDamage
 } from '../systems/CombatSystem';
-import { createWorldAsset } from '../systems/WorldAssetFactory';
+import { createWorldAsset, createEnemyMesh as createEnemyMeshFactory } from '../systems/WorldAssetFactory';
 import {
   SELECTABLE_TYPES,
   normalizeObjectForSave,
@@ -1845,94 +1845,10 @@ const GameWorld = () => {
     return group;
   }, []);
   
-  // Function to create an enemy mesh (must be defined BEFORE handlePlaceEnemy)
+  // Function to create an enemy mesh - now using WorldAssetFactory
+  // Wrapper to maintain compatibility with existing code
   const createEnemyMesh = useCallback((x, z, enemyData, enemyId) => {
-    const terrainY = getTerrainHeight(x, z);
-    const group = new THREE.Group();
-    
-    const scale = 1 + (enemyData.level / 50); // Scale based on level
-    const color = new THREE.Color(enemyData.color || 0xff0000);
-    
-    // Body
-    const bodyMat = new THREE.MeshStandardMaterial({ color: color });
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.35 * scale, 0.6 * scale, 8, 16),
-      bodyMat
-    );
-    body.position.y = 0.7 * scale;
-    body.castShadow = true;
-    group.add(body);
-    
-    // Head
-    const headMat = new THREE.MeshStandardMaterial({ color: color });
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25 * scale, 12, 12), headMat);
-    head.position.y = 1.3 * scale;
-    head.castShadow = true;
-    group.add(head);
-    
-    // Glowing red eyes
-    const eyeMat = new THREE.MeshStandardMaterial({ 
-      color: 0xff0000, 
-      emissive: 0xff0000, 
-      emissiveIntensity: 0.8 
-    });
-    for (let side of [-1, 1]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05 * scale, 6, 6), eyeMat);
-      eye.position.set(side * 0.1 * scale, 1.35 * scale, 0.2 * scale);
-      group.add(eye);
-    }
-    
-    // Health bar background
-    const healthBarWidth = 1 * scale;
-    const healthBarBg = new THREE.Mesh(
-      new THREE.PlaneGeometry(healthBarWidth, 0.1),
-      new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide })
-    );
-    healthBarBg.position.y = 1.8 * scale;
-    healthBarBg.name = 'healthBarBg';
-    group.add(healthBarBg);
-    
-    // Health bar fill
-    const healthBarFill = new THREE.Mesh(
-      new THREE.PlaneGeometry(healthBarWidth - 0.04, 0.06),
-      new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })
-    );
-    healthBarFill.position.y = 1.8 * scale;
-    healthBarFill.name = 'healthBarFill';
-    group.add(healthBarFill);
-    
-    // Level indicator
-    const levelPlate = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.4, 0.2),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
-    );
-    levelPlate.position.y = 1.95 * scale;
-    group.add(levelPlate);
-    
-    // Store enemy data
-    group.userData = {
-      type: 'monster',
-      enemyId: enemyId,
-      enemyType: enemyData.enemyType,
-      name: enemyData.name,
-      level: enemyData.level,
-      maxHealth: enemyData.maxHealth,
-      currentHealth: enemyData.currentHealth,
-      damage: enemyData.damage,
-      xpReward: enemyData.xpReward,
-      goldDrop: enemyData.goldDrop,
-      hostile: true,
-      interactable: true,
-      spawnX: x,
-      spawnZ: z,
-      patrolRadius: enemyData.patrolRadius,
-      healthBarWidth: healthBarWidth - 0.04
-    };
-    
-    group.position.set(x, terrainY, z);
-    group.name = enemyData.name; // Use custom name for display
-    
-    return group;
+    return createEnemyMeshFactory(enemyData, x, z, enemyId, getTerrainHeight);
   }, []);
   
   // Enemy placement handler
