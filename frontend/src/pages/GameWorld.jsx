@@ -2064,9 +2064,10 @@ const GameWorld = () => {
     setupWorldLighting(scene);
     
     // ==================== TERRAIN WITH HILLS AND WATER ====================
+    // Reduced world size for performance - single active zone around spawn
     
-    const worldSize = 600;
-    const terrainSegments = 200; // Higher resolution for smoother hills
+    const worldSize = 240; // Reduced from 600 (120 unit radius from center)
+    const terrainSegments = 120; // Reduced from 200 for better performance
     
     // Create terrain geometry
     const terrainGeometry = new THREE.PlaneGeometry(worldSize, worldSize, terrainSegments, terrainSegments);
@@ -2401,11 +2402,8 @@ const GameWorld = () => {
       return portalGroup;
     };
     
-    // Create portals to adjacent zones
-    createZonePortal(95, 0, 'darkwood_forest', 'Darkwood Forest');
-    createZonePortal(-95, 0, 'scorched_plains', 'Scorched Plains');
-    createZonePortal(0, 95, 'crystal_caves', 'Crystal Caves');
-    createZonePortal(0, -95, 'frozen_peaks', 'Frozen Peaks');
+    // Zone portals removed - world size reduced to single active zone (±120 units)
+    // Previous portals were at ±95 units, now outside reduced world bounds
     
     // ==================== WORLD CONTENT: Starter Village ====================
     // ==================== OAKVALE TOWN CENTER ====================
@@ -2993,11 +2991,8 @@ const GameWorld = () => {
     // ==================== END AMBIENT NPCs ====================
     
     // ==================== DARK CASTLE (Enemy Area) ====================
-    // A castle far from the village with enemies inside
-    // Clear visual beacon for progression - positioned northeast for natural exploration flow
-    
-    const CASTLE_X = 80;
-    const CASTLE_Z = -60;
+    // Castle removed - was at (80, -60), outside reduced world bounds (±120 units)
+    // World size reduced to single active zone for performance
     
     const createCastle = (x, z) => {
       const castleGroup = new THREE.Group();
@@ -3163,35 +3158,8 @@ const GameWorld = () => {
       return castleGroup;
     };
     
-    // Create the castle
-    createCastle(CASTLE_X, CASTLE_Z);
-    
-    // Path to castle
-    const castlePathMaterial = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.95 });
-    const castlePath = new THREE.Mesh(new THREE.PlaneGeometry(5, 100), castlePathMaterial);
-    castlePath.rotation.x = -Math.PI / 2;
-    castlePath.rotation.z = Math.atan2(CASTLE_Z, CASTLE_X);
-    castlePath.position.set(CASTLE_X / 2 + 10, 0.02, CASTLE_Z / 2 - 5);
-    scene.add(castlePath);
-    
-    // Spawn enemies inside the castle
-    const castleEnemyPositions = [
-      // Courtyard guards
-      { x: CASTLE_X - 8, z: CASTLE_Z, type: 'skeleton', level: 3 },
-      { x: CASTLE_X + 8, z: CASTLE_Z, type: 'skeleton', level: 3 },
-      { x: CASTLE_X, z: CASTLE_Z - 8, type: 'skeleton', level: 4 },
-      { x: CASTLE_X, z: CASTLE_Z + 8, type: 'skeleton', level: 4 },
-      // Inner castle
-      { x: CASTLE_X - 5, z: CASTLE_Z - 5, type: 'skeleton', level: 5 },
-      { x: CASTLE_X + 5, z: CASTLE_Z - 5, type: 'skeleton', level: 5 },
-      { x: CASTLE_X + 5, z: CASTLE_Z + 5, type: 'skeleton', level: 5 },
-      { x: CASTLE_X - 5, z: CASTLE_Z + 5, type: 'skeleton', level: 5 },
-      // Boss area (near main keep)
-      { x: CASTLE_X, z: CASTLE_Z, type: 'demon', level: 8 },
-    ];
-    
-    // Store castle enemies for later spawning
-    castleEnemiesRef.current = castleEnemyPositions;
+    // Castle removed - was outside reduced world bounds
+    // Castle enemies removed - were at (80, -60), outside ±120 unit bounds
     
     // ==================== END DARK CASTLE ====================
     
@@ -3715,9 +3683,11 @@ const GameWorld = () => {
       return treeGroup;
     };
     
-    // Forest areas (removed trees near training ground and spawn center for clarity)
+    // Forest areas (filtered to active world radius of 120 units)
     [[-22, 12], [-18, 20], [20, -12], [25, 0], [22, 12], [18, 20],
-     [-30, -20], [-35, 5], [30, -20], [35, 5], [0, 28], [-8, 25], [8, 25]].forEach(([x, z]) => {
+     [-30, -20], [-35, 5], [30, -20], [35, 5], [0, 28], [-8, 25], [8, 25]]
+    .filter(([x, z]) => Math.sqrt(x*x + z*z) < 115) // Only within active radius
+    .forEach(([x, z]) => {
       createTree(x, z, 0.8 + Math.random() * 0.4);
     });
     

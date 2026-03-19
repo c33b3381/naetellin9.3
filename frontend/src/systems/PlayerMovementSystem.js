@@ -29,7 +29,7 @@ const MOVE_SPEED = 8; // units per second
 const JUMP_VELOCITY = 0.2;
 const GRAVITY = 0.01;
 const WATER_SLOWDOWN = 0.3; // 30% slower in water
-const WORLD_BOUND = 290;
+const WORLD_BOUND = 115; // Reduced from 290 - Active gameplay zone limit
 const TERRAIN_FOLLOW_SPEED = 10;
 
 /**
