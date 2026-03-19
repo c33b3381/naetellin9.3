@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GraduationCap, Coins, X, Lock, Check, Sparkles, BookOpen } from 'lucide-react';
+import { GraduationCap, Coins, X, Lock, Check, Sparkles, BookOpen, Sword } from 'lucide-react';
 import { formatCurrency } from '../../store/gameStore';
 // Import spell data from centralized data file
 import { WARRIOR_SPELLS, SPELL_COLORS } from '../../data/spells';
