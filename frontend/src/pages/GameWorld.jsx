@@ -2395,16 +2395,36 @@ const GameWorld = () => {
     // A lively starter town with central square, market, and functional NPCs
     
     // === GROUND & TOWN SQUARE ===
+    const SPAWN_PLATFORM_HEIGHT = 0.5; // Height of raised spawn platform
+    const SPAWN_RADIUS = 30; // Radius of spawn area that uses raised platform
+    
+    // Helper function to get correct Y position (platform height in spawn area, terrain height elsewhere)
+    const getSpawnAwareHeight = (x, z) => {
+      const distFromCenter = Math.sqrt(x * x + z * z);
+      if (distFromCenter < SPAWN_RADIUS) {
+        return SPAWN_PLATFORM_HEIGHT; // Objects in spawn area sit on raised platform
+      }
+      return getTerrainHeight(x, z); // Objects outside spawn area use terrain height
+    };
+    
     // Town square ground - cobblestone (raised ABOVE terrain)
     const townSquareGeometry = new THREE.CircleGeometry(18, 32);
-    const townSquareMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
+    const townSquareMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x8B7355, 
+      roughness: 0.9,
+      side: THREE.DoubleSide // Ensure it's visible from both sides
+    });
     const townSquare = new THREE.Mesh(townSquareGeometry, townSquareMaterial);
     townSquare.rotation.x = -Math.PI / 2;
-    townSquare.position.y = 0.5; // Raised to 0.5 to be clearly above terrain (terrain is at ~0.3)
+    townSquare.position.y = SPAWN_PLATFORM_HEIGHT;
+    townSquare.receiveShadow = true;
     scene.add(townSquare);
     
     // Grass areas around the square (raised ABOVE terrain)
-    const grassMaterial = new THREE.MeshStandardMaterial({ color: 0x32CD32 });
+    const grassMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x32CD32,
+      side: THREE.DoubleSide
+    });
     const grassPatches = [
       { x: -22, z: 0, r: 8 },
       { x: 22, z: 0, r: 8 },
@@ -2414,7 +2434,8 @@ const GameWorld = () => {
     grassPatches.forEach(patch => {
       const grass = new THREE.Mesh(new THREE.CircleGeometry(patch.r, 16), grassMaterial);
       grass.rotation.x = -Math.PI / 2;
-      grass.position.set(patch.x, 0.45, patch.z); // Raised to 0.45 to be clearly above terrain
+      grass.position.set(patch.x, SPAWN_PLATFORM_HEIGHT - 0.05, patch.z); // Slightly below town square
+      grass.receiveShadow = true;
       scene.add(grass);
     });
     
@@ -2487,7 +2508,7 @@ const GameWorld = () => {
         interactable: false
       };
       
-      fountainGroup.position.set(x, 0.5, z); // Raised from 0 to 0.5 to be above terrain
+      fountainGroup.position.set(x, SPAWN_PLATFORM_HEIGHT, z); // Position on raised platform
       scene.add(fountainGroup);
       
       // Add collider to selectable objects for collision detection
@@ -2577,7 +2598,7 @@ const GameWorld = () => {
         interactable: true
       };
       
-      stallGroup.position.set(x, 0, z);
+      stallGroup.position.set(x, SPAWN_PLATFORM_HEIGHT, z); // Position on raised platform
       stallGroup.rotation.y = rotation;
       scene.add(stallGroup);
       
@@ -2591,7 +2612,8 @@ const GameWorld = () => {
     const createCrate = (x, z, scale = 1, rotation = 0) => {
       const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 });
       const crate = new THREE.Mesh(new THREE.BoxGeometry(0.8 * scale, 0.7 * scale, 0.8 * scale), woodMaterial);
-      crate.position.set(x, 0.35 * scale, z);
+      const baseY = getSpawnAwareHeight(x, z);
+      crate.position.set(x, baseY + 0.35 * scale, z);
       crate.rotation.y = rotation;
       crate.castShadow = true;
       scene.add(crate);
@@ -2601,7 +2623,8 @@ const GameWorld = () => {
     const createBarrel = (x, z, scale = 1) => {
       const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8 });
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * scale, 0.4 * scale, 1 * scale, 12), woodMaterial);
-      barrel.position.set(x, 0.5 * scale, z);
+      const baseY = getSpawnAwareHeight(x, z);
+      barrel.position.set(x, baseY + 0.5 * scale, z);
       barrel.castShadow = true;
       scene.add(barrel);
       
@@ -2610,7 +2633,7 @@ const GameWorld = () => {
       [0.3, 0.7].forEach(h => {
         const band = new THREE.Mesh(new THREE.TorusGeometry(0.38 * scale, 0.03, 8, 16), bandMaterial);
         band.rotation.x = Math.PI / 2;
-        band.position.set(x, h * scale, z);
+        band.position.set(x, baseY + h * scale, z);
         scene.add(band);
       });
       return barrel;
@@ -2620,7 +2643,8 @@ const GameWorld = () => {
       const sackMaterial = new THREE.MeshStandardMaterial({ color: 0xDAA520, roughness: 0.95 });
       const sack = new THREE.Mesh(new THREE.SphereGeometry(0.35 * scale, 8, 8), sackMaterial);
       sack.scale.set(1, 0.8, 1);
-      sack.position.set(x, 0.28 * scale, z);
+      const baseY = getSpawnAwareHeight(x, z);
+      sack.position.set(x, baseY + 0.28 * scale, z);
       sack.castShadow = true;
       scene.add(sack);
       return sack;
@@ -2660,7 +2684,8 @@ const GameWorld = () => {
       hay.position.y = 1.35;
       cartGroup.add(hay);
       
-      cartGroup.position.set(x, 0, z);
+      const baseY = getSpawnAwareHeight(x, z);
+      cartGroup.position.set(x, baseY, z);
       cartGroup.rotation.y = rotation;
       scene.add(cartGroup);
       return cartGroup;
@@ -2702,7 +2727,8 @@ const GameWorld = () => {
       target.position.set(0, 1.5, 0.31);
       dummyGroup.add(target);
       
-      dummyGroup.position.set(x, 0, z);
+      const baseY = getSpawnAwareHeight(x, z);
+      dummyGroup.position.set(x, baseY, z);
       dummyGroup.rotation.y = rotation;
       scene.add(dummyGroup);
       return dummyGroup;
@@ -2832,7 +2858,7 @@ const GameWorld = () => {
       hair.position.y = 1.45;
       npcGroup.add(hair);
       
-      const terrainY = getTerrainHeight(x, z);
+      const terrainY = getSpawnAwareHeight(x, z);
       npcGroup.position.set(x, terrainY, z);
       npcGroup.rotation.y = Math.random() * Math.PI * 2;
       scene.add(npcGroup);
@@ -3196,7 +3222,7 @@ const GameWorld = () => {
     // Restore player position from saved game state
     const startX = savedPosition.x || 0;
     const startZ = savedPosition.z || 0;
-    const startY = getTerrainHeight(startX, startZ);
+    const startY = getSpawnAwareHeight(startX, startZ); // Use spawn platform height if in spawn area
     playerGroup.position.set(startX, startY, startZ);
     
     // Mark if we started at a non-origin position
