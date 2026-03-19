@@ -64,6 +64,14 @@ import {
 } from '../systems/DeathResurrectionSystem';
 import { updateQuestListForEnemyKill } from '../systems/QuestProgressSystem';
 import {
+  startSpellCooldown,
+  updateSpellCooldowns,
+  startGlobalCooldown,
+  isSpellOnCooldown,
+  COOLDOWN_TICK_INTERVAL,
+  COOLDOWN_TICK_AMOUNT
+} from '../systems/SpellCooldownSystem';
+import {
   SELECTABLE_TYPES,
   normalizeObjectForSave,
   normalizeEnemyForSave,
@@ -723,21 +731,14 @@ const GameWorld = () => {
     actionBarSpellsRef.current = actionBarSpells;
   }, [actionBarSpells]);
   
-  // Cooldown timer effect
+  // Cooldown timer effect - using SpellCooldownSystem
   useEffect(() => {
     const interval = setInterval(() => {
       setSpellCooldowns(prev => {
-        const updated = { ...prev };
-        let hasChanges = false;
-        Object.keys(updated).forEach(spellId => {
-          if (updated[spellId] > 0) {
-            updated[spellId] = Math.max(0, updated[spellId] - 0.1);
-            hasChanges = true;
-          }
-        });
-        return hasChanges ? updated : prev;
+        const result = updateSpellCooldowns(prev, COOLDOWN_TICK_AMOUNT);
+        return result.cooldowns;
       });
-    }, 100);
+    }, COOLDOWN_TICK_INTERVAL);
     return () => clearInterval(interval);
   }, []);
   
@@ -1778,8 +1779,8 @@ const GameWorld = () => {
       return;
     }
     
-    // Check cooldown
-    if (spellCooldowns[spellId] > 0) {
+    // Check cooldown - using SpellCooldownSystem
+    if (isSpellOnCooldown(spellCooldowns, spellId)) {
       addNotification('Spell is on cooldown!', 'error');
       return;
     }
@@ -1807,11 +1808,11 @@ const GameWorld = () => {
     // Consume mana
     setCurrentMana(prev => Math.max(0, prev - spell.manaCost));
     
-    // Start cooldown
-    setSpellCooldowns(prev => ({ ...prev, [spellId]: spell.cooldown }));
+    // Start cooldown - using SpellCooldownSystem
+    setSpellCooldowns(prev => startSpellCooldown(prev, spellId, spell.cooldown));
     
-    // Set global cooldown (1.5s for most spells)
-    globalCooldownRef.current = COMBAT_CONSTANTS.GCD_DURATION;
+    // Set global cooldown - using SpellCooldownSystem
+    globalCooldownRef.current = startGlobalCooldown();
     
     // Enter combat
     enterCombat();
