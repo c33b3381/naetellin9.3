@@ -2591,15 +2591,35 @@ const GameWorld = () => {
       const gatehouseWidth = 8;
       const gatehouseDepth = 6;
       const gatehouseHeight = 10;
+      const archWidth = 4; // Width of passage through gate
+      const wallThick = 1.5;
       
-      // Main gatehouse structure
-      const gatehouse = new THREE.Mesh(
-        new THREE.BoxGeometry(gatehouseWidth, gatehouseHeight, gatehouseDepth),
+      // Gatehouse LEFT WALL (creates tunnel effect)
+      const gateLeftWall = new THREE.Mesh(
+        new THREE.BoxGeometry((gatehouseWidth - archWidth) / 2, gatehouseHeight, gatehouseDepth),
         stoneMaterial
       );
-      gatehouse.position.set(0, gatehouseHeight/2, outerSize/2 + gatehouseDepth/2 - 1);
-      gatehouse.castShadow = true;
-      castleGroup.add(gatehouse);
+      gateLeftWall.position.set(-gatehouseWidth/4 - archWidth/4, gatehouseHeight/2, outerSize/2 + gatehouseDepth/2 - 1);
+      gateLeftWall.castShadow = true;
+      castleGroup.add(gateLeftWall);
+      
+      // Gatehouse RIGHT WALL (creates tunnel effect)
+      const gateRightWall = new THREE.Mesh(
+        new THREE.BoxGeometry((gatehouseWidth - archWidth) / 2, gatehouseHeight, gatehouseDepth),
+        stoneMaterial
+      );
+      gateRightWall.position.set(gatehouseWidth/4 + archWidth/4, gatehouseHeight/2, outerSize/2 + gatehouseDepth/2 - 1);
+      gateRightWall.castShadow = true;
+      castleGroup.add(gateRightWall);
+      
+      // Gatehouse TOP/CEILING (arch top)
+      const gateTop = new THREE.Mesh(
+        new THREE.BoxGeometry(gatehouseWidth, wallThick, gatehouseDepth),
+        stoneMaterial
+      );
+      gateTop.position.set(0, gatehouseHeight - wallThick/2, outerSize/2 + gatehouseDepth/2 - 1);
+      gateTop.castShadow = true;
+      castleGroup.add(gateTop);
       
       // Gatehouse towers (flanking)
       [-4, 4].forEach(xOffset => {
@@ -2612,10 +2632,8 @@ const GameWorld = () => {
         castleGroup.add(gateT);
       });
       
-      // Gate archway - REMOVED (was blocking entrance)
-      // Leave open so players can walk through
-      
-      // Portcullis - REMOVED (gate is open for players to enter)
+      // Gate archway opening - Now actually open (no mesh blocking)
+      // Players can walk through the 4-unit wide passage
       
       // === INTERIOR BUILDINGS (simplified rooms from plan) ===
       // Great Hall (rooms 10, 15)
