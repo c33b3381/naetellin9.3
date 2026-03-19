@@ -5745,7 +5745,7 @@ const GameWorld = () => {
           }
           
           // Update patrol movement (using EnemyAISystem)
-          updatePatrol(enemyMesh, patrolData, delta, patrolNow, getTerrainHeight, camera);
+          updatePatrol(enemyMesh, patrolData, delta, patrolNow, getTerrainHeight, camera, selectableObjects.current);
         });
         
         // Update target indicator position to follow selected target
@@ -5825,7 +5825,7 @@ const GameWorld = () => {
             resetEnemyHealth(enemyMesh);
             
             // Move back to spawn (using EnemyAISystem)
-            const reachedSpawn = moveToSpawn(enemyMesh, combatState, delta, getTerrainHeight);
+            const reachedSpawn = moveToSpawn(enemyMesh, combatState, delta, getTerrainHeight, selectableObjects.current);
             if (reachedSpawn) {
               combatState.notifiedReset = false;
               combatState.notifiedAggro = false;
@@ -5835,7 +5835,7 @@ const GameWorld = () => {
           }
           
           // Chase player / check melee range (using EnemyAISystem)
-          const inMeleeRange = chasePlayer(enemyMesh, player, enemyId, delta, getTerrainHeight);
+          const inMeleeRange = chasePlayer(enemyMesh, player, enemyId, delta, getTerrainHeight, selectableObjects.current);
           
           if (inMeleeRange) {
             // In melee range - NPC attacks player (damage resolution stays in GameWorld)

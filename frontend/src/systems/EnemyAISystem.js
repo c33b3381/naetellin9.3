@@ -6,12 +6,15 @@
  * - Chase behavior
  * - Leash/reset behavior
  * - Return to spawn
+ * - Collision detection with buildings and walls
  * 
  * Note: Combat damage resolution remains in GameWorld.jsx
  * This system only handles AI behavior and movement
  * 
  * Extracted from GameWorld.jsx for modularity
  */
+
+import * as THREE from 'three';
 
 // AI Constants
 export const AI_CONSTANTS = {
@@ -22,7 +25,44 @@ export const AI_CONSTANTS = {
   CHASE_SPEED: 4,        // Units per second while chasing
   RETURN_SPEED: 6,       // Units per second returning to spawn
   SPREAD_DISTANCE: 2,    // Distance enemies spread around player
-  NUM_SPREAD_SLOTS: 8    // Number of positions around player
+  NUM_SPREAD_SLOTS: 8,   // Number of positions around player
+  COLLISION_RADIUS: 1.2  // Collision detection radius for enemies
+};
+
+/**
+ * Check if enemy movement would collide with collidable objects
+ * @param {Object} enemyMesh - The enemy mesh
+ * @param {number} newX - New X position to test
+ * @param {number} newZ - New Z position to test
+ * @param {Array} collidableObjects - Array of objects with collision
+ * @returns {boolean} True if collision detected
+ */
+const checkEnemyCollision = (enemyMesh, newX, newZ, collidableObjects) => {
+  if (!collidableObjects || collidableObjects.length === 0) return false;
+  
+  const raycaster = new THREE.Raycaster();
+  const enemyRadius = AI_CONSTANTS.COLLISION_RADIUS;
+  
+  // Check 4 directions around the enemy
+  const directions = [
+    new THREE.Vector3(1, 0, 0),   // Right
+    new THREE.Vector3(-1, 0, 0),  // Left
+    new THREE.Vector3(0, 0, 1),   // Forward
+    new THREE.Vector3(0, 0, -1),  // Backward
+  ];
+  
+  const enemyPos = new THREE.Vector3(newX, enemyMesh.position.y + 0.5, newZ);
+  
+  for (const direction of directions) {
+    raycaster.set(enemyPos, direction);
+    const intersects = raycaster.intersectObjects(collidableObjects, true);
+    
+    if (intersects.length > 0 && intersects[0].distance < enemyRadius) {
+      return true; // Collision detected
+    }
+  }
+  
+  return false;
 };
 
 // Available patrol patterns
@@ -161,9 +201,10 @@ export const calculateSpreadPosition = (enemyId, playerPos, spreadDistance = AI_
  * @param {number} timestamp - Current timestamp
  * @param {Function} getTerrainHeight - Function to get terrain height
  * @param {Object} camera - Camera for health bar facing (optional)
+ * @param {Array} collidableObjects - Objects with collision (buildings, walls)
  * @returns {boolean} True if enemy moved
  */
-export const updatePatrol = (enemyMesh, patrolData, delta, timestamp, getTerrainHeight, camera = null) => {
+export const updatePatrol = (enemyMesh, patrolData, delta, timestamp, getTerrainHeight, camera = null, collidableObjects = []) => {
   const patrolSpeed = AI_CONSTANTS.PATROL_SPEED * delta;
   const patrolRadius = enemyMesh.userData.patrolRadius || 5;
   const spawnX = enemyMesh.userData.spawnX;
@@ -199,17 +240,28 @@ export const updatePatrol = (enemyMesh, patrolData, delta, timestamp, getTerrain
     const moveX = (dx / distance) * patrolSpeed;
     const moveZ = (dz / distance) * patrolSpeed;
     
-    enemyMesh.position.x += moveX;
-    enemyMesh.position.z += moveZ;
+    // Calculate new position
+    const newX = enemyMesh.position.x + moveX;
+    const newZ = enemyMesh.position.z + moveZ;
     
-    // Update Y position based on terrain
-    const terrainY = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
-    enemyMesh.position.y = terrainY;
-    
-    // Face movement direction
-    const angle = Math.atan2(dx, dz);
-    enemyMesh.rotation.y = angle;
-    moved = true;
+    // Check for collision before moving
+    if (!checkEnemyCollision(enemyMesh, newX, newZ, collidableObjects)) {
+      enemyMesh.position.x = newX;
+      enemyMesh.position.z = newZ;
+      
+      // Update Y position based on terrain
+      const terrainY = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+      enemyMesh.position.y = terrainY;
+      
+      // Face movement direction
+      const angle = Math.atan2(dx, dz);
+      enemyMesh.rotation.y = angle;
+      moved = true;
+    } else {
+      // Hit a wall, skip to next patrol point
+      patrolData.patrolState = (patrolData.patrolState + 1) % patrolOffsets.length;
+      patrolData.lastStateChange = timestamp;
+    }
   } else {
     // Reached target, wait then move to next patrol point
     if (timestamp - patrolData.lastStateChange > patrolData.patrolWaitTime) {
@@ -298,18 +350,26 @@ export const shouldLeash = (enemyMesh, player, combatState) => {
  * @param {Object} combatState - Enemy combat state
  * @param {number} delta - Time delta
  * @param {Function} getTerrainHeight - Function to get terrain height
+ * @param {Array} collidableObjects - Objects with collision
  * @returns {boolean} True if reached spawn
  */
-export const moveToSpawn = (enemyMesh, combatState, delta, getTerrainHeight) => {
+export const moveToSpawn = (enemyMesh, combatState, delta, getTerrainHeight, collidableObjects = []) => {
   const dxSpawn = combatState.spawnPos.x - enemyMesh.position.x;
   const dzSpawn = combatState.spawnPos.z - enemyMesh.position.z;
   const returnDist = Math.sqrt(dxSpawn * dxSpawn + dzSpawn * dzSpawn);
   
   if (returnDist > 0.5) {
     const returnSpeed = AI_CONSTANTS.RETURN_SPEED * delta;
-    enemyMesh.position.x += (dxSpawn / returnDist) * returnSpeed;
-    enemyMesh.position.z += (dzSpawn / returnDist) * returnSpeed;
-    enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+    const newX = enemyMesh.position.x + (dxSpawn / returnDist) * returnSpeed;
+    const newZ = enemyMesh.position.z + (dzSpawn / returnDist) * returnSpeed;
+    
+    // Check collision before moving
+    if (!checkEnemyCollision(enemyMesh, newX, newZ, collidableObjects)) {
+      enemyMesh.position.x = newX;
+      enemyMesh.position.z = newZ;
+      enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+    }
+    // If blocked, try alternate path or teleport if stuck too long
     
     const angle = Math.atan2(dxSpawn, dzSpawn);
     enemyMesh.rotation.y = angle;
@@ -330,9 +390,10 @@ export const moveToSpawn = (enemyMesh, combatState, delta, getTerrainHeight) => 
  * @param {string} enemyId - Enemy ID for spread calculation
  * @param {number} delta - Time delta
  * @param {Function} getTerrainHeight - Function to get terrain height
+ * @param {Array} collidableObjects - Objects with collision
  * @returns {boolean} True if in melee range
  */
-export const chasePlayer = (enemyMesh, player, enemyId, delta, getTerrainHeight) => {
+export const chasePlayer = (enemyMesh, player, enemyId, delta, getTerrainHeight, collidableObjects = []) => {
   const distanceToPlayer = getDistance2D(enemyMesh, player);
   
   if (distanceToPlayer > AI_CONSTANTS.MELEE_RANGE) {
@@ -345,9 +406,16 @@ export const chasePlayer = (enemyMesh, player, enemyId, delta, getTerrainHeight)
     
     if (distToTarget > 0.3) {
       const chaseSpeed = AI_CONSTANTS.CHASE_SPEED * delta;
-      enemyMesh.position.x += (dxTarget / distToTarget) * chaseSpeed;
-      enemyMesh.position.z += (dzTarget / distToTarget) * chaseSpeed;
-      enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+      const newX = enemyMesh.position.x + (dxTarget / distToTarget) * chaseSpeed;
+      const newZ = enemyMesh.position.z + (dzTarget / distToTarget) * chaseSpeed;
+      
+      // Check collision before moving
+      if (!checkEnemyCollision(enemyMesh, newX, newZ, collidableObjects)) {
+        enemyMesh.position.x = newX;
+        enemyMesh.position.z = newZ;
+        enemyMesh.position.y = getTerrainHeight(enemyMesh.position.x, enemyMesh.position.z);
+      }
+      // If blocked, enemy stays in place but still faces player
     }
     
     // Face player
