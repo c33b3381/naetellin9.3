@@ -27,8 +27,8 @@ export const TERRAIN_AMPLITUDES = {
   detail: 0.05,     // Minimal surface detail
 };
 
-// Village flattening (EXPANDED for completely flat spawn area)
-export const VILLAGE_FLATTEN_RADIUS = 100;   // Large flat area around spawn
+// Village flattening (EXPANDED to cover entire 240x240 world for uniform appearance)
+export const VILLAGE_FLATTEN_RADIUS = 120;   // Covers entire playable area
 export const VILLAGE_TARGET_HEIGHT = 0.3;    // Very flat target height
 export const PATH_WIDTH = 3;
 
@@ -234,10 +234,7 @@ export const getTerrainHeight = (x, z) => {
     height = height * (1 - smoothFlatten) + VILLAGE_TARGET_HEIGHT * smoothFlatten;
   }
   
-  // Flatten paths (less aggressive)
-  if (Math.abs(x) < PATH_WIDTH || Math.abs(z) < PATH_WIDTH) {
-    height *= 0.5;  // Changed from 0.3 to 0.5 (less extreme)
-  }
+  // NOTE: Path flattening removed for uniform ground
   
   // Zone-specific terrain modifications (MINIMAL for flat gameplay)
   // Frozen peaks - slightly more elevation (REDUCED significantly)
@@ -455,7 +452,7 @@ const addColorNoise = (color, x, z, intensity = 0.08) => {
 
 /**
  * Calculate terrain color at a world position
- * Takes into account: zone, height, slope, water proximity, and adds noise variation
+ * NOTE: Simplified for uniform flat terrain - returns consistent grass color across entire world
  * 
  * @param {number} x - World X coordinate
  * @param {number} z - World Z coordinate
@@ -463,90 +460,15 @@ const addColorNoise = (color, x, z, intensity = 0.08) => {
  * @returns {Object} Color {r, g, b} with values 0-1
  */
 export const getTerrainColor = (x, z, height = null) => {
-  // Get height if not provided
-  if (height === null) {
-    height = getTerrainHeight(x, z);
-  }
+  // For uniform flat ground, return a consistent grass color
+  // Using the starter zone's grassLow color for consistency
+  const palette = TERRAIN_COLORS['starter'];
   
-  // Get zone-specific color palette
-  const zone = getZoneType(x, z);
-  const palette = TERRAIN_COLORS[zone];
+  // Return uniform grass color with minimal noise for texture
+  const baseColor = { ...palette.grassLow };
   
-  // Calculate terrain features
-  const slope = getTerrainSlope(x, z);
-  const waterProximity = getWaterProximity(x, z);
-  const inWater = isInWater(x, z);
-  
-  // Start with base grass color
-  let baseColor;
-  
-  // Height-based color (low grass vs high grass)
-  const heightFactor = Math.min(1, Math.max(0, height / 15)); // 0-1 based on height 0-15
-  baseColor = lerpColor(palette.grassLow, palette.grassHigh, heightFactor * 0.6);
-  
-  // Slope-based blending (steep = more rock/dirt)
-  if (slope > 0.2) {
-    const slopeFactor = Math.min(1, (slope - 0.2) / 0.5); // 0-1 for slopes 0.2-0.7
-    // Blend toward dirt first, then rock for steeper slopes
-    if (slope > 0.5) {
-      const rockFactor = (slope - 0.5) / 0.5;
-      baseColor = lerpColor(baseColor, palette.rock, rockFactor * 0.7);
-    } else {
-      baseColor = lerpColor(baseColor, palette.dirt, slopeFactor * 0.5);
-    }
-  }
-  
-  // Water proximity (wet/damp areas near water)
-  if (waterProximity > 0 && !inWater) {
-    baseColor = lerpColor(baseColor, palette.wet, waterProximity * 0.6);
-  }
-  
-  // In-water coloring (underwater ground)
-  if (inWater) {
-    baseColor = lerpColor(baseColor, palette.wet, 0.8);
-    // Darken slightly for submerged effect
-    baseColor.r *= 0.7;
-    baseColor.g *= 0.75;
-    baseColor.b *= 0.8;
-  }
-  
-  // Add path flattening color (near center paths)
-  if (Math.abs(x) < PATH_WIDTH || Math.abs(z) < PATH_WIDTH) {
-    const pathFactor = 1 - (Math.min(Math.abs(x), Math.abs(z)) / PATH_WIDTH);
-    baseColor = lerpColor(baseColor, palette.dirt, pathFactor * 0.6);
-  }
-  
-  // Add noise variation for more organic look
-  const finalColor = addColorNoise(baseColor, x, z, 0.06);
-  
-  // Zone transition blending (smooth edges between zones)
-  const transitionWidth = 20;
-  
-  // Check for zone transitions and blend
-  if (x > 80 && x < 120) {
-    // Starter to Forest transition
-    const t = (x - 80) / transitionWidth;
-    const forestColor = getZoneBaseColor(x + 50, z, height); // Sample from forest zone
-    return lerpColor(finalColor, { r: forestColor.r, g: forestColor.g, b: forestColor.b }, t * 0.5);
-  }
-  if (x < -80 && x > -120) {
-    // Starter to Scorched transition
-    const t = (-80 - x) / transitionWidth;
-    const scorchedColor = getZoneBaseColor(x - 50, z, height);
-    return lerpColor(finalColor, { r: scorchedColor.r, g: scorchedColor.g, b: scorchedColor.b }, t * 0.5);
-  }
-  if (z > 80 && z < 120) {
-    // Starter to Caves transition
-    const t = (z - 80) / transitionWidth;
-    const cavesColor = getZoneBaseColor(x, z + 50, height);
-    return lerpColor(finalColor, { r: cavesColor.r, g: cavesColor.g, b: cavesColor.b }, t * 0.5);
-  }
-  if (z < -80 && z > -120) {
-    // Starter to Frozen transition
-    const t = (-80 - z) / transitionWidth;
-    const frozenColor = getZoneBaseColor(x, z - 50, height);
-    return lerpColor(finalColor, { r: frozenColor.r, g: frozenColor.g, b: frozenColor.b }, t * 0.5);
-  }
+  // Add very subtle noise for texture (reduced from 0.06 to 0.02)
+  const finalColor = addColorNoise(baseColor, x, z, 0.02);
   
   return finalColor;
 };

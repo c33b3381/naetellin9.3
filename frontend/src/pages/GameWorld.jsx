@@ -2121,7 +2121,7 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
-    const TERRAIN_VERSION = 4; // Increment when terrain generation changes (v4: Ultra-flat terrain for better gameplay visibility)
+    const TERRAIN_VERSION = 6; // Increment when terrain generation changes (v6: Completely uniform color - no variations)
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();
@@ -2419,36 +2419,8 @@ const GameWorld = () => {
     });
     
     // === PATHS ===
-    const pathMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.9 });
-    
-    // Main north-south path
-    const path1 = new THREE.Mesh(new THREE.PlaneGeometry(4, 180), pathMaterial);
-    path1.rotation.x = -Math.PI / 2;
-    path1.position.y = 0.025;
-    scene.add(path1);
-    
-    // Main east-west path
-    const path2 = new THREE.Mesh(new THREE.PlaneGeometry(180, 4), pathMaterial);
-    path2.rotation.x = -Math.PI / 2;
-    path2.position.y = 0.025;
-    scene.add(path2);
-    
-    // Diagonal paths for natural feel
-    const createDiagonalPath = (x1, z1, x2, z2, width = 2.5) => {
-      const length = Math.sqrt((x2-x1)**2 + (z2-z1)**2);
-      const angle = Math.atan2(z2-z1, x2-x1);
-      const path = new THREE.Mesh(new THREE.PlaneGeometry(length, width), pathMaterial);
-      path.rotation.x = -Math.PI / 2;
-      path.rotation.z = -angle;
-      path.position.set((x1+x2)/2, 0.022, (z1+z2)/2);
-      scene.add(path);
-    };
-    
-    // Connect market areas with diagonal paths
-    createDiagonalPath(0, 0, 15, 12);
-    createDiagonalPath(0, 0, -15, -12);
-    createDiagonalPath(0, 0, -18, 8);
-    createDiagonalPath(0, 0, 18, -8);
+    // NOTE: All path meshes removed for clean uniform ground
+    // The terrain is now completely flat with uniform coloring
     
     // === CENTRAL FOUNTAIN (Focal Point) ===
     const createFountain = (x, z) => {
@@ -2902,18 +2874,8 @@ const GameWorld = () => {
       return road;
     };
     
-    // Create main cross-shaped road system
-    // North-South main road through town center
-    createMainRoad(0, -35, 0, 35, 5); // Main street
-    
-    // East-West main road through town center
-    createMainRoad(-35, 0, 35, 0, 5); // Main street
-    
-    // Secondary roads to key buildings
-    createMainRoad(0, -25, -22, -15, 3); // Town Hall to Armory
-    createMainRoad(0, -25, 22, -15, 3); // Town Hall to Inn
-    createMainRoad(-25, 0, -18, -8, 3); // Blacksmith to Training Area
-    createMainRoad(25, 0, 10, 6, 3); // General Store to Market
+    // Create main cross-shaped road system - REMOVED for uniform ground
+    // NOTE: All road meshes removed to have clean flat ground with uniform color
     
     // ==================== END TOWN LAYOUT IMPROVEMENTS ====================
     
