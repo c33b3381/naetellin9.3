@@ -5749,7 +5749,9 @@ const GameWorld = () => {
           }
         }
         
-        if (detectedZone !== currentZone) {
+        // Only trigger zone change if actually different from current zone (use ref to prevent spam)
+        if (detectedZone !== currentZoneRef.current) {
+          currentZoneRef.current = detectedZone;  // Update ref immediately
           setCurrentZone(detectedZone);
           addNotification(`Entering ${WORLD_ZONES[detectedZone].name}`, 'info');
         }
