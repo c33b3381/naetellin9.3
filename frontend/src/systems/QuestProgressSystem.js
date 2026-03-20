@@ -21,18 +21,30 @@
  * @returns {boolean} true if enemy matches objective
  */
 export const isEnemyMatchForObjective = (namesToMatch, objective) => {
-  if (!namesToMatch || namesToMatch.length === 0) return false;
+  if (!namesToMatch || namesToMatch.length === 0) {
+    console.log('[MATCH] No names to match');
+    return false;
+  }
   
   const targetLower = objective.target?.toLowerCase() || '';
   const targetIdLower = objective.targetId?.toLowerCase() || '';
   
+  console.log('[MATCH] Checking match - namesToMatch:', namesToMatch, 'targetLower:', targetLower);
+  
   // Check if any name matches
-  return namesToMatch.some(name => 
-    name === targetLower || 
-    name === targetIdLower ||
-    targetLower.includes(name) ||
-    name.includes(targetLower)
-  );
+  const matched = namesToMatch.some(name => {
+    const exactMatch = name === targetLower;
+    const exactIdMatch = name === targetIdLower;
+    const targetIncludes = targetLower.includes(name);
+    const nameIncludes = name.includes(targetLower);
+    
+    const result = exactMatch || exactIdMatch || targetIncludes || nameIncludes;
+    console.log('[MATCH] Testing:', name, '→', { exactMatch, targetIncludes, nameIncludes, result });
+    return result;
+  });
+  
+  console.log('[MATCH] Final match result:', matched);
+  return matched;
 };
 
 /**
@@ -176,14 +188,21 @@ export const updateCollectObjective = (objective, itemId, itemName, quantity, ad
  */
 export const updateQuestForEnemyKill = (quest, namesToMatch, addNotification) => {
   if (!quest.objectives) {
+    console.log('[QUEST MATCH] Quest has no objectives:', quest.name);
     return { quest, updated: false, allComplete: false };
   }
+  
+  console.log('[QUEST MATCH] Checking quest:', quest.name);
+  console.log('[QUEST MATCH] Names to match:', namesToMatch);
+  console.log('[QUEST MATCH] Quest objectives:', quest.objectives);
   
   let anyUpdated = false;
   
   // Update all objectives
   const updatedObjectives = quest.objectives.map(obj => {
+    console.log('[QUEST MATCH] Checking objective:', obj);
     const result = updateKillObjective(obj, namesToMatch, addNotification);
+    console.log('[QUEST MATCH] Objective result:', { updated: result.updated, current: result.objective.current });
     if (result.updated) anyUpdated = true;
     return result.objective;
   });
@@ -201,6 +220,8 @@ export const updateQuestForEnemyKill = (quest, namesToMatch, addNotification) =>
     }
     updatedQuest.isComplete = true;
   }
+  
+  console.log('[QUEST MATCH] Final result - anyUpdated:', anyUpdated, 'allComplete:', allComplete);
   
   return {
     quest: updatedQuest,
