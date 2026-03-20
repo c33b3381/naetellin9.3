@@ -362,7 +362,7 @@ const GameWorld = () => {
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC
   
   // Attack animation state
-  const attackHandRef = useRef('right'); // Alternates between 'right' and 'left'
+  const attackHandRef = useRef('left'); // Alternates between 'left' and 'right' - starts with left since weapon is there
   const attackAnimationRef = useRef(null); // Current animation frame
   const isAttackingRef = useRef(false); // Is currently in attack animation
   const playerArmsRef = useRef({ left: null, right: null }); // References to arm meshes
@@ -775,23 +775,22 @@ const GameWorld = () => {
     // Attach new weapon if equipped
     if (mainHandItem && mainHandItem.weaponModel) {
       const weaponMesh = createWeaponMesh(mainHandItem.weaponModel, 1);
-      // Get the right arm pivot from the player model's userData (not getObjectByName)
-      const rightArm = playerModelRef.current.userData?.rightArmPivot;
+      // Get the LEFT arm pivot from the player model's userData (switched to left hand)
+      const leftArm = playerModelRef.current.userData?.leftArmPivot;
       
-      if (rightArm) {
+      if (leftArm) {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
-        // Rotate weapon to align with hand grip (blade points down along arm)
-        // Rotate 90 degrees around Z to point blade downward
-        weaponMesh.rotation.z = Math.PI;        // 180 degrees - blade points down
-        weaponMesh.rotation.x = -Math.PI / 4;   // -45 degrees tilt forward
+        // Rotate weapon to align with hand grip (blade points upward)
+        weaponMesh.rotation.z = Math.PI;        // 180 degrees - handle at bottom
+        weaponMesh.rotation.x = Math.PI / 6;    // +30 degrees - blade tilts upward
         
-        rightArm.add(weaponMesh);
+        leftArm.add(weaponMesh);
         playerModelRef.current.userData.equippedWeapon = weaponMesh;
         
-        console.log(`[WEAPON] Attached ${mainHandItem.name} to player hand`);
+        console.log(`[WEAPON] Attached ${mainHandItem.name} to player LEFT hand`);
       } else {
-        console.log('[WEAPON] Could not find rightArmPivot in player model userData');
+        console.log('[WEAPON] Could not find leftArmPivot in player model userData');
       }
     }
   }, [equipment]);
@@ -1416,12 +1415,12 @@ const GameWorld = () => {
     // Update last attack time IMMEDIATELY to prevent double attacks
     lastAutoAttackRef.current = now;
     
-    // Play attack animation with alternating hands
+    // Play attack animation - prioritize LEFT hand since weapon is equipped there
     const currentHand = attackHandRef.current;
     playAttackAnimation(currentHand);
     
-    // Alternate hands for next attack
-    attackHandRef.current = currentHand === 'right' ? 'left' : 'right';
+    // Alternate hands for next attack (but start with left since weapon is there)
+    attackHandRef.current = currentHand === 'left' ? 'right' : 'left';
     
     // Enter combat
     if (enterCombatRef.current) {
