@@ -2471,89 +2471,87 @@ export const createEnemyMesh = (enemyData, x, z, enemyId, getTerrainHeight) => {
   
   const scale = 1 + (enemyData.level / 50); // Scale based on level
   
-  // Use bright green color for blocky orc style (#2ecc71)
-  const orcGreen = 0x2ecc71;
+  // Use bright green color (#2ecc71)
+  const goblinGreen = 0x2ecc71;
   
-  // === BLOCKY ORC BODY ===
-  // Torso - rectangular
-  const bodyMat = new THREE.MeshStandardMaterial({ color: orcGreen });
+  // === BODY (Large rounded rectangle) ===
+  const bodyMat = new THREE.MeshStandardMaterial({ color: goblinGreen });
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5 * scale, 0.7 * scale, 0.3 * scale),
+    new THREE.BoxGeometry(0.6 * scale, 0.8 * scale, 0.35 * scale),
     bodyMat
   );
-  body.position.y = 0.75 * scale;
+  body.position.y = 0.8 * scale;
   body.castShadow = true;
   group.add(body);
   
-  // Arms - simple rectangular blocks
+  // === ARMS (Thin rectangles) ===
   for (let side of [-1, 1]) {
     const arm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15 * scale, 0.6 * scale, 0.15 * scale),
+      new THREE.BoxGeometry(0.12 * scale, 0.7 * scale, 0.12 * scale),
       bodyMat
     );
-    arm.position.set(side * 0.35 * scale, 0.75 * scale, 0);
+    arm.position.set(side * 0.38 * scale, 0.75 * scale, 0);
     arm.castShadow = true;
     group.add(arm);
   }
   
-  // Legs - rectangular blocks
+  // === LEGS (Thin straight rectangles) ===
   for (let side of [-1, 1]) {
     const leg = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15 * scale, 0.5 * scale, 0.15 * scale),
+      new THREE.BoxGeometry(0.14 * scale, 0.65 * scale, 0.14 * scale),
       bodyMat
     );
-    leg.position.set(side * 0.15 * scale, 0.25 * scale, 0);
+    leg.position.set(side * 0.18 * scale, 0.325 * scale, 0);
     leg.castShadow = true;
     group.add(leg);
   }
   
-  // === BLOCKY HEAD ===
-  const headMat = new THREE.MeshStandardMaterial({ color: orcGreen });
+  // === HEAD (Rounded rectangular - pill shape) ===
+  const headMat = new THREE.MeshStandardMaterial({ color: goblinGreen });
   const head = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4 * scale, 0.4 * scale, 0.35 * scale), 
+    new THREE.BoxGeometry(0.45 * scale, 0.5 * scale, 0.35 * scale),
     headMat
   );
-  head.position.y = 1.35 * scale;
+  head.position.y = 1.45 * scale;
   head.castShadow = true;
   group.add(head);
   
-  // === BLACK CIRCULAR EYES ===
+  // === EYES (Simple black circles) ===
   const eyeMat = new THREE.MeshStandardMaterial({ 
     color: 0x000000
   });
   for (let side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.CircleGeometry(0.06 * scale, 16), eyeMat);
-    eye.position.set(side * 0.1 * scale, 1.4 * scale, 0.176 * scale);
+    const eye = new THREE.Mesh(
+      new THREE.CircleGeometry(0.06 * scale, 16), 
+      eyeMat
+    );
+    eye.position.set(side * 0.1 * scale, 1.5 * scale, 0.176 * scale);
     group.add(eye);
   }
   
-  // === RED TUSKS (triangular) ===
-  const tuskMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-  for (let side of [-1, 1]) {
-    const tusk = new THREE.Mesh(
-      new THREE.ConeGeometry(0.05 * scale, 0.15 * scale, 3),
-      tuskMat
+  // === MOUTH AREA (Red rectangle) ===
+  const mouthBgMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  const mouthBg = new THREE.Mesh(
+    new THREE.BoxGeometry(0.25 * scale, 0.12 * scale, 0.02 * scale),
+    mouthBgMat
+  );
+  mouthBg.position.set(0, 1.3 * scale, 0.177 * scale);
+  group.add(mouthBg);
+  
+  // === WHITE TEETH (Triangular) ===
+  const teethMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  // 3 white triangular teeth
+  for (let i = 0; i < 3; i++) {
+    const tooth = new THREE.Mesh(
+      new THREE.ConeGeometry(0.03 * scale, 0.08 * scale, 3),
+      teethMat
     );
-    tusk.position.set(side * 0.08 * scale, 1.25 * scale, 0.18 * scale);
-    tusk.rotation.x = Math.PI; // Point downward
-    group.add(tusk);
+    tooth.position.set((i - 1) * 0.08 * scale, 1.32 * scale, 0.185 * scale);
+    tooth.rotation.x = Math.PI; // Point downward
+    group.add(tooth);
   }
   
-  // === BLACK OUTLINE EFFECT ===
-  // Add thin black wireframe/edges to simulate outline
-  const outlineMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
-  
-  // Head outline
-  const headEdges = new THREE.EdgesGeometry(head.geometry);
-  const headOutline = new THREE.LineSegments(headEdges, outlineMat);
-  headOutline.position.copy(head.position);
-  group.add(headOutline);
-  
-  // Body outline
-  const bodyEdges = new THREE.EdgesGeometry(body.geometry);
-  const bodyOutline = new THREE.LineSegments(bodyEdges, outlineMat);
-  bodyOutline.position.copy(body.position);
-  group.add(bodyOutline);
+  // NO BLACK OUTLINES - removed completely
   
   // Health bar background
   const healthBarWidth = 1 * scale;
