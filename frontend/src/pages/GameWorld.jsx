@@ -1173,11 +1173,20 @@ const GameWorld = () => {
         // Generate new ID for respawned enemy
         const newEnemyId = `enemy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        console.log('[RESPAWN] Creating new enemy with ID:', newEnemyId, 'at position:', spawnData.x, spawnData.z);
+        console.log('[RESPAWN] ===== RESPAWNING ENEMY =====');
+        console.log('[RESPAWN] Original enemyId:', enemyId);
+        console.log('[RESPAWN] New enemyId:', newEnemyId);
+        console.log('[RESPAWN] Position:', spawnData.x, spawnData.z);
+        console.log('[RESPAWN] Full spawn data:', JSON.stringify(spawnData, null, 2));
         
         // Create new enemy mesh at original spawn position using the ref
         // Use enemyData from spawnData if it exists, otherwise use spawnData itself
         const enemyData = spawnData.enemyData || spawnData;
+        
+        console.log('[RESPAWN] Enemy data to use:', JSON.stringify(enemyData, null, 2));
+        console.log('[RESPAWN] Enemy level:', enemyData.level);
+        console.log('[RESPAWN] Enemy name:', enemyData.name);
+        
         const newEnemy = createEnemyMeshRef.current(
           spawnData.x,
           spawnData.z,
@@ -1189,11 +1198,15 @@ const GameWorld = () => {
         );
         
         console.log('[RESPAWN] New enemy mesh created:', !!newEnemy);
+        console.log('[RESPAWN] Mesh type:', newEnemy?.type);
+        console.log('[RESPAWN] Mesh children count:', newEnemy?.children?.length);
         
         if (newEnemy) {
           sceneRef.current.add(newEnemy);
           enemyMeshesRef.current.push(newEnemy);
           selectableObjects.current.push(newEnemy);
+          
+          console.log('[RESPAWN] Added to scene, total enemies:', enemyMeshesRef.current.length);
           
           // Update placedEnemies with new enemy ID
           setPlacedEnemies(prev => prev.map(e => 
@@ -1209,31 +1222,13 @@ const GameWorld = () => {
             enemyId: newEnemyId
           });
           
-          // DELETE old enemy from database FIRST, then add new one
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies/${enemyId}`, {
-            method: 'DELETE'
-          }).then(() => {
-            // Now save the respawned enemy with new ID
-            return fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                ...enemyData,
-                enemyId: newEnemyId,
-                x: spawnData.x,
-                z: spawnData.z,
-                currentHealth: enemyData.maxHealth
-              })
-            });
-          }).catch(err => console.error('[RESPAWN] Failed to update database:', err));
-          
           // Use ref for notification to avoid stale closure
           if (addNotificationRef.current) {
             addNotificationRef.current(`${enemyData.name || 'Enemy'} has respawned!`, 'info');
           }
-          console.log(`[RESPAWN] SUCCESS: Enemy respawned: ${enemyData.name} at (${spawnData.x}, ${spawnData.z})`);
+          console.log(`[RESPAWN] ✅ SUCCESS: ${enemyData.name} respawned at (${spawnData.x}, ${spawnData.z})`);
         } else {
-          console.error('[RESPAWN] Failed to create enemy mesh');
+          console.error('[RESPAWN] ❌ FAILED: createEnemyMesh returned null/undefined');
         }
       } else {
         console.log('[RESPAWN] No respawn - missing data. spawnData:', !!spawnData, 'scene:', !!sceneRef.current, 'createFn:', !!createEnemyMeshRef.current);
