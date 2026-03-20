@@ -2861,21 +2861,21 @@ const GameWorld = () => {
     const createCastle = (centerX, centerZ) => {
       const castleGroup = new THREE.Group();
       
-      // Load castle stone brick wall texture
+      // Load castle stone floor/wall texture
       const textureLoader = new THREE.TextureLoader();
-      const stoneBrickTexture = textureLoader.load('/textures/castle/stone_brick_wall.png');
+      const stoneWallTexture = textureLoader.load('/textures/castle/stone_floor_wall.jpg');
       
       // Configure texture for tiling
-      stoneBrickTexture.wrapS = THREE.RepeatWrapping;
-      stoneBrickTexture.wrapT = THREE.RepeatWrapping;
-      stoneBrickTexture.repeat.set(3, 3); // Tile 3x3 for better brick detail
-      stoneBrickTexture.anisotropy = 16;
+      stoneWallTexture.wrapS = THREE.RepeatWrapping;
+      stoneWallTexture.wrapT = THREE.RepeatWrapping;
+      stoneWallTexture.repeat.set(2, 2); // Tile 2x2 for natural stone look
+      stoneWallTexture.anisotropy = 16;
       
-      console.log('[CASTLE] Loading stone brick wall texture...');
+      console.log('[CASTLE] Loading stone floor/wall texture...');
       
       const stoneMaterial = new THREE.MeshStandardMaterial({ 
-        map: stoneBrickTexture,
-        roughness: 0.8 
+        map: stoneWallTexture,
+        roughness: 0.85 
       });
       
       // Castle dimensions (based on Bodiam layout)
