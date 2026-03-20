@@ -781,14 +781,15 @@ const GameWorld = () => {
       if (leftArm) {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
-        // Rotate weapon to align with hand grip (blade points upward along arm)
-        weaponMesh.rotation.z = 0;              // No flip - keep blade naturally up
-        weaponMesh.rotation.x = -Math.PI / 4;   // -45 degrees - blade tilts up along arm
+        // Rotate weapon to align with hand grip (blade points upward and forward)
+        weaponMesh.rotation.x = -Math.PI / 4;   // -45° - blade tilts up along arm
+        weaponMesh.rotation.y = Math.PI;        // 180° - flip to face forward (not backward)
+        weaponMesh.rotation.z = 0;              // No Z rotation
         
         leftArm.add(weaponMesh);
         playerModelRef.current.userData.equippedWeapon = weaponMesh;
         
-        console.log(`[WEAPON] Attached ${mainHandItem.name} to player LEFT hand`);
+        console.log(`[WEAPON] Attached ${mainHandItem.name} to player LEFT hand, facing forward`);
       } else {
         console.log('[WEAPON] Could not find leftArmPivot in player model userData');
       }
