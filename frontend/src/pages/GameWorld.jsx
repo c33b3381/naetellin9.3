@@ -360,6 +360,7 @@ const GameWorld = () => {
   const autoAttackSpeedRef = useRef(COMBAT_CONSTANTS.PLAYER_AUTO_ATTACK_SPEED);
   const globalCooldownRef = useRef(0); // GCD in seconds
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC
+  const equipmentRef = useRef(equipment); // Current equipment for combat calculations
   
   // Attack animation state
   const attackHandRef = useRef('right'); // Starts with 'right' for weapon combat (alternates to 'left' for unarmed)
@@ -759,6 +760,9 @@ const GameWorld = () => {
   // ==================== WEAPON ATTACHMENT SYSTEM ====================
   // Attach/detach visible weapon model when equipment changes
   useEffect(() => {
+    // Update equipment ref for combat system
+    equipmentRef.current = equipment;
+    
     if (!playerModelRef.current) return;
     
     const mainHandItem = equipment?.mainHand;
@@ -1422,18 +1426,22 @@ const GameWorld = () => {
     // Update last attack time IMMEDIATELY to prevent double attacks
     lastAutoAttackRef.current = now;
     
-    // Check if weapon equipped in mainHand
-    const equippedWeapon = equipment?.mainHand;
+    // Check if weapon equipped in mainHand (use ref to avoid stale closure)
+    const equippedWeapon = equipmentRef.current?.mainHand;
     const isWeaponEquipped = equippedWeapon?.type === 'equipment' && equippedWeapon?.weaponModel;
+    
+    console.log(`[COMBAT] Weapon equipped: ${isWeaponEquipped}, weapon:`, equippedWeapon?.name || 'none');
     
     // Weapon-based combat: only use right arm (weapon hand)
     // Unarmed combat: alternate hands for variety
     if (isWeaponEquipped) {
       // Always use right arm when weapon equipped
+      console.log('[COMBAT] Using RIGHT arm only (weapon equipped)');
       playAttackAnimation('right');
     } else {
       // Unarmed: alternate hands
       const currentHand = attackHandRef.current;
+      console.log(`[COMBAT] Using ${currentHand} arm (unarmed, alternating)`);
       playAttackAnimation(currentHand);
       attackHandRef.current = currentHand === 'right' ? 'left' : 'right';
     }
