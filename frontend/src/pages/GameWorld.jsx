@@ -792,6 +792,36 @@ const GameWorld = () => {
     }
   }, [equipment]);
   
+  // ==================== STARTER EQUIPMENT ====================
+  // Give player a starter sword if backpack is empty (for testing)
+  useEffect(() => {
+    const hasStarterSword = backpack.some(item => item.id === 'iron_sword' || item.id === 'rusty_sword');
+    const isBackpackEmpty = backpack.length === 0;
+    
+    if (!hasStarterSword && isBackpackEmpty) {
+      // Add iron sword to backpack
+      const ironSword = {
+        id: 'iron_sword',
+        name: 'Iron Sword',
+        icon: '🗡️',
+        description: 'A reliable iron blade.',
+        vendorPrice: 1500,
+        rarity: 'uncommon',
+        equipment: true,
+        slot: 'weapon',
+        equipSlot: 'mainHand',
+        type: 'equipment',
+        weaponModel: 'sword_iron',
+        stats: { damage: 8 },
+        quantity: 1
+      };
+      
+      addItemToBag(ironSword);
+      addNotification('Starter equipment received: Iron Sword', 'info');
+      console.log('[STARTER] Added Iron Sword to backpack');
+    }
+  }, []); // Run once on mount
+  
   // Cooldown timer effect - using SpellCooldownSystem
   useEffect(() => {
     const interval = setInterval(() => {
