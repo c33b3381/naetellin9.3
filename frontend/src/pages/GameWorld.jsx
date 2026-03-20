@@ -3667,16 +3667,6 @@ const GameWorld = () => {
       door.position.set(0, 1.75, naveDepth / 2 + 0.01);
       churchGroup.add(door);
       
-      // Door arch (stone)
-      const archMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355 });
-      const doorArch = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.2, 1.2, 0.3, 16, 1, false, 0, Math.PI),
-        archMaterial
-      );
-      doorArch.position.set(0, 3.5, naveDepth / 2 + 0.05);
-      doorArch.rotation.x = Math.PI / 2;
-      churchGroup.add(doorArch);
-      
       // === GOTHIC ARCHED WINDOWS (stained glass) ===
       const windowMaterial = new THREE.MeshStandardMaterial({ 
         map: windowTexture,
@@ -3701,15 +3691,6 @@ const GameWorld = () => {
         window.position.set(pos.x, pos.y, pos.z);
         window.rotation.y = pos.rot;
         churchGroup.add(window);
-        
-        // Window arch
-        const windowArch = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16, 1, false, 0, Math.PI),
-          archMaterial
-        );
-        windowArch.position.set(pos.x, pos.y + 1.4, pos.z);
-        windowArch.rotation.z = pos.rot === Math.PI / 2 ? -Math.PI / 2 : Math.PI / 2;
-        churchGroup.add(windowArch);
       });
       
       // Tower window
