@@ -168,9 +168,15 @@ export const calculateXPGain = (mobLevel, playerLvl) => {
  * Calculate player auto-attack damage
  * @returns {number} Damage amount
  */
-export const calculateAutoAttackDamage = () => {
+/**
+ * Calculate player auto-attack damage
+ * @param {number} weaponDamageBonus - Bonus damage from equipped weapon (default 0)
+ * @returns {number} Damage amount
+ */
+export const calculateAutoAttackDamage = (weaponDamageBonus = 0) => {
   const range = COMBAT_CONSTANTS.AUTO_ATTACK_DAMAGE_MAX - COMBAT_CONSTANTS.AUTO_ATTACK_DAMAGE_MIN + 1;
-  return Math.floor(Math.random() * range) + COMBAT_CONSTANTS.AUTO_ATTACK_DAMAGE_MIN;
+  const baseDamage = Math.floor(Math.random() * range) + COMBAT_CONSTANTS.AUTO_ATTACK_DAMAGE_MIN;
+  return baseDamage + weaponDamageBonus;
 };
 
 /**

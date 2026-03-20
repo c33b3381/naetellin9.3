@@ -364,7 +364,10 @@ export const LOOT_ITEMS = {
     equipSlot: 'mainHand',
     type: 'equipment',
     weaponModel: 'sword_basic',
-    stats: { damage: 3 }
+    stats: { 
+      damage: 3,
+      attackSpeed: 2.2  // Slower than base (2.0)
+    }
   },
   iron_sword: {
     id: 'iron_sword',
@@ -379,7 +382,10 @@ export const LOOT_ITEMS = {
     equipSlot: 'mainHand',
     type: 'equipment',
     weaponModel: 'sword_iron',
-    stats: { damage: 8 }
+    stats: { 
+      damage: 8,
+      attackSpeed: 1.9  // Faster than base
+    }
   },
   steel_longsword: {
     id: 'steel_longsword',
@@ -394,7 +400,10 @@ export const LOOT_ITEMS = {
     equipSlot: 'mainHand',
     type: 'equipment',
     weaponModel: 'sword_iron',
-    stats: { damage: 15 }
+    stats: { 
+      damage: 15,
+      attackSpeed: 1.7  // Fast
+    }
   },
   enchanted_blade: {
     id: 'enchanted_blade',
@@ -409,7 +418,11 @@ export const LOOT_ITEMS = {
     equipSlot: 'mainHand',
     type: 'equipment',
     weaponModel: 'sword_iron',
-    stats: { damage: 25, magic: 10 }
+    stats: { 
+      damage: 25, 
+      magic: 10,
+      attackSpeed: 1.5  // Very fast
+    }
   },
 
   // ==================== EQUIPMENT (Armor) ====================

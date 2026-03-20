@@ -362,7 +362,7 @@ const GameWorld = () => {
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC
   
   // Attack animation state
-  const attackHandRef = useRef('left'); // Alternates between 'left' and 'right' - starts with left since weapon is there
+  const attackHandRef = useRef('right'); // Starts with 'right' for weapon combat (alternates to 'left' for unarmed)
   const attackAnimationRef = useRef(null); // Current animation frame
   const isAttackingRef = useRef(false); // Is currently in attack animation
   const playerArmsRef = useRef({ left: null, right: null }); // References to arm meshes
@@ -775,25 +775,31 @@ const GameWorld = () => {
     // Attach new weapon if equipped
     if (mainHandItem && mainHandItem.weaponModel) {
       const weaponMesh = createWeaponMesh(mainHandItem.weaponModel, 1);
-      // Get the LEFT arm pivot from the player model's userData (switched to left hand)
-      const leftArm = playerModelRef.current.userData?.leftArmPivot;
+      // Attach to RIGHT arm for weapon-based combat (MMO standard)
+      const rightArm = playerModelRef.current.userData?.rightArmPivot;
       
-      if (leftArm) {
+      if (rightArm) {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
-        // Rotate weapon: align blade along arm, facing forward and upward
+        // Rotate weapon: blade pointing up and forward
         weaponMesh.rotation.x = Math.PI / 6;         // 30° upward tilt
-        weaponMesh.rotation.y = 3 * Math.PI / 2;     // 270° (180° + 90° more)
-        weaponMesh.rotation.z = -Math.PI / 2;        // -90° to align blade along arm
+        weaponMesh.rotation.y = 3 * Math.PI / 2;     // 270° facing adjustment
+        weaponMesh.rotation.z = -Math.PI / 2;        // -90° align blade along arm
         
-        leftArm.add(weaponMesh);
+        rightArm.add(weaponMesh);
         playerModelRef.current.userData.equippedWeapon = weaponMesh;
         
-        console.log(`[WEAPON] Attached ${mainHandItem.name} to LEFT hand with 270° Y rotation`);
+        console.log(`[WEAPON] Attached ${mainHandItem.name} to RIGHT hand (weapon combat)`);
       } else {
-        console.log('[WEAPON] Could not find leftArmPivot in player model userData');
+        console.log('[WEAPON] Could not find rightArmPivot in player model userData');
       }
     }
+    
+    // Update attack speed when equipment changes
+    const weaponSpeed = mainHandItem?.stats?.attackSpeed || COMBAT_CONSTANTS.PLAYER_AUTO_ATTACK_SPEED;
+    autoAttackSpeedRef.current = weaponSpeed;
+    console.log(`[WEAPON] Attack speed set to ${weaponSpeed}s`);
+    
   }, [equipment]);
   
   // ==================== STARTER EQUIPMENT ====================
@@ -1416,20 +1422,30 @@ const GameWorld = () => {
     // Update last attack time IMMEDIATELY to prevent double attacks
     lastAutoAttackRef.current = now;
     
-    // Play attack animation - prioritize LEFT hand since weapon is equipped there
-    const currentHand = attackHandRef.current;
-    playAttackAnimation(currentHand);
+    // Check if weapon equipped in mainHand
+    const equippedWeapon = equipment?.mainHand;
+    const isWeaponEquipped = equippedWeapon?.type === 'equipment' && equippedWeapon?.weaponModel;
     
-    // Alternate hands for next attack (but start with left since weapon is there)
-    attackHandRef.current = currentHand === 'left' ? 'right' : 'left';
+    // Weapon-based combat: only use right arm (weapon hand)
+    // Unarmed combat: alternate hands for variety
+    if (isWeaponEquipped) {
+      // Always use right arm when weapon equipped
+      playAttackAnimation('right');
+    } else {
+      // Unarmed: alternate hands
+      const currentHand = attackHandRef.current;
+      playAttackAnimation(currentHand);
+      attackHandRef.current = currentHand === 'right' ? 'left' : 'right';
+    }
     
     // Enter combat
     if (enterCombatRef.current) {
       enterCombatRef.current();
     }
     
-    // Calculate auto-attack damage (using CombatSystem)
-    const damage = calculateAutoAttackDamage();
+    // Calculate auto-attack damage with weapon bonus
+    const weaponDamageBonus = equippedWeapon?.stats?.damage || 0;
+    const damage = calculateAutoAttackDamage(weaponDamageBonus);
     
     // Apply damage to target (use currentHealth, fallback to maxHealth)
     const currentHp = target.userData.currentHealth ?? target.userData.maxHealth;
