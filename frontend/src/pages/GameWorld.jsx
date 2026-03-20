@@ -1176,17 +1176,19 @@ const GameWorld = () => {
         console.log('[RESPAWN] Creating new enemy with ID:', newEnemyId, 'at position:', spawnData.x, spawnData.z);
         
         // Create new enemy mesh at original spawn position using the ref
+        // Use enemyData from spawnData if it exists, otherwise use spawnData itself
+        const enemyData = spawnData.enemyData || spawnData;
         const newEnemy = createEnemyMeshRef.current(
           spawnData.x,
           spawnData.z,
           {
-            ...spawnData,
-            currentHealth: spawnData.maxHealth // Full health on respawn
+            ...enemyData,
+            currentHealth: enemyData.maxHealth // Full health on respawn
           },
           newEnemyId
         );
         
-        console.log('[RESPAWN] New enemy mesh created:', newEnemy);
+        console.log('[RESPAWN] New enemy mesh created:', !!newEnemy);
         
         if (newEnemy) {
           sceneRef.current.add(newEnemy);
@@ -1195,14 +1197,17 @@ const GameWorld = () => {
           
           // Update placedEnemies with new enemy ID
           setPlacedEnemies(prev => prev.map(e => 
-            e.id === enemyId 
-              ? { ...e, id: newEnemyId, currentHealth: e.maxHealth }
+            e.enemyId === enemyId 
+              ? { ...e, enemyId: newEnemyId, currentHealth: e.maxHealth }
               : e
           ));
           
           // Update spawn data reference with new ID
           enemySpawnDataRef.current.delete(enemyId);
-          enemySpawnDataRef.current.set(newEnemyId, spawnData);
+          enemySpawnDataRef.current.set(newEnemyId, {
+            ...spawnData,
+            enemyId: newEnemyId
+          });
           
           // DELETE old enemy from database FIRST, then add new one
           fetch(`${process.env.REACT_APP_BACKEND_URL}/api/world/enemies/${enemyId}`, {
@@ -1213,18 +1218,20 @@ const GameWorld = () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                ...spawnData,
-                id: newEnemyId,
-                currentHealth: spawnData.maxHealth
+                ...enemyData,
+                enemyId: newEnemyId,
+                x: spawnData.x,
+                z: spawnData.z,
+                currentHealth: enemyData.maxHealth
               })
             });
           }).catch(err => console.error('[RESPAWN] Failed to update database:', err));
           
           // Use ref for notification to avoid stale closure
           if (addNotificationRef.current) {
-            addNotificationRef.current(`${spawnData.name} has respawned!`, 'info');
+            addNotificationRef.current(`${enemyData.name || 'Enemy'} has respawned!`, 'info');
           }
-          console.log(`[RESPAWN] SUCCESS: Enemy respawned: ${spawnData.name} at (${spawnData.x}, ${spawnData.z})`);
+          console.log(`[RESPAWN] SUCCESS: Enemy respawned: ${enemyData.name} at (${spawnData.x}, ${spawnData.z})`);
         } else {
           console.error('[RESPAWN] Failed to create enemy mesh');
         }
