@@ -782,14 +782,14 @@ const GameWorld = () => {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
         // Rotate weapon: align blade along arm, facing forward and upward
-        weaponMesh.rotation.x = Math.PI / 6;     // 30° upward tilt
-        weaponMesh.rotation.y = Math.PI;         // 180° (was 90°, added 90° more)
-        weaponMesh.rotation.z = -Math.PI / 2;    // -90° to align blade along arm
+        weaponMesh.rotation.x = Math.PI / 6;         // 30° upward tilt
+        weaponMesh.rotation.y = 3 * Math.PI / 2;     // 270° (180° + 90° more)
+        weaponMesh.rotation.z = -Math.PI / 2;        // -90° to align blade along arm
         
         leftArm.add(weaponMesh);
         playerModelRef.current.userData.equippedWeapon = weaponMesh;
         
-        console.log(`[WEAPON] Attached ${mainHandItem.name} to LEFT hand with +90° Y rotation`);
+        console.log(`[WEAPON] Attached ${mainHandItem.name} to LEFT hand with 270° Y rotation`);
       } else {
         console.log('[WEAPON] Could not find leftArmPivot in player model userData');
       }
