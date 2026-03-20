@@ -4721,6 +4721,14 @@ const GameWorld = () => {
         enemyMeshesRef.current.push(enemyMesh);
         selectableObjects.current.push(enemyMesh); // Add to selectable objects for targeting
         
+        // Store spawn data for respawning
+        enemySpawnDataRef.current.set(enemyId, {
+          x: goblinData.x,
+          z: goblinData.z,
+          enemyData: enemyData,
+          enemyId: enemyId
+        });
+        
         // Add to placedEnemies state
         setPlacedEnemies(prev => [...prev, {
           ...enemyData,
