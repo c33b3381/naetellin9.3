@@ -512,30 +512,53 @@ const ENEMY_LOOT_TABLES = {
  * @returns {Array} Array of loot item objects
  */
 export const generateLoot = (enemyType, enemyLevel = 1) => {
+  console.log(`[LOOT DEBUG] Starting loot generation for enemyType="${enemyType}", level=${enemyLevel}`);
+  
   const loot = [];
   const lootTable = ENEMY_LOOT_TABLES[enemyType] || ENEMY_LOOT_TABLES.default;
+  console.log(`[LOOT DEBUG] Loot table for "${enemyType}":`, lootTable);
   
   // Base number of drops scales with level
   const maxDrops = Math.min(1 + Math.floor(enemyLevel / 5), 4);
+  console.log(`[LOOT DEBUG] Max drops for level ${enemyLevel}: ${maxDrops}`);
   
   // Try to generate loot for each potential drop
   for (let i = 0; i < maxDrops; i++) {
     // Pick a random item from the loot table
     const itemId = lootTable[Math.floor(Math.random() * lootTable.length)];
     const item = LOOT_ITEMS[itemId];
+    console.log(`[LOOT DEBUG] Roll ${i+1}/${maxDrops}: Selected itemId="${itemId}"`, item ? `(${item.name}, ${item.dropChance * 100}% chance)` : '(NOT FOUND)');
     
     if (item) {
       // Roll against drop chance (modified by level)
       const levelBonus = 1 + (enemyLevel * 0.02); // 2% per level
       const modifiedChance = Math.min(item.dropChance * levelBonus, 0.95);
+      const roll = Math.random();
       
-      if (Math.random() < modifiedChance) {
+      console.log(`[LOOT DEBUG] Roll ${i+1}: ${itemId} - chance=${(modifiedChance * 100).toFixed(1)}%, rolled=${(roll * 100).toFixed(1)}% - ${roll < modifiedChance ? 'SUCCESS' : 'FAILED'}`);
+      
+      if (roll < modifiedChance) {
         // Add the item with a unique instance ID
         loot.push({
           ...item,
           instanceId: `${item.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         });
       }
+    }
+  }
+  
+  // FIX: Guarantee at least 1 item drops (makes combat rewarding)
+  // If all RNG rolls failed, force one random item from the loot table to drop
+  if (loot.length === 0) {
+    console.log(`[LOOT DEBUG] No loot rolled! Forcing guaranteed drop...`);
+    const guaranteedItemId = lootTable[Math.floor(Math.random() * lootTable.length)];
+    const guaranteedItem = LOOT_ITEMS[guaranteedItemId];
+    if (guaranteedItem) {
+      loot.push({
+        ...guaranteedItem,
+        instanceId: `${guaranteedItem.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      });
+      console.log(`[LOOT DEBUG] Forced guaranteed drop: ${guaranteedItem.name}`);
     }
   }
   
@@ -551,6 +574,7 @@ export const generateLoot = (enemyType, enemyLevel = 1) => {
     }
   }
   
+  console.log(`[LOOT DEBUG] Final loot array (${loot.length} items):`, loot.map(i => i.name));
   return loot;
 };
 
