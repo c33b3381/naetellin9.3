@@ -759,35 +759,39 @@ const GameWorld = () => {
   // ==================== WEAPON ATTACHMENT SYSTEM ====================
   // Attach/detach visible weapon model when equipment changes
   useEffect(() => {
-    if (!playerRef.current) return;
+    if (!playerModelRef.current) return;
     
     const mainHandItem = equipment?.mainHand;
     
     // Remove old weapon if exists
-    if (playerRef.current.userData.equippedWeapon) {
-      const oldWeapon = playerRef.current.userData.equippedWeapon;
+    if (playerModelRef.current.userData.equippedWeapon) {
+      const oldWeapon = playerModelRef.current.userData.equippedWeapon;
       if (oldWeapon.parent) {
         oldWeapon.parent.remove(oldWeapon);
       }
-      playerRef.current.userData.equippedWeapon = null;
+      playerModelRef.current.userData.equippedWeapon = null;
     }
     
     // Attach new weapon if equipped
     if (mainHandItem && mainHandItem.weaponModel) {
       const weaponMesh = createWeaponMesh(mainHandItem.weaponModel, 1);
-      const rightArm = playerRef.current.getObjectByName('rightArmPivot');
+      // Get the right arm pivot from the player model's userData (not getObjectByName)
+      const rightArm = playerModelRef.current.userData?.rightArmPivot;
       
       if (rightArm) {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
-        // Rotate weapon to align with hand grip (blade points along arm)
-        weaponMesh.rotation.z = Math.PI / 2;
-        weaponMesh.rotation.x = Math.PI / 8; // Slight forward tilt
+        // Rotate weapon to align with hand grip (blade points down along arm)
+        // Rotate 90 degrees around Z to point blade downward
+        weaponMesh.rotation.z = Math.PI;        // 180 degrees - blade points down
+        weaponMesh.rotation.x = -Math.PI / 4;   // -45 degrees tilt forward
         
         rightArm.add(weaponMesh);
-        playerRef.current.userData.equippedWeapon = weaponMesh;
+        playerModelRef.current.userData.equippedWeapon = weaponMesh;
         
         console.log(`[WEAPON] Attached ${mainHandItem.name} to player hand`);
+      } else {
+        console.log('[WEAPON] Could not find rightArmPivot in player model userData');
       }
     }
   }, [equipment]);
@@ -1299,18 +1303,28 @@ const GameWorld = () => {
   
   // Play attack animation - swing the appropriate arm
   const playAttackAnimation = useCallback((hand = 'right') => {
-    if (!playerRef.current || isAttackingRef.current) return;
+    if (!playerModelRef.current) {
+      console.log('[ATTACK ANIM] No player model ref');
+      return;
+    }
+    if (isAttackingRef.current) {
+      console.log('[ATTACK ANIM] Already attacking, skipping');
+      return;
+    }
     
     isAttackingRef.current = true;
     
-    // Get the arm pivot
+    // Get the arm pivot from the player MODEL (humanoid), not the player group
     const armPivotName = hand === 'right' ? 'rightArmPivot' : 'leftArmPivot';
-    const armPivot = playerRef.current.getObjectByName(armPivotName);
+    const armPivot = playerModelRef.current.userData?.[armPivotName];
     
     if (!armPivot) {
+      console.log(`[ATTACK ANIM] Could not find ${armPivotName} in player model userData`);
       isAttackingRef.current = false;
       return;
     }
+    
+    console.log(`[ATTACK ANIM] Playing ${hand} hand attack animation`);
     
     // Store original rotation
     const originalRotX = armPivot.rotation.x;
