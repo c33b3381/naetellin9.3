@@ -818,10 +818,16 @@ async def create_global_quest(quest: Dict[str, Any], auth: dict = Depends(verify
 
 @api_router.get("/quests/global")
 async def list_global_quests(skip: int = 0, limit: int = 50):
-    """Get all global quests (available to everyone) with pagination"""
+    """Get all global quests (AVAILABLE_QUESTS + database global_quests) with pagination"""
     limit = min(limit, 100)  # Cap at 100 max
-    quests = await db.global_quests.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-    return {"quests": quests}
+    
+    # Get database quests
+    db_quests = await db.global_quests.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+    
+    # Combine with AVAILABLE_QUESTS (hardcoded system quests)
+    all_quests = list(AVAILABLE_QUESTS) + db_quests
+    
+    return {"quests": all_quests}
 
 @api_router.delete("/quests/global/{quest_id}")
 async def delete_global_quest(quest_id: str, auth: dict = Depends(verify_token)):
