@@ -987,8 +987,16 @@ const GameWorld = () => {
   // ==================== QUEST KILL TRACKING ====================
   // Update quest progress when an enemy is killed - using QuestProgressSystem
   const updateQuestKillProgress = useCallback((enemyName, enemyType, customName) => {
-    console.log('[QUEST PROGRESS] Enemy killed:', { enemyName, enemyType, customName });
-    console.log('[QUEST PROGRESS] Current active quests:', activeQuests.length);
+    console.log('[QUEST PROGRESS] ===== ENEMY KILLED =====');
+    console.log('[QUEST PROGRESS] Enemy details:', { 
+      enemyName, 
+      enemyType, 
+      customName,
+      lowercaseName: enemyName?.toLowerCase(),
+      lowercaseType: enemyType?.toLowerCase()
+    });
+    console.log('[QUEST PROGRESS] Current active quests count:', activeQuests.length);
+    console.log('[QUEST PROGRESS] Active quests:', JSON.stringify(activeQuests, null, 2));
     
     // Update active quests (predefined quests)
     const activeResult = updateQuestListForEnemyKill(
@@ -1000,11 +1008,17 @@ const GameWorld = () => {
       false // No NPC requirement for active quests
     );
     
+    console.log('[QUEST PROGRESS] Update result:', {
+      anyUpdated: activeResult.anyUpdated,
+      questCount: activeResult.updatedQuests.length
+    });
+    
     if (activeResult.anyUpdated) {
-      console.log('[QUEST PROGRESS] Active quests updated!', activeResult.updatedQuests);
+      console.log('[QUEST PROGRESS] ✅ Active quests UPDATED!');
+      console.log('[QUEST PROGRESS] Updated quests:', JSON.stringify(activeResult.updatedQuests, null, 2));
       setActiveQuests(activeResult.updatedQuests);
     } else {
-      console.log('[QUEST PROGRESS] No active quest match found');
+      console.log('[QUEST PROGRESS] ❌ No active quest match found');
     }
     
     // Update custom quests (player-created quests - require NPC assignment)
@@ -1018,6 +1032,7 @@ const GameWorld = () => {
     );
     
     if (customResult.anyUpdated) {
+      console.log('[QUEST PROGRESS] Custom quests updated');
       setCustomQuests(customResult.updatedQuests);
     }
     
@@ -1883,14 +1898,30 @@ const GameWorld = () => {
   // ==================== CALLBACKS: Quest Management ====================
   // Quest handlers
   const handleAcceptQuest = useCallback((quest) => {
-    console.log('[QUEST] Accepting quest:', quest);
-    console.log('[QUEST] Quest objectives:', quest.objectives);
+    console.log('[QUEST] ===== ACCEPTING QUEST =====');
+    console.log('[QUEST] Raw quest data:', JSON.stringify(quest, null, 2));
+    
+    // Ensure objectives have proper structure with current field
+    const normalizedQuest = {
+      ...quest,
+      objectives: (quest.objectives || []).map(obj => ({
+        ...obj,
+        current: obj.current || 0, // Ensure current is set
+        required: obj.required || 1
+      })),
+      acceptedAt: Date.now()
+    };
+    
+    console.log('[QUEST] Normalized quest:', JSON.stringify(normalizedQuest, null, 2));
+    
     // Add quest to active quests
     setActiveQuests(prev => {
-      const updated = [...prev, { ...quest, acceptedAt: Date.now() }];
-      console.log('[QUEST] Updated active quests:', updated);
+      const updated = [...prev, normalizedQuest];
+      console.log('[QUEST] Total active quests after accept:', updated.length);
+      console.log('[QUEST] All active quests:', JSON.stringify(updated, null, 2));
       return updated;
     });
+    
     addNotification(`Quest accepted: ${quest.name}`, 'success');
     setIsQuestDialogOpen(false);
   }, [addNotification]);
