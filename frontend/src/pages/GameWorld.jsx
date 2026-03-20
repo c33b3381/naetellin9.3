@@ -3501,6 +3501,237 @@ const GameWorld = () => {
       return rackGroup;
     };
     
+    // === CHURCH ===
+    const createChurch = (x, z) => {
+      const churchGroup = new THREE.Group();
+      churchGroup.name = 'Church';
+      churchGroup.userData = { type: 'building', name: 'Church', interactable: true, hasCollision: true };
+      
+      // Load textures
+      const textureLoader = new THREE.TextureLoader();
+      const stoneTexture = textureLoader.load('/textures/houses/wood_wall.jpg');
+      stoneTexture.wrapS = THREE.RepeatWrapping;
+      stoneTexture.wrapT = THREE.RepeatWrapping;
+      stoneTexture.repeat.set(3, 3);
+      
+      const roofTexture = textureLoader.load('/textures/houses/roof_tiles.webp');
+      roofTexture.wrapS = THREE.RepeatWrapping;
+      roofTexture.wrapT = THREE.RepeatWrapping;
+      roofTexture.repeat.set(4, 4);
+      
+      const doorTexture = textureLoader.load('/textures/houses/door.png');
+      const windowTexture = textureLoader.load('/textures/houses/window_glass.jpg');
+      
+      // Stone wall material (beige/tan for church)
+      const stoneMaterial = new THREE.MeshStandardMaterial({ 
+        map: stoneTexture,
+        color: 0xD2B48C, // Tan/beige tint
+        roughness: 0.85
+      });
+      
+      // Blue roof material
+      const roofMaterial = new THREE.MeshStandardMaterial({ 
+        map: roofTexture,
+        color: 0x4A6B8A, // Blue-gray tint
+        roughness: 0.7
+      });
+      
+      // === MAIN NAVE (church body) ===
+      const naveWidth = 8;
+      const naveHeight = 6;
+      const naveDepth = 12;
+      const naveWalls = new THREE.Mesh(
+        new THREE.BoxGeometry(naveWidth, naveHeight, naveDepth),
+        stoneMaterial
+      );
+      naveWalls.position.set(0, naveHeight / 2, 0);
+      naveWalls.castShadow = true;
+      naveWalls.receiveShadow = true;
+      churchGroup.add(naveWalls);
+      
+      // === MAIN ROOF (pitched) ===
+      const mainRoofGeometry = new THREE.BoxGeometry(naveWidth + 1, 0.3, naveDepth + 1);
+      const mainRoof1 = new THREE.Mesh(mainRoofGeometry, roofMaterial);
+      mainRoof1.position.set(0, naveHeight + 1.5, 0);
+      mainRoof1.rotation.z = Math.PI / 6; // Pitched angle
+      mainRoof1.castShadow = true;
+      churchGroup.add(mainRoof1);
+      
+      const mainRoof2 = new THREE.Mesh(mainRoofGeometry, roofMaterial);
+      mainRoof2.position.set(0, naveHeight + 1.5, 0);
+      mainRoof2.rotation.z = -Math.PI / 6; // Opposite pitch
+      mainRoof2.castShadow = true;
+      churchGroup.add(mainRoof2);
+      
+      // === TOWER (tall square tower with spire) ===
+      const towerWidth = 4;
+      const towerHeight = 10;
+      const tower = new THREE.Mesh(
+        new THREE.BoxGeometry(towerWidth, towerHeight, towerWidth),
+        stoneMaterial
+      );
+      tower.position.set(-naveWidth/2 - towerWidth/2 + 0.5, towerHeight / 2, naveDepth/2 - 2);
+      tower.castShadow = true;
+      churchGroup.add(tower);
+      
+      // === SPIRE (pointed blue cone on tower) ===
+      const spireHeight = 6;
+      const spire = new THREE.Mesh(
+        new THREE.ConeGeometry(towerWidth * 0.7, spireHeight, 4),
+        roofMaterial
+      );
+      spire.position.set(tower.position.x, towerHeight + spireHeight / 2, tower.position.z);
+      spire.rotation.y = Math.PI / 4;
+      spire.castShadow = true;
+      churchGroup.add(spire);
+      
+      // === SPIRE TIP (cross on top) ===
+      const crossMaterial = new THREE.MeshStandardMaterial({ color: 0xD4AF37 }); // Gold
+      const crossVertical = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 1.5, 0.2),
+        crossMaterial
+      );
+      crossVertical.position.set(spire.position.x, spire.position.y + spireHeight / 2 + 0.75, spire.position.z);
+      churchGroup.add(crossVertical);
+      
+      const crossHorizontal = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.2, 0.2),
+        crossMaterial
+      );
+      crossHorizontal.position.set(crossVertical.position.x, crossVertical.position.y + 0.2, crossVertical.position.z);
+      churchGroup.add(crossHorizontal);
+      
+      // === SIDE CHAPEL (smaller wing) ===
+      const chapelWidth = 5;
+      const chapelHeight = 5;
+      const chapelDepth = 6;
+      const chapel = new THREE.Mesh(
+        new THREE.BoxGeometry(chapelWidth, chapelHeight, chapelDepth),
+        stoneMaterial
+      );
+      chapel.position.set(naveWidth/2 + chapelWidth/2 - 0.5, chapelHeight / 2, -naveDepth/4);
+      chapel.castShadow = true;
+      churchGroup.add(chapel);
+      
+      // Chapel roof
+      const chapelRoofGeometry = new THREE.BoxGeometry(chapelWidth + 0.5, 0.3, chapelDepth + 0.5);
+      const chapelRoof1 = new THREE.Mesh(chapelRoofGeometry, roofMaterial);
+      chapelRoof1.position.set(chapel.position.x, chapelHeight + 1, chapel.position.z);
+      chapelRoof1.rotation.z = Math.PI / 6;
+      chapelRoof1.castShadow = true;
+      churchGroup.add(chapelRoof1);
+      
+      const chapelRoof2 = new THREE.Mesh(chapelRoofGeometry, roofMaterial);
+      chapelRoof2.position.set(chapel.position.x, chapelHeight + 1, chapel.position.z);
+      chapelRoof2.rotation.z = -Math.PI / 6;
+      chapelRoof2.castShadow = true;
+      churchGroup.add(chapelRoof2);
+      
+      // === ARCHED DOORWAY (main entrance) ===
+      const doorMaterial = new THREE.MeshStandardMaterial({ 
+        map: doorTexture,
+        transparent: true,
+        color: 0x6B5544
+      });
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(2, 3.5), doorMaterial);
+      door.position.set(0, 1.75, naveDepth / 2 + 0.01);
+      churchGroup.add(door);
+      
+      // Door arch (stone)
+      const archMaterial = new THREE.MeshStandardMaterial({ color: 0x8B7355 });
+      const doorArch = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.2, 1.2, 0.3, 16, 1, false, 0, Math.PI),
+        archMaterial
+      );
+      doorArch.position.set(0, 3.5, naveDepth / 2 + 0.05);
+      doorArch.rotation.x = Math.PI / 2;
+      churchGroup.add(doorArch);
+      
+      // === GOTHIC ARCHED WINDOWS (stained glass) ===
+      const windowMaterial = new THREE.MeshStandardMaterial({ 
+        map: windowTexture,
+        transparent: true,
+        opacity: 0.7,
+        emissive: 0x4169E1,
+        emissiveIntensity: 0.2
+      });
+      
+      // Side windows (nave)
+      const windowPositions = [
+        { x: -naveWidth/2 - 0.01, y: 3.5, z: 3, rot: Math.PI / 2 },
+        { x: -naveWidth/2 - 0.01, y: 3.5, z: -1, rot: Math.PI / 2 },
+        { x: -naveWidth/2 - 0.01, y: 3.5, z: -5, rot: Math.PI / 2 },
+        { x: naveWidth/2 + 0.01, y: 3.5, z: 3, rot: -Math.PI / 2 },
+        { x: naveWidth/2 + 0.01, y: 3.5, z: -1, rot: -Math.PI / 2 },
+        { x: naveWidth/2 + 0.01, y: 3.5, z: -5, rot: -Math.PI / 2 },
+      ];
+      
+      windowPositions.forEach(pos => {
+        const window = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.5), windowMaterial);
+        window.position.set(pos.x, pos.y, pos.z);
+        window.rotation.y = pos.rot;
+        churchGroup.add(window);
+        
+        // Window arch
+        const windowArch = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16, 1, false, 0, Math.PI),
+          archMaterial
+        );
+        windowArch.position.set(pos.x, pos.y + 1.4, pos.z);
+        windowArch.rotation.z = pos.rot === Math.PI / 2 ? -Math.PI / 2 : Math.PI / 2;
+        churchGroup.add(windowArch);
+      });
+      
+      // Tower window
+      const towerWindow = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2), windowMaterial);
+      towerWindow.position.set(tower.position.x, tower.position.y + 2, tower.position.z + towerWidth/2 + 0.01);
+      churchGroup.add(towerWindow);
+      
+      // === COLLISION BOXES ===
+      const colliderMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        visible: false 
+      });
+      
+      // Main nave collider
+      const naveCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(naveWidth, naveHeight, naveDepth),
+        colliderMaterial
+      );
+      naveCollider.position.copy(naveWalls.position);
+      naveCollider.name = 'collider';
+      churchGroup.add(naveCollider);
+      selectableObjects.current.push(naveCollider);
+      
+      // Tower collider
+      const towerCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(towerWidth, towerHeight + spireHeight, towerWidth),
+        colliderMaterial
+      );
+      towerCollider.position.set(tower.position.x, (towerHeight + spireHeight) / 2, tower.position.z);
+      towerCollider.name = 'collider';
+      churchGroup.add(towerCollider);
+      selectableObjects.current.push(towerCollider);
+      
+      // Chapel collider
+      const chapelCollider = new THREE.Mesh(
+        new THREE.BoxGeometry(chapelWidth, chapelHeight, chapelDepth),
+        colliderMaterial
+      );
+      chapelCollider.position.copy(chapel.position);
+      chapelCollider.name = 'collider';
+      churchGroup.add(chapelCollider);
+      selectableObjects.current.push(chapelCollider);
+      
+      // Place church at terrain height
+      const terrainY = getTerrainHeight(x, z);
+      churchGroup.position.set(x, terrainY, z);
+      scene.add(churchGroup);
+      
+      return churchGroup;
+    };
+    
     // === SMALL HOUSES/HUTS ===
     const createSmallHouse = (x, z, rotation = 0, color = 0x8B4513) => {
       const houseGroup = new THREE.Group();
