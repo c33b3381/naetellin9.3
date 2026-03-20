@@ -2470,36 +2470,90 @@ export const createEnemyMesh = (enemyData, x, z, enemyId, getTerrainHeight) => {
   const group = new THREE.Group();
   
   const scale = 1 + (enemyData.level / 50); // Scale based on level
-  const color = new THREE.Color(enemyData.color || 0xff0000);
   
-  // Body
-  const bodyMat = new THREE.MeshStandardMaterial({ color: color });
+  // Use bright green color for blocky orc style (#2ecc71)
+  const orcGreen = 0x2ecc71;
+  
+  // === BLOCKY ORC BODY ===
+  // Torso - rectangular
+  const bodyMat = new THREE.MeshStandardMaterial({ color: orcGreen });
   const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.35 * scale, 0.6 * scale, 8, 16),
+    new THREE.BoxGeometry(0.5 * scale, 0.7 * scale, 0.3 * scale),
     bodyMat
   );
-  body.position.y = 0.7 * scale;
+  body.position.y = 0.75 * scale;
   body.castShadow = true;
   group.add(body);
   
-  // Head
-  const headMat = new THREE.MeshStandardMaterial({ color: color });
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.25 * scale, 12, 12), headMat);
-  head.position.y = 1.3 * scale;
+  // Arms - simple rectangular blocks
+  for (let side of [-1, 1]) {
+    const arm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15 * scale, 0.6 * scale, 0.15 * scale),
+      bodyMat
+    );
+    arm.position.set(side * 0.35 * scale, 0.75 * scale, 0);
+    arm.castShadow = true;
+    group.add(arm);
+  }
+  
+  // Legs - rectangular blocks
+  for (let side of [-1, 1]) {
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15 * scale, 0.5 * scale, 0.15 * scale),
+      bodyMat
+    );
+    leg.position.set(side * 0.15 * scale, 0.25 * scale, 0);
+    leg.castShadow = true;
+    group.add(leg);
+  }
+  
+  // === BLOCKY HEAD ===
+  const headMat = new THREE.MeshStandardMaterial({ color: orcGreen });
+  const head = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4 * scale, 0.4 * scale, 0.35 * scale), 
+    headMat
+  );
+  head.position.y = 1.35 * scale;
   head.castShadow = true;
   group.add(head);
   
-  // Glowing red eyes
+  // === BLACK CIRCULAR EYES ===
   const eyeMat = new THREE.MeshStandardMaterial({ 
-    color: 0xff0000, 
-    emissive: 0xff0000, 
-    emissiveIntensity: 0.8 
+    color: 0x000000
   });
   for (let side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05 * scale, 6, 6), eyeMat);
-    eye.position.set(side * 0.1 * scale, 1.35 * scale, 0.2 * scale);
+    const eye = new THREE.Mesh(new THREE.CircleGeometry(0.06 * scale, 16), eyeMat);
+    eye.position.set(side * 0.1 * scale, 1.4 * scale, 0.176 * scale);
     group.add(eye);
   }
+  
+  // === RED TUSKS (triangular) ===
+  const tuskMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+  for (let side of [-1, 1]) {
+    const tusk = new THREE.Mesh(
+      new THREE.ConeGeometry(0.05 * scale, 0.15 * scale, 3),
+      tuskMat
+    );
+    tusk.position.set(side * 0.08 * scale, 1.25 * scale, 0.18 * scale);
+    tusk.rotation.x = Math.PI; // Point downward
+    group.add(tusk);
+  }
+  
+  // === BLACK OUTLINE EFFECT ===
+  // Add thin black wireframe/edges to simulate outline
+  const outlineMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
+  
+  // Head outline
+  const headEdges = new THREE.EdgesGeometry(head.geometry);
+  const headOutline = new THREE.LineSegments(headEdges, outlineMat);
+  headOutline.position.copy(head.position);
+  group.add(headOutline);
+  
+  // Body outline
+  const bodyEdges = new THREE.EdgesGeometry(body.geometry);
+  const bodyOutline = new THREE.LineSegments(bodyEdges, outlineMat);
+  bodyOutline.position.copy(body.position);
+  group.add(bodyOutline);
   
   // Health bar background
   const healthBarWidth = 1 * scale;
