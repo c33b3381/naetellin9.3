@@ -3507,12 +3507,19 @@ const GameWorld = () => {
       churchGroup.name = 'Church';
       churchGroup.userData = { type: 'building', name: 'Church', interactable: true, hasCollision: true };
       
-      // Load textures
+      // Load textures - use castle PavingStones for walls
       const textureLoader = new THREE.TextureLoader();
-      const stoneTexture = textureLoader.load('/textures/houses/wood_wall.jpg');
-      stoneTexture.wrapS = THREE.RepeatWrapping;
-      stoneTexture.wrapT = THREE.RepeatWrapping;
-      stoneTexture.repeat.set(3, 3);
+      const pavingColor = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_Color.jpg');
+      const pavingNormal = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_NormalGL.jpg');
+      const pavingRoughness = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_Roughness.jpg');
+      
+      // Configure wall textures for tiling
+      [pavingColor, pavingNormal, pavingRoughness].forEach(texture => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2);
+        texture.anisotropy = 16;
+      });
       
       const roofTexture = textureLoader.load('/textures/houses/roof_tiles.webp');
       roofTexture.wrapS = THREE.RepeatWrapping;
@@ -3522,18 +3529,19 @@ const GameWorld = () => {
       const doorTexture = textureLoader.load('/textures/houses/door.png');
       const windowTexture = textureLoader.load('/textures/houses/window_glass.jpg');
       
-      // Stone wall material (beige/tan for church)
+      // Stone wall material using castle PavingStones PBR
       const stoneMaterial = new THREE.MeshStandardMaterial({ 
-        map: stoneTexture,
-        color: 0xD2B48C, // Tan/beige tint
+        map: pavingColor,
+        normalMap: pavingNormal,
+        roughnessMap: pavingRoughness,
         roughness: 0.85
       });
       
-      // Blue roof material
+      // Dark roof material
       const roofMaterial = new THREE.MeshStandardMaterial({ 
         map: roofTexture,
-        color: 0x4A6B8A, // Blue-gray tint
-        roughness: 0.7
+        color: 0x2C3539, // Very dark gray
+        roughness: 0.8
       });
       
       // === MAIN NAVE (church body) ===
@@ -3549,19 +3557,27 @@ const GameWorld = () => {
       naveWalls.receiveShadow = true;
       churchGroup.add(naveWalls);
       
-      // === MAIN ROOF (pitched) ===
-      const mainRoofGeometry = new THREE.BoxGeometry(naveWidth + 1, 0.3, naveDepth + 1);
-      const mainRoof1 = new THREE.Mesh(mainRoofGeometry, roofMaterial);
-      mainRoof1.position.set(0, naveHeight + 1.5, 0);
-      mainRoof1.rotation.z = Math.PI / 6; // Pitched angle
-      mainRoof1.castShadow = true;
-      churchGroup.add(mainRoof1);
+      // === MAIN ROOF (pitched /\ shape) ===
+      const roofHeight = 3;
+      const roofWidth = naveWidth + 1;
       
-      const mainRoof2 = new THREE.Mesh(mainRoofGeometry, roofMaterial);
-      mainRoof2.position.set(0, naveHeight + 1.5, 0);
-      mainRoof2.rotation.z = -Math.PI / 6; // Opposite pitch
-      mainRoof2.castShadow = true;
-      churchGroup.add(mainRoof2);
+      // Left slope
+      const leftRoofGeometry = new THREE.PlaneGeometry(Math.sqrt(roofHeight * roofHeight + (roofWidth/2) * (roofWidth/2)), naveDepth + 1);
+      const leftRoof = new THREE.Mesh(leftRoofGeometry, roofMaterial);
+      leftRoof.position.set(-roofWidth/4, naveHeight + roofHeight/2, 0);
+      leftRoof.rotation.set(0, 0, Math.atan2(roofHeight, roofWidth/2)); // Angle to create slope
+      leftRoof.castShadow = true;
+      leftRoof.receiveShadow = true;
+      churchGroup.add(leftRoof);
+      
+      // Right slope
+      const rightRoofGeometry = new THREE.PlaneGeometry(Math.sqrt(roofHeight * roofHeight + (roofWidth/2) * (roofWidth/2)), naveDepth + 1);
+      const rightRoof = new THREE.Mesh(rightRoofGeometry, roofMaterial);
+      rightRoof.position.set(roofWidth/4, naveHeight + roofHeight/2, 0);
+      rightRoof.rotation.set(0, 0, -Math.atan2(roofHeight, roofWidth/2)); // Opposite slope
+      rightRoof.castShadow = true;
+      rightRoof.receiveShadow = true;
+      churchGroup.add(rightRoof);
       
       // === TOWER (tall square tower with spire) ===
       const towerWidth = 4;
@@ -3613,19 +3629,39 @@ const GameWorld = () => {
       chapel.castShadow = true;
       churchGroup.add(chapel);
       
-      // Chapel roof
-      const chapelRoofGeometry = new THREE.BoxGeometry(chapelWidth + 0.5, 0.3, chapelDepth + 0.5);
-      const chapelRoof1 = new THREE.Mesh(chapelRoofGeometry, roofMaterial);
-      chapelRoof1.position.set(chapel.position.x, chapelHeight + 1, chapel.position.z);
-      chapelRoof1.rotation.z = Math.PI / 6;
-      chapelRoof1.castShadow = true;
-      churchGroup.add(chapelRoof1);
+      // Chapel roof (pitched /\ shape)
+      const chapelRoofHeight = 2.5;
+      const chapelRoofWidth = chapelWidth + 0.5;
       
-      const chapelRoof2 = new THREE.Mesh(chapelRoofGeometry, roofMaterial);
-      chapelRoof2.position.set(chapel.position.x, chapelHeight + 1, chapel.position.z);
-      chapelRoof2.rotation.z = -Math.PI / 6;
-      chapelRoof2.castShadow = true;
-      churchGroup.add(chapelRoof2);
+      // Left slope
+      const chapelLeftRoofGeometry = new THREE.PlaneGeometry(
+        Math.sqrt(chapelRoofHeight * chapelRoofHeight + (chapelRoofWidth/2) * (chapelRoofWidth/2)), 
+        chapelDepth + 0.5
+      );
+      const chapelLeftRoof = new THREE.Mesh(chapelLeftRoofGeometry, roofMaterial);
+      chapelLeftRoof.position.set(
+        chapel.position.x - chapelRoofWidth/4, 
+        chapelHeight + chapelRoofHeight/2, 
+        chapel.position.z
+      );
+      chapelLeftRoof.rotation.set(0, 0, Math.atan2(chapelRoofHeight, chapelRoofWidth/2));
+      chapelLeftRoof.castShadow = true;
+      churchGroup.add(chapelLeftRoof);
+      
+      // Right slope
+      const chapelRightRoofGeometry = new THREE.PlaneGeometry(
+        Math.sqrt(chapelRoofHeight * chapelRoofHeight + (chapelRoofWidth/2) * (chapelRoofWidth/2)), 
+        chapelDepth + 0.5
+      );
+      const chapelRightRoof = new THREE.Mesh(chapelRightRoofGeometry, roofMaterial);
+      chapelRightRoof.position.set(
+        chapel.position.x + chapelRoofWidth/4, 
+        chapelHeight + chapelRoofHeight/2, 
+        chapel.position.z
+      );
+      chapelRightRoof.rotation.set(0, 0, -Math.atan2(chapelRoofHeight, chapelRoofWidth/2));
+      chapelRightRoof.castShadow = true;
+      churchGroup.add(chapelRightRoof);
       
       // === ARCHED DOORWAY (main entrance) ===
       const doorMaterial = new THREE.MeshStandardMaterial({ 
@@ -4354,6 +4390,10 @@ const GameWorld = () => {
     createBuilding(25, 0, 5, 4, 5, 0x654321, 'General Store', 'shop');
     createBuilding(-22, -15, 6, 5, 5, 0x4a4a4a, 'Armory', 'shop');
     createBuilding(22, -15, 5, 4, 5, 0x8B4513, 'Inn', 'building');
+    
+    // ==================== CHURCH ====================
+    // Gothic Revival church near graveyard
+    createChurch(-14.3, -41.3);
     
     // ==================== GRAVEYARD AREA ====================
     const GRAVEYARD_CENTER = { x: -40, z: -40 };
