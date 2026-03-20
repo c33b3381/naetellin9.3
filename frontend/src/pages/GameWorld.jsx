@@ -990,7 +990,12 @@ const GameWorld = () => {
       }
     }
     
+    // Get spawn data for respawn timing (before setTimeout closure)
+    const spawnData = enemySpawnDataRef.current.get(enemyId);
+    
     // Set corpse despawn timer, then RESPAWN the enemy
+    // Use enemy's respawnTime from spawnData, or default to 2 minutes (120000ms)
+    const respawnTime = (spawnData?.respawnTime || 120) * 1000; // Convert seconds to milliseconds
     const despawnTimer = setTimeout(() => {
       console.log('[RESPAWN] Timer fired for enemy:', enemyId);
       
@@ -1088,7 +1093,7 @@ const GameWorld = () => {
         // No spawn data = temporary enemy, just remove from placedEnemies
         setPlacedEnemies(prev => prev.filter(e => e.id !== enemyId));
       }
-    }, RESPAWN_TIME);
+    }, respawnTime);
     
     corpseTimersRef.current.set(enemyId, despawnTimer);
   }, [addNotification, gainXP, playerLevel, updateQuestKillProgress]);
