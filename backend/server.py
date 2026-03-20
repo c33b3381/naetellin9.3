@@ -116,6 +116,18 @@ STARTER_INVENTORY = [
 
 AVAILABLE_QUESTS = [
     {
+        "quest_id": "goblin_heads",
+        "name": "Goblin Heads",
+        "giver": "Elder Theron",
+        "description": "The goblins near the old castle grow bolder by the day. Elder Theron needs proof their numbers are thinning. Travel to the castle, slay the goblin guards, and return with proof of 6 kills.",
+        "objectives": [
+            {"id": "kill_goblin_guards", "type": "kill", "target": "Goblin Guard", "description": "Slay Goblin Guards at the castle", "required": 6}
+        ],
+        "rewards": {"xp": 100, "gold": 50},
+        "difficulty": "easy",
+        "level_requirement": 1
+    },
+    {
         "quest_id": "tutorial_quest",
         "name": "The Beginning",
         "description": "Learn the basics of Quest Of Honor. Speak to the Tutorial Guide.",

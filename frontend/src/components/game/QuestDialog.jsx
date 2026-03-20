@@ -54,17 +54,21 @@ const QuestDialog = ({
   });
   
   // Build the list of available quests from database
-  // Only show quests specifically assigned to this NPC
+  // Show quests assigned to this NPC OR quests from AVAILABLE_QUESTS that match the giver name
   const formattedDatabaseQuests = databaseQuests
     .filter(quest => {
-      if (!npcId) return false; // No NPC ID = no database quests to show
-      return quest.assigned_npc_id === npcId;
+      if (!npcId) {
+        // No NPC ID - check if quest giver matches this NPC's name
+        return quest.giver === npcName;
+      }
+      // Has NPC ID - show assigned quests OR quests where giver matches
+      return quest.assigned_npc_id === npcId || quest.giver === npcName;
     })
     .map(quest => ({
       id: quest.quest_id,
       quest_id: quest.quest_id,
       name: quest.name,
-      giver: npcName, // Use this NPC's name
+      giver: quest.giver || npcName, // Use quest's giver or this NPC's name
       description: quest.description,
       objectives: (quest.objectives || []).map(obj => ({
         id: obj.id,
@@ -78,7 +82,7 @@ const QuestDialog = ({
       rewards: quest.rewards || { xp: 50, gold: 10 },
       difficulty: quest.difficulty || 'medium',
       level: quest.level || 1,
-      isGlobal: true,
+      isGlobal: quest.assigned_npc_id ? true : false,
       assigned_npc_id: quest.assigned_npc_id
     }));
   

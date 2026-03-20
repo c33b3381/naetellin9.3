@@ -97,7 +97,7 @@ import {
 import HUD from '../components/hud/HUD';
 import InventoryPanel from '../components/panels/InventoryPanel';
 import SkillsPanel from '../components/panels/SkillsPanel';
-import QuestPanel from '../components/panels/QuestPanel';
+// QuestPanel REMOVED - Unified with QuestLog
 import CharacterPanel from '../components/panels/CharacterPanel';
 import Minimap from '../components/hud/Minimap';
 import WorldMap from '../components/hud/WorldMap';
@@ -6733,6 +6733,7 @@ const GameWorld = () => {
           isInCombat={isInCombat}
           onOpenSpellBook={() => setIsSpellBookOpen(true)}
           onOpenCharacter={() => setIsCharacterPanelOpen(true)}
+          onOpenQuestLog={() => setIsQuestLogOpen(true)}
           onLogout={handleLogout}
           playerLevel={playerLevel}
           currentXP={currentXP}
@@ -6782,11 +6783,7 @@ const GameWorld = () => {
           </div>
         )}
         
-        {activePanel === 'quests' && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-            <QuestPanel />
-          </div>
-        )}
+        {/* Quest Panel - REMOVED - Unified with QuestLog (opened by L key or HUD quest button) */}
         
         {/* Character Panel */}
         <CharacterPanel

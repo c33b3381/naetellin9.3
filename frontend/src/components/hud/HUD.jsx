@@ -12,6 +12,7 @@ const HUD = ({
   isInCombat = false,
   onOpenSpellBook,
   onOpenCharacter,
+  onOpenQuestLog,
   onLogout,
   playerLevel = 1,
   currentXP = 0,
@@ -139,6 +140,8 @@ const HUD = ({
                   onOpenSpellBook();
                 } else if (action.id === 'character' && onOpenCharacter) {
                   onOpenCharacter();
+                } else if (action.id === 'quests' && onOpenQuestLog) {
+                  onOpenQuestLog();
                 } else if (!action.special) {
                   setActivePanel(action.id);
                 }
