@@ -967,14 +967,33 @@ const GameWorld = () => {
     
     // Generate loot for this enemy
     const enemyType = enemy.userData.enemyType || enemy.userData.name?.toLowerCase() || 'default';
-    const loot = generateLoot(enemyType, enemy.userData.level || 1);
-    console.log(`[LOOT] Generated ${loot.length} items for ${enemyType} (level ${enemy.userData.level}):`, loot.map(i => i.name));
+    const lootItems = generateLoot(enemyType, enemy.userData.level || 1);
+    console.log(`[LOOT] Generated ${lootItems.length} items for ${enemyType} (level ${enemy.userData.level}):`, lootItems.map(i => i.name));
+    
+    // Generate gold drop
+    let goldAmount = 0;
+    if (enemy.userData.goldDrop) {
+      if (Array.isArray(enemy.userData.goldDrop) && enemy.userData.goldDrop.length === 2) {
+        // goldDrop is [min, max] range
+        const [min, max] = enemy.userData.goldDrop;
+        goldAmount = Math.floor(Math.random() * (max - min + 1)) + min;
+      } else if (typeof enemy.userData.goldDrop === 'number') {
+        goldAmount = enemy.userData.goldDrop;
+      }
+    }
+    
+    // Structure loot data properly: {gold, items[]}
+    const lootData = {
+      gold: goldAmount,
+      items: lootItems
+    };
+    console.log(`[LOOT] Complete loot data:`, lootData);
     
     // Transform enemy into lootable corpse (using LootSystem)
-    transformToLootableCorpse(enemy, getTerrainHeight, loot);
+    transformToLootableCorpse(enemy, getTerrainHeight, lootData);
     
     // Store in lootable corpses
-    lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot });
+    lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot: lootData });
     
     // Add sparkle effect to corpse (using LootSystem)
     const sparkles = lootSystemCreateSparkles();
