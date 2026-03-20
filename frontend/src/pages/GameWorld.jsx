@@ -2328,8 +2328,8 @@ const GameWorld = () => {
     terrainGeometryRef.current = terrainGeometry;
     terrainMeshRef.current = terrain;
     
-    // ==================== GRASS TUFTS GENERATION ====================
-    console.log('[GRASS] Generating grass tufts...');
+    // ==================== GRASS TUFTS GENERATION (INSTANCED) ====================
+    console.log('[GRASS] Generating instanced grass tufts...');
     
     // Create grass tuft texture (simple green gradient)
     const canvas = document.createElement('canvas');
@@ -2357,46 +2357,170 @@ const GameWorld = () => {
       depthWrite: false,
     });
     
-    // Create crossed-plane grass tuft
-    const createGrassTuft = () => {
-      const group = new THREE.Group();
-      const size = 0.4;
-      
-      // Plane 1
-      const plane1 = new THREE.Mesh(
-        new THREE.PlaneGeometry(size, size),
-        grassMaterial
-      );
-      plane1.rotation.x = Math.PI / 2;
-      
-      // Plane 2 (perpendicular)
-      const plane2 = plane1.clone();
-      plane2.rotation.y = Math.PI / 2;
-      
-      group.add(plane1, plane2);
-      return group;
+    // Create crossed-plane grass tuft geometry (reused for all instances)
+    const grassGeometry = new THREE.BufferGeometry();
+    const size = 0.4;
+    
+    // Plane 1 vertices (vertical)
+    const positions1 = [
+      -size/2, 0, 0,  size/2, 0, 0,  size/2, size, 0,
+      -size/2, 0, 0,  size/2, size, 0,  -size/2, size, 0
+    ];
+    
+    // Plane 2 vertices (perpendicular, 90° rotated)
+    const positions2 = [
+      0, 0, -size/2,  0, 0, size/2,  0, size, size/2,
+      0, 0, -size/2,  0, size, size/2,  0, size, -size/2
+    ];
+    
+    // Combine both planes
+    const positions = [...positions1, ...positions2];
+    const uvs = [
+      0, 0,  1, 0,  1, 1,
+      0, 0,  1, 1,  0, 1,
+      0, 0,  1, 0,  1, 1,
+      0, 0,  1, 1,  0, 1
+    ];
+    
+    grassGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    grassGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    grassGeometry.computeVertexNormals();
+    
+    // Exclusion zones (avoid placing grass here)
+    const exclusionZones = [
+      { x: 0, z: 0, radius: 15 },      // Spawn area
+      { x: -70, z: 60, radius: 50 },   // Castle area
+    ];
+    
+    // Helper: Check if position is in exclusion zone
+    const isInExclusionZone = (x, z) => {
+      for (const zone of exclusionZones) {
+        const dx = x - zone.x;
+        const dz = z - zone.z;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < zone.radius * zone.radius) return true;
+      }
+      return false;
     };
     
-    // Scatter grass tufts (800 total)
-    const grassCount = 800;
-    const worldSpread = 100; // -100 to 100
+    // Helper: Check terrain slope (avoid steep slopes)
+    const isTerrainSuitable = (x, z) => {
+      const centerHeight = getTerrainHeight(x, z);
+      const sampleDist = 1.0;
+      
+      // Sample 4 nearby points
+      const h1 = getTerrainHeight(x + sampleDist, z);
+      const h2 = getTerrainHeight(x - sampleDist, z);
+      const h3 = getTerrainHeight(x, z + sampleDist);
+      const h4 = getTerrainHeight(x, z - sampleDist);
+      
+      // Calculate max height difference
+      const maxDiff = Math.max(
+        Math.abs(h1 - centerHeight),
+        Math.abs(h2 - centerHeight),
+        Math.abs(h3 - centerHeight),
+        Math.abs(h4 - centerHeight)
+      );
+      
+      // Reject if slope too steep (> 0.5 units difference over 1 unit distance)
+      return maxDiff < 0.5;
+    };
     
-    for (let i = 0; i < grassCount; i++) {
-      const x = (Math.random() - 0.5) * worldSpread * 2;
-      const z = (Math.random() - 0.5) * worldSpread * 2;
-      const y = getTerrainHeight(x, z);
+    // CLUSTERED PLACEMENT: Generate grass in natural clusters
+    const targetGrassCount = 500; // Target total instances
+    const clusterCount = 60;      // Number of cluster centers
+    const tuftsPerCluster = Math.floor(targetGrassCount / clusterCount); // ~8 per cluster
+    
+    const grassInstances = [];
+    let placedCount = 0;
+    
+    for (let c = 0; c < clusterCount; c++) {
+      // Pick random cluster center
+      const clusterX = (Math.random() - 0.5) * 180; // -90 to 90
+      const clusterZ = (Math.random() - 0.5) * 180;
       
-      const grassTuft = createGrassTuft();
-      grassTuft.position.set(x, y + 0.1, z);
-      grassTuft.rotation.y = Math.random() * Math.PI * 2;
+      // Skip if cluster center in exclusion zone
+      if (isInExclusionZone(clusterX, clusterZ)) continue;
       
-      const scale = 0.8 + Math.random() * 0.4; // 0.8-1.2
-      grassTuft.scale.set(scale, scale, scale);
+      // Place 5-12 tufts around cluster center
+      const tuftsInThisCluster = 5 + Math.floor(Math.random() * 8); // 5-12
       
-      scene.add(grassTuft);
+      for (let t = 0; t < tuftsInThisCluster; t++) {
+        // Random offset from cluster center (3-8 units)
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 3 + Math.random() * 5;
+        const x = clusterX + Math.cos(angle) * distance;
+        const z = clusterZ + Math.sin(angle) * distance;
+        
+        // Check exclusion zones and terrain suitability
+        if (isInExclusionZone(x, z)) continue;
+        if (!isTerrainSuitable(x, z)) continue;
+        
+        const y = getTerrainHeight(x, z);
+        
+        // Store instance data
+        grassInstances.push({
+          position: new THREE.Vector3(x, y + 0.1, z),
+          rotation: Math.random() * Math.PI * 2,
+          scale: 0.7 + Math.random() * 0.6, // 0.7-1.3
+          color: new THREE.Color(
+            0.25 + Math.random() * 0.15, // R: 0.25-0.40
+            0.50 + Math.random() * 0.20, // G: 0.50-0.70 (darker greens)
+            0.25 + Math.random() * 0.15  // B: 0.25-0.40
+          )
+        });
+        
+        placedCount++;
+        if (placedCount >= targetGrassCount) break;
+      }
+      
+      if (placedCount >= targetGrassCount) break;
     }
     
-    console.log(`[GRASS] Generated ${grassCount} grass tufts`);
+    console.log(`[GRASS] Placed ${grassInstances.length} grass tufts in ${clusterCount} clusters`);
+    
+    // Create InstancedMesh (1 draw call for all grass!)
+    const grassInstancedMesh = new THREE.InstancedMesh(
+      grassGeometry,
+      grassMaterial,
+      grassInstances.length
+    );
+    
+    // Set position, rotation, scale for each instance
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const rotation = new THREE.Euler();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    
+    for (let i = 0; i < grassInstances.length; i++) {
+      const instance = grassInstances[i];
+      
+      // Set transform
+      position.copy(instance.position);
+      rotation.set(0, instance.rotation, 0);
+      quaternion.setFromEuler(rotation);
+      scale.set(instance.scale, instance.scale, instance.scale);
+      
+      matrix.compose(position, quaternion, scale);
+      grassInstancedMesh.setMatrixAt(i, matrix);
+      
+      // Set color variation
+      grassInstancedMesh.setColorAt(i, instance.color);
+    }
+    
+    // Update instance attributes
+    grassInstancedMesh.instanceMatrix.needsUpdate = true;
+    if (grassInstancedMesh.instanceColor) {
+      grassInstancedMesh.instanceColor.needsUpdate = true;
+    }
+    
+    grassInstancedMesh.frustumCulled = true; // Enable frustum culling
+    grassInstancedMesh.name = 'grassTufts';
+    
+    scene.add(grassInstancedMesh);
+    
+    console.log(`[GRASS] Instanced mesh created: ${grassInstances.length} instances, 1 draw call`);
     // ==================== END GRASS TUFTS ====================
     
     // Create brush indicator for terrain editor
