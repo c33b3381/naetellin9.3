@@ -968,6 +968,7 @@ const GameWorld = () => {
     // Generate loot for this enemy
     const enemyType = enemy.userData.enemyType || enemy.userData.name?.toLowerCase() || 'default';
     const loot = generateLoot(enemyType, enemy.userData.level || 1);
+    console.log(`[LOOT] Generated ${loot.length} items for ${enemyType} (level ${enemy.userData.level}):`, loot.map(i => i.name));
     
     // Transform enemy into lootable corpse (using LootSystem)
     transformToLootableCorpse(enemy, getTerrainHeight, loot);
