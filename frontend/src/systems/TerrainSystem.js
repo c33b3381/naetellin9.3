@@ -322,13 +322,13 @@ export const getTerrainY = (x, z, offset = 0) => {
  * Each zone has primary colors that blend based on terrain features
  */
 export const TERRAIN_COLORS = {
-  // Starter Village (Oakvale) - Lush green meadows
+  // Starter Village (Oakvale) - Darker, richer green meadows
   starter: {
-    grassLow: { r: 0.22, g: 0.55, b: 0.22 },      // #38A038 - Lush grass
-    grassHigh: { r: 0.35, g: 0.65, b: 0.30 },     // #59A64D - Lighter hilltop grass
+    grassLow: { r: 0.15, g: 0.40, b: 0.15 },      // Darker, richer grass
+    grassHigh: { r: 0.20, g: 0.50, b: 0.20 },     // Darker hilltop grass
     dirt: { r: 0.45, g: 0.35, b: 0.20 },          // #735933 - Brown dirt/paths
     rock: { r: 0.50, g: 0.48, b: 0.45 },          // #807A73 - Rocky slopes
-    wet: { r: 0.12, g: 0.35, b: 0.18 },           // #1F592E - Damp grass
+    wet: { r: 0.10, g: 0.30, b: 0.12 },           // Darker damp grass
   },
   // Darkwood Forest - Deep greens and shadows
   forest: {

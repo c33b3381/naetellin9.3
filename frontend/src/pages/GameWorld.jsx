@@ -2251,7 +2251,7 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
-    const TERRAIN_VERSION = 6; // Increment when terrain generation changes (v6: Completely uniform color - no variations)
+    const TERRAIN_VERSION = 7; // v7: Darker, richer green grass colors
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();
@@ -2327,6 +2327,77 @@ const GameWorld = () => {
     // Store terrain references for editing
     terrainGeometryRef.current = terrainGeometry;
     terrainMeshRef.current = terrain;
+    
+    // ==================== GRASS TUFTS GENERATION ====================
+    console.log('[GRASS] Generating grass tufts...');
+    
+    // Create grass tuft texture (simple green gradient)
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw simple grass tuft shape (radial gradient)
+    const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gradient.addColorStop(0, 'rgba(40, 90, 40, 1)');
+    gradient.addColorStop(0.5, 'rgba(35, 80, 35, 0.8)');
+    gradient.addColorStop(1, 'rgba(30, 70, 30, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 64);
+    
+    const grassTexture = new THREE.CanvasTexture(canvas);
+    grassTexture.needsUpdate = true;
+    
+    // Grass material (transparent, double-sided)
+    const grassMaterial = new THREE.MeshBasicMaterial({
+      map: grassTexture,
+      transparent: true,
+      alphaTest: 0.3,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    
+    // Create crossed-plane grass tuft
+    const createGrassTuft = () => {
+      const group = new THREE.Group();
+      const size = 0.4;
+      
+      // Plane 1
+      const plane1 = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size),
+        grassMaterial
+      );
+      plane1.rotation.x = Math.PI / 2;
+      
+      // Plane 2 (perpendicular)
+      const plane2 = plane1.clone();
+      plane2.rotation.y = Math.PI / 2;
+      
+      group.add(plane1, plane2);
+      return group;
+    };
+    
+    // Scatter grass tufts (800 total)
+    const grassCount = 800;
+    const worldSpread = 100; // -100 to 100
+    
+    for (let i = 0; i < grassCount; i++) {
+      const x = (Math.random() - 0.5) * worldSpread * 2;
+      const z = (Math.random() - 0.5) * worldSpread * 2;
+      const y = getTerrainHeight(x, z);
+      
+      const grassTuft = createGrassTuft();
+      grassTuft.position.set(x, y + 0.1, z);
+      grassTuft.rotation.y = Math.random() * Math.PI * 2;
+      
+      const scale = 0.8 + Math.random() * 0.4; // 0.8-1.2
+      grassTuft.scale.set(scale, scale, scale);
+      
+      scene.add(grassTuft);
+    }
+    
+    console.log(`[GRASS] Generated ${grassCount} grass tufts`);
+    // ==================== END GRASS TUFTS ====================
     
     // Create brush indicator for terrain editor
     const brushGeometry = new THREE.RingGeometry(1, 1.2, 32);
