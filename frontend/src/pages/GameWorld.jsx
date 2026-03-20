@@ -781,9 +781,9 @@ const GameWorld = () => {
       if (leftArm) {
         // Position weapon at hand level (end of forearm)
         weaponMesh.position.set(0, -0.5, 0.15);
-        // Rotate weapon to align with hand grip (blade points upward)
-        weaponMesh.rotation.z = Math.PI;        // 180 degrees - handle at bottom
-        weaponMesh.rotation.x = Math.PI / 6;    // +30 degrees - blade tilts upward
+        // Rotate weapon to align with hand grip (blade points upward along arm)
+        weaponMesh.rotation.z = 0;              // No flip - keep blade naturally up
+        weaponMesh.rotation.x = -Math.PI / 4;   // -45 degrees - blade tilts up along arm
         
         leftArm.add(weaponMesh);
         playerModelRef.current.userData.equippedWeapon = weaponMesh;
