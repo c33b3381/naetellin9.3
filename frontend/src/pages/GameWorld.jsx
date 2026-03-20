@@ -3559,25 +3559,26 @@ const GameWorld = () => {
       
       // === MAIN ROOF (pitched /\ shape) ===
       const roofHeight = 3;
-      const roofWidth = naveWidth + 1;
+      const roofOverhang = 0.5;
       
-      // Left slope
-      const leftRoofGeometry = new THREE.PlaneGeometry(Math.sqrt(roofHeight * roofHeight + (roofWidth/2) * (roofWidth/2)), naveDepth + 1);
-      const leftRoof = new THREE.Mesh(leftRoofGeometry, roofMaterial);
-      leftRoof.position.set(-roofWidth/4, naveHeight + roofHeight/2, 0);
-      leftRoof.rotation.set(0, 0, Math.atan2(roofHeight, roofWidth/2)); // Angle to create slope
-      leftRoof.castShadow = true;
-      leftRoof.receiveShadow = true;
-      churchGroup.add(leftRoof);
+      // Create a proper triangular prism for the roof
+      const roofShape = new THREE.Shape();
+      roofShape.moveTo(-naveWidth/2 - roofOverhang, 0);
+      roofShape.lineTo(0, roofHeight);
+      roofShape.lineTo(naveWidth/2 + roofOverhang, 0);
+      roofShape.lineTo(-naveWidth/2 - roofOverhang, 0);
       
-      // Right slope
-      const rightRoofGeometry = new THREE.PlaneGeometry(Math.sqrt(roofHeight * roofHeight + (roofWidth/2) * (roofWidth/2)), naveDepth + 1);
-      const rightRoof = new THREE.Mesh(rightRoofGeometry, roofMaterial);
-      rightRoof.position.set(roofWidth/4, naveHeight + roofHeight/2, 0);
-      rightRoof.rotation.set(0, 0, -Math.atan2(roofHeight, roofWidth/2)); // Opposite slope
-      rightRoof.castShadow = true;
-      rightRoof.receiveShadow = true;
-      churchGroup.add(rightRoof);
+      const extrudeSettings = {
+        depth: naveDepth + roofOverhang * 2,
+        bevelEnabled: false
+      };
+      
+      const roofGeometry = new THREE.ExtrudeGeometry(roofShape, extrudeSettings);
+      const mainRoof = new THREE.Mesh(roofGeometry, roofMaterial);
+      mainRoof.position.set(0, naveHeight, -naveDepth/2 - roofOverhang);
+      mainRoof.castShadow = true;
+      mainRoof.receiveShadow = true;
+      churchGroup.add(mainRoof);
       
       // === TOWER (tall square tower with spire) ===
       const towerWidth = 4;
@@ -3631,37 +3632,30 @@ const GameWorld = () => {
       
       // Chapel roof (pitched /\ shape)
       const chapelRoofHeight = 2.5;
-      const chapelRoofWidth = chapelWidth + 0.5;
+      const chapelRoofOverhang = 0.3;
       
-      // Left slope
-      const chapelLeftRoofGeometry = new THREE.PlaneGeometry(
-        Math.sqrt(chapelRoofHeight * chapelRoofHeight + (chapelRoofWidth/2) * (chapelRoofWidth/2)), 
-        chapelDepth + 0.5
-      );
-      const chapelLeftRoof = new THREE.Mesh(chapelLeftRoofGeometry, roofMaterial);
-      chapelLeftRoof.position.set(
-        chapel.position.x - chapelRoofWidth/4, 
-        chapelHeight + chapelRoofHeight/2, 
-        chapel.position.z
-      );
-      chapelLeftRoof.rotation.set(0, 0, Math.atan2(chapelRoofHeight, chapelRoofWidth/2));
-      chapelLeftRoof.castShadow = true;
-      churchGroup.add(chapelLeftRoof);
+      // Create triangular prism for chapel roof
+      const chapelRoofShape = new THREE.Shape();
+      chapelRoofShape.moveTo(-chapelWidth/2 - chapelRoofOverhang, 0);
+      chapelRoofShape.lineTo(0, chapelRoofHeight);
+      chapelRoofShape.lineTo(chapelWidth/2 + chapelRoofOverhang, 0);
+      chapelRoofShape.lineTo(-chapelWidth/2 - chapelRoofOverhang, 0);
       
-      // Right slope
-      const chapelRightRoofGeometry = new THREE.PlaneGeometry(
-        Math.sqrt(chapelRoofHeight * chapelRoofHeight + (chapelRoofWidth/2) * (chapelRoofWidth/2)), 
-        chapelDepth + 0.5
+      const chapelExtrudeSettings = {
+        depth: chapelDepth + chapelRoofOverhang * 2,
+        bevelEnabled: false
+      };
+      
+      const chapelRoofGeometry = new THREE.ExtrudeGeometry(chapelRoofShape, chapelExtrudeSettings);
+      const chapelRoof = new THREE.Mesh(chapelRoofGeometry, roofMaterial);
+      chapelRoof.position.set(
+        chapel.position.x, 
+        chapelHeight, 
+        chapel.position.z - chapelDepth/2 - chapelRoofOverhang
       );
-      const chapelRightRoof = new THREE.Mesh(chapelRightRoofGeometry, roofMaterial);
-      chapelRightRoof.position.set(
-        chapel.position.x + chapelRoofWidth/4, 
-        chapelHeight + chapelRoofHeight/2, 
-        chapel.position.z
-      );
-      chapelRightRoof.rotation.set(0, 0, -Math.atan2(chapelRoofHeight, chapelRoofWidth/2));
-      chapelRightRoof.castShadow = true;
-      churchGroup.add(chapelRightRoof);
+      chapelRoof.castShadow = true;
+      chapelRoof.receiveShadow = true;
+      churchGroup.add(chapelRoof);
       
       // === ARCHED DOORWAY (main entrance) ===
       const doorMaterial = new THREE.MeshStandardMaterial({ 
