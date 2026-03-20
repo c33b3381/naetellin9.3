@@ -2860,8 +2860,36 @@ const GameWorld = () => {
     // === CASTLE (Bodiam-style layout) ===
     const createCastle = (centerX, centerZ) => {
       const castleGroup = new THREE.Group();
-      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0x6B6B6B, roughness: 0.9 });
-      const darkStoneMaterial = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
+      
+      // Load castle rock textures
+      const textureLoader = new THREE.TextureLoader();
+      const rockColor = textureLoader.load('/textures/castle/Rocks004_1K-JPG_Color.jpg');
+      const rockRoughness = textureLoader.load('/textures/castle/Rocks004_1K-JPG_Roughness.jpg');
+      const rockNormal = textureLoader.load('/textures/castle/Rocks004_1K-JPG_NormalGL.jpg');
+      
+      // Configure textures for tiling
+      [rockColor, rockRoughness, rockNormal].forEach(texture => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2); // Tile 2x2 on each wall
+        texture.anisotropy = 16;
+      });
+      
+      console.log('[CASTLE] Loading rock textures...');
+      
+      const stoneMaterial = new THREE.MeshStandardMaterial({ 
+        map: rockColor,
+        roughnessMap: rockRoughness,
+        normalMap: rockNormal,
+        roughness: 0.9 
+      });
+      const darkStoneMaterial = new THREE.MeshStandardMaterial({ 
+        map: rockColor,
+        roughnessMap: rockRoughness,
+        normalMap: rockNormal,
+        color: 0x808080, // Slight gray tint
+        roughness: 0.9 
+      });
       
       // Castle dimensions (based on Bodiam layout)
       const outerSize = 30; // Overall castle size
