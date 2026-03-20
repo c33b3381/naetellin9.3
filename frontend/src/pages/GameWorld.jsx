@@ -1061,6 +1061,10 @@ const GameWorld = () => {
   // ==================== CALLBACKS: Enemy Death & Loot ====================
   // Handle enemy death - create lootable corpse
   const handleEnemyDeath = useCallback((enemy, enemyId) => {
+    console.log('[ENEMY DEATH] ===== ENEMY DIED =====');
+    console.log('[ENEMY DEATH] Enemy ID:', enemyId);
+    console.log('[ENEMY DEATH] Enemy name:', enemy.userData.name);
+    
     // Calculate XP based on level difference using mob difficulty system
     const mobLevel = enemy.userData.level || 1;
     const xpGained = calculateXPGain(mobLevel, playerLevel);
@@ -1079,47 +1083,29 @@ const GameWorld = () => {
     const killedEnemyCustomName = enemy.userData.customName || '';
     updateQuestKillProgress(killedEnemyName, killedEnemyType, killedEnemyCustomName);
     
+    // ============ IMMEDIATE CLEANUP - Remove from ALL refs ============
+    console.log('[ENEMY DEATH] Cleaning up refs immediately...');
+    
     // Remove from combat tracking
     if (enemyId) {
       combatEngagedEnemiesRef.current.delete(enemyId);
       npcCombatStateRef.current.delete(enemyId);
     }
     
-    // Generate loot for this enemy
-    const enemyType = enemy.userData.enemyType || enemy.userData.name?.toLowerCase() || 'default';
-    const lootItems = generateLoot(enemyType, enemy.userData.level || 1);
-    console.log(`[LOOT] Generated ${lootItems.length} items for ${enemyType} (level ${enemy.userData.level}):`, lootItems.map(i => i.name));
+    // IMMEDIATELY remove from enemyMeshesRef (before corpse transformation)
+    const originalMeshCount = enemyMeshesRef.current.length;
+    enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== enemyId);
+    console.log('[ENEMY DEATH] Removed from enemyMeshesRef:', originalMeshCount, '→', enemyMeshesRef.current.length);
     
-    // Generate gold drop
-    let goldAmount = 0;
-    if (enemy.userData.goldDrop) {
-      if (Array.isArray(enemy.userData.goldDrop) && enemy.userData.goldDrop.length === 2) {
-        // goldDrop is [min, max] range
-        const [min, max] = enemy.userData.goldDrop;
-        goldAmount = Math.floor(Math.random() * (max - min + 1)) + min;
-      } else if (typeof enemy.userData.goldDrop === 'number') {
-        goldAmount = enemy.userData.goldDrop;
-      }
+    // IMMEDIATELY remove from selectableObjects (before corpse transformation)
+    const originalSelectableCount = selectableObjects.current.length;
+    selectableObjects.current = selectableObjects.current.filter(obj => obj.userData.enemyId !== enemyId);
+    console.log('[ENEMY DEATH] Removed from selectableObjects:', originalSelectableCount, '→', selectableObjects.current.length);
+    
+    // Clear patrol data
+    if (enemyId) {
+      delete enemyPatrolDataRef.current[enemyId];
     }
-    
-    // Structure loot data properly: {gold, items[]}
-    const lootData = {
-      gold: goldAmount,
-      items: lootItems
-    };
-    console.log(`[LOOT] Complete loot data:`, lootData);
-    
-    // Transform enemy into lootable corpse (using LootSystem)
-    transformToLootableCorpse(enemy, getTerrainHeight, lootData);
-    
-    // Store in lootable corpses
-    lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot: lootData });
-    
-    // Add sparkle effect to corpse (using LootSystem)
-    const sparkles = lootSystemCreateSparkles();
-    sparkles.position.set(0, 1.5, 0); // Above corpse
-    enemy.add(sparkles);
-    enemy.userData.sparkles = sparkles;
     
     // Clear target if this was the selected target
     if (selectedTargetRef.current === enemy) {
@@ -1130,39 +1116,84 @@ const GameWorld = () => {
       }
     }
     
-    // Get spawn data for respawn timing (before setTimeout closure)
-    const spawnData = enemySpawnDataRef.current.get(enemyId);
+    console.log('[ENEMY DEATH] ✅ All refs cleaned up');
     
-    // Set corpse despawn timer, then RESPAWN the enemy
-    // Use enemy's respawnTime from spawnData, or default to 2 minutes (120000ms)
-    const respawnTime = (spawnData?.respawnTime || 120) * 1000; // Convert seconds to milliseconds
+    // ============ Generate Loot ============
+    const enemyType = enemy.userData.enemyType || enemy.userData.name?.toLowerCase() || 'default';
+    const lootItems = generateLoot(enemyType, enemy.userData.level || 1);
+    console.log(`[LOOT] Generated ${lootItems.length} items for ${enemyType} (level ${enemy.userData.level}):`, lootItems.map(i => i.name));
+    
+    // Generate gold drop
+    let goldAmount = 0;
+    if (enemy.userData.goldDrop) {
+      if (Array.isArray(enemy.userData.goldDrop) && enemy.userData.goldDrop.length === 2) {
+        const [min, max] = enemy.userData.goldDrop;
+        goldAmount = Math.floor(Math.random() * (max - min + 1)) + min;
+      } else if (typeof enemy.userData.goldDrop === 'number') {
+        goldAmount = enemy.userData.goldDrop;
+      }
+    }
+    
+    const lootData = {
+      gold: goldAmount,
+      items: lootItems
+    };
+    console.log(`[LOOT] Complete loot data:`, lootData);
+    
+    // ============ Transform to Corpse ============
+    // Transform enemy mesh into lootable corpse (visual only)
+    transformToLootableCorpse(enemy, getTerrainHeight, lootData);
+    
+    // Store corpse in lootable corpses map
+    lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot: lootData });
+    
+    // Add sparkle effect to corpse
+    const sparkles = lootSystemCreateSparkles();
+    sparkles.position.set(0, 1.5, 0);
+    enemy.add(sparkles);
+    enemy.userData.sparkles = sparkles;
+    
+    console.log('[ENEMY DEATH] Corpse created and registered');
+    
+    // ============ Schedule Corpse Despawn & Respawn ============
+    const spawnData = enemySpawnDataRef.current.get(enemyId);
+    const respawnTime = (spawnData?.respawnTime || 120) * 1000;
+    
     const despawnTimer = setTimeout(() => {
-      console.log('[RESPAWN] Timer fired for enemy:', enemyId);
+      console.log('[RESPAWN] Despawn timer fired for enemy:', enemyId);
       
       // Remove corpse from scene
       if (sceneRef.current && enemy.parent) {
+        console.log('[RESPAWN] Removing corpse from scene...');
         sceneRef.current.remove(enemy);
-        selectableObjects.current = selectableObjects.current.filter(obj => obj !== enemy);
-        console.log('[RESPAWN] Corpse removed from scene');
+        
+        // Dispose geometry and materials to free memory
+        enemy.traverse((child) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => m.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+        
+        console.log('[RESPAWN] ✅ Corpse removed and disposed');
       }
       
-      // Clean up tracking
-      if (enemyId) {
-        enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== enemyId);
-        delete enemyPatrolDataRef.current[enemyId];
-        lootableCorpsesRef.current.delete(enemyId);
-        corpseTimersRef.current.delete(enemyId);
-      }
+      // Final cleanup of corpse tracking
+      lootableCorpsesRef.current.delete(enemyId);
+      corpseTimersRef.current.delete(enemyId);
       
       // Close loot panel if this corpse was being looted
       setIsLootPanelOpen(prev => {
-        // Check via closure if this was the looted corpse
         return prev;
       });
       setCurrentLootData(null);
       setCurrentLootCorpse(null);
       
-      // RESPAWN: Check if this enemy has spawn data saved (placed enemies respawn)
+      // ============ RESPAWN Enemy ============
       const spawnData = enemySpawnDataRef.current.get(enemyId);
       console.log('[RESPAWN] Checking respawn for enemy:', enemyId);
       console.log('[RESPAWN] Spawn data found:', spawnData);
