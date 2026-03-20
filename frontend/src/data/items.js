@@ -361,6 +361,9 @@ export const LOOT_ITEMS = {
     dropChance: 0.12,
     equipment: true,
     slot: 'weapon',
+    equipSlot: 'mainHand',
+    type: 'equipment',
+    weaponModel: 'sword_basic',
     stats: { damage: 3 }
   },
   iron_sword: {
@@ -373,6 +376,9 @@ export const LOOT_ITEMS = {
     dropChance: 0.06,
     equipment: true,
     slot: 'weapon',
+    equipSlot: 'mainHand',
+    type: 'equipment',
+    weaponModel: 'sword_iron',
     stats: { damage: 8 }
   },
   steel_longsword: {
@@ -385,6 +391,9 @@ export const LOOT_ITEMS = {
     dropChance: 0.025,
     equipment: true,
     slot: 'weapon',
+    equipSlot: 'mainHand',
+    type: 'equipment',
+    weaponModel: 'sword_iron',
     stats: { damage: 15 }
   },
   enchanted_blade: {
@@ -397,6 +406,9 @@ export const LOOT_ITEMS = {
     dropChance: 0.008,
     equipment: true,
     slot: 'weapon',
+    equipSlot: 'mainHand',
+    type: 'equipment',
+    weaponModel: 'sword_iron',
     stats: { damage: 25, magic: 10 }
   },
 
@@ -496,7 +508,7 @@ export const RARITY_ORDER = ['junk', 'common', 'uncommon', 'rare', 'epic', 'lege
 
 // Loot tables for different enemy types
 const ENEMY_LOOT_TABLES = {
-  goblin: ['goblin_ear', 'ruined_leather_scraps', 'dirty_fur', 'torn_cloth', 'minor_health_potion'],
+  goblin: ['goblin_ear', 'ruined_leather_scraps', 'dirty_fur', 'torn_cloth', 'minor_health_potion', 'rusty_sword', 'iron_sword'],
   wolf: ['wolf_pelt', 'wolf_heart', 'pristine_fur', 'sharp_claw', 'worg_fang'],
   spider: ['spider_silk', 'venom_sac', 'cracked_fang', 'bat_wing'],
   bat: ['bat_wing', 'small_fang', 'minor_mana_potion'],

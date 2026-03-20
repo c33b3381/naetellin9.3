@@ -48,6 +48,7 @@ import {
   createWorldAsset, 
   createEnemyMesh as createEnemyMeshFactory, 
   createPlayerMesh,
+  createWeaponMesh,
   createNPCMesh,
   createTrainerMesh,
   createVendorMesh,
@@ -754,6 +755,42 @@ const GameWorld = () => {
   useEffect(() => {
     actionBarSpellsRef.current = actionBarSpells;
   }, [actionBarSpells]);
+  
+  // ==================== WEAPON ATTACHMENT SYSTEM ====================
+  // Attach/detach visible weapon model when equipment changes
+  useEffect(() => {
+    if (!playerRef.current) return;
+    
+    const mainHandItem = equipment?.mainHand;
+    
+    // Remove old weapon if exists
+    if (playerRef.current.userData.equippedWeapon) {
+      const oldWeapon = playerRef.current.userData.equippedWeapon;
+      if (oldWeapon.parent) {
+        oldWeapon.parent.remove(oldWeapon);
+      }
+      playerRef.current.userData.equippedWeapon = null;
+    }
+    
+    // Attach new weapon if equipped
+    if (mainHandItem && mainHandItem.weaponModel) {
+      const weaponMesh = createWeaponMesh(mainHandItem.weaponModel, 1);
+      const rightArm = playerRef.current.getObjectByName('rightArmPivot');
+      
+      if (rightArm) {
+        // Position weapon at hand level (end of forearm)
+        weaponMesh.position.set(0, -0.5, 0.15);
+        // Rotate weapon to align with hand grip (blade points along arm)
+        weaponMesh.rotation.z = Math.PI / 2;
+        weaponMesh.rotation.x = Math.PI / 8; // Slight forward tilt
+        
+        rightArm.add(weaponMesh);
+        playerRef.current.userData.equippedWeapon = weaponMesh;
+        
+        console.log(`[WEAPON] Attached ${mainHandItem.name} to player hand`);
+      }
+    }
+  }, [equipment]);
   
   // Cooldown timer effect - using SpellCooldownSystem
   useEffect(() => {

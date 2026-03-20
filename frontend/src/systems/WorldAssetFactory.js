@@ -2565,6 +2565,98 @@ export default createWorldAsset;
  * @param {string} characterData.hair_color - Hex color for hair (default: '#2C1810')
  * @returns {THREE.Group} Player body group with animation pivots in userData
  */
+/**
+ * Create a weapon mesh (sword, axe, etc.)
+ * @param {string} weaponType - Type of weapon ('sword_basic', 'sword_iron', 'axe', etc.)
+ * @param {number} scale - Scale multiplier
+ * @returns {THREE.Group} Weapon mesh group
+ */
+export const createWeaponMesh = (weaponType = 'sword_basic', scale = 1) => {
+  const weaponGroup = new THREE.Group();
+  weaponGroup.name = `weapon_${weaponType}`;
+  
+  switch (weaponType) {
+    case 'sword_basic':
+    case 'sword_iron':
+    case 'sword': {
+      // Blade
+      const bladeMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xc0c0c0, 
+        metalness: 0.8, 
+        roughness: 0.3 
+      });
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08 * scale, 0.7 * scale, 0.02 * scale),
+        bladeMaterial
+      );
+      blade.position.y = 0.35 * scale;
+      blade.castShadow = true;
+      weaponGroup.add(blade);
+      
+      // Blade tip (pointed)
+      const tip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.04 * scale, 0.1 * scale, 4),
+        bladeMaterial
+      );
+      tip.position.y = 0.75 * scale;
+      tip.rotation.z = Math.PI / 2;
+      tip.castShadow = true;
+      weaponGroup.add(tip);
+      
+      // Cross-guard
+      const guardMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8b7355,
+        metalness: 0.5,
+        roughness: 0.6
+      });
+      const guard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25 * scale, 0.04 * scale, 0.04 * scale),
+        guardMaterial
+      );
+      guard.position.y = 0;
+      guard.castShadow = true;
+      weaponGroup.add(guard);
+      
+      // Hilt (handle)
+      const hiltMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x3d2817,
+        roughness: 0.9
+      });
+      const hilt = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025 * scale, 0.03 * scale, 0.15 * scale, 8),
+        hiltMaterial
+      );
+      hilt.position.y = -0.075 * scale;
+      hilt.castShadow = true;
+      weaponGroup.add(hilt);
+      
+      // Pommel
+      const pommelMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8b7355,
+        metalness: 0.6,
+        roughness: 0.4
+      });
+      const pommel = new THREE.Mesh(
+        new THREE.SphereGeometry(0.04 * scale, 8, 8),
+        pommelMaterial
+      );
+      pommel.position.y = -0.15 * scale;
+      pommel.castShadow = true;
+      weaponGroup.add(pommel);
+      
+      break;
+    }
+    
+    default:
+      console.warn(`Unknown weapon type: ${weaponType}`);
+      // Return empty group for unknown types
+      break;
+  }
+  
+  weaponGroup.userData.weaponType = weaponType;
+  return weaponGroup;
+};
+
 export const createPlayerMesh = (characterData = {}) => {
   const skinColor = characterData.skin_tone || '#E8BEAC';
   const shirtColor = '#2E5090'; // Blue shirt
