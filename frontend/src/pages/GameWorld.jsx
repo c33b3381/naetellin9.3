@@ -2357,30 +2357,60 @@ const GameWorld = () => {
       depthWrite: false,
     });
     
-    // Create crossed-plane grass tuft geometry (reused for all instances)
+    // Create grass blade geometry (tall, thin, blade-like)
     const grassGeometry = new THREE.BufferGeometry();
-    const size = 0.4;
     
-    // Plane 1 vertices (vertical)
-    const positions1 = [
-      -size/2, 0, 0,  size/2, 0, 0,  size/2, size, 0,
-      -size/2, 0, 0,  size/2, size, 0,  -size/2, size, 0
-    ];
+    // Grass blade dimensions
+    const bladeWidth = 0.08;  // Thin blade
+    const bladeHeight = 0.6;  // Tall blade
     
-    // Plane 2 vertices (perpendicular, 90° rotated)
-    const positions2 = [
-      0, 0, -size/2,  0, 0, size/2,  0, size, size/2,
-      0, 0, -size/2,  0, size, size/2,  0, size, -size/2
-    ];
+    // Create 4 grass blades radiating from center (not just 2 crossed planes)
+    const positions = [];
+    const uvs = [];
     
-    // Combine both planes
-    const positions = [...positions1, ...positions2];
-    const uvs = [
-      0, 0,  1, 0,  1, 1,
-      0, 0,  1, 1,  0, 1,
-      0, 0,  1, 0,  1, 1,
-      0, 0,  1, 1,  0, 1
-    ];
+    // Blade 1: Straight vertical
+    positions.push(
+      -bladeWidth/2, 0, 0,  bladeWidth/2, 0, 0,  bladeWidth/2, bladeHeight, 0,
+      -bladeWidth/2, 0, 0,  bladeWidth/2, bladeHeight, 0,  -bladeWidth/2, bladeHeight, 0
+    );
+    
+    // Blade 2: Rotated 45°
+    const cos45 = Math.cos(Math.PI / 4);
+    const sin45 = Math.sin(Math.PI / 4);
+    positions.push(
+      -bladeWidth/2 * cos45, 0, -bladeWidth/2 * sin45,
+      bladeWidth/2 * cos45, 0, bladeWidth/2 * sin45,
+      bladeWidth/2 * cos45, bladeHeight, bladeWidth/2 * sin45,
+      -bladeWidth/2 * cos45, 0, -bladeWidth/2 * sin45,
+      bladeWidth/2 * cos45, bladeHeight, bladeWidth/2 * sin45,
+      -bladeWidth/2 * cos45, bladeHeight, -bladeWidth/2 * sin45
+    );
+    
+    // Blade 3: Rotated 90°
+    positions.push(
+      0, 0, -bladeWidth/2,  0, 0, bladeWidth/2,  0, bladeHeight, bladeWidth/2,
+      0, 0, -bladeWidth/2,  0, bladeHeight, bladeWidth/2,  0, bladeHeight, -bladeWidth/2
+    );
+    
+    // Blade 4: Rotated 135°
+    const cos135 = Math.cos(3 * Math.PI / 4);
+    const sin135 = Math.sin(3 * Math.PI / 4);
+    positions.push(
+      -bladeWidth/2 * cos135, 0, -bladeWidth/2 * sin135,
+      bladeWidth/2 * cos135, 0, bladeWidth/2 * sin135,
+      bladeWidth/2 * cos135, bladeHeight, bladeWidth/2 * sin135,
+      -bladeWidth/2 * cos135, 0, -bladeWidth/2 * sin135,
+      bladeWidth/2 * cos135, bladeHeight, bladeWidth/2 * sin135,
+      -bladeWidth/2 * cos135, bladeHeight, -bladeWidth/2 * sin135
+    );
+    
+    // UVs for all 4 blades (each blade uses same UV mapping)
+    for (let i = 0; i < 4; i++) {
+      uvs.push(
+        0, 0,  1, 0,  1, 1,
+        0, 0,  1, 1,  0, 1
+      );
+    }
     
     grassGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     grassGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
