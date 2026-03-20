@@ -360,7 +360,7 @@ const GameWorld = () => {
   const autoAttackSpeedRef = useRef(COMBAT_CONSTANTS.PLAYER_AUTO_ATTACK_SPEED);
   const globalCooldownRef = useRef(0); // GCD in seconds
   const npcCombatStateRef = useRef(new Map()); // Track combat state per NPC
-  const equipmentRef = useRef(equipment); // Current equipment for combat calculations
+  const equipmentRef = useRef(null); // Current equipment for combat calculations (updated in useEffect)
   
   // Attack animation state
   const attackHandRef = useRef('right'); // Starts with 'right' for weapon combat (alternates to 'left' for unarmed)
