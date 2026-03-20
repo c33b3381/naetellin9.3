@@ -4280,6 +4280,7 @@ const GameWorld = () => {
       if (enemyMesh && sceneRef.current) {
         sceneRef.current.add(enemyMesh);
         enemyMeshesRef.current.push(enemyMesh);
+        selectableObjects.current.push(enemyMesh); // Add to selectable objects for targeting
         
         // Add to placedEnemies state
         setPlacedEnemies(prev => [...prev, {
