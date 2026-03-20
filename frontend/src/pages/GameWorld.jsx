@@ -987,6 +987,9 @@ const GameWorld = () => {
   // ==================== QUEST KILL TRACKING ====================
   // Update quest progress when an enemy is killed - using QuestProgressSystem
   const updateQuestKillProgress = useCallback((enemyName, enemyType, customName) => {
+    console.log('[QUEST PROGRESS] Enemy killed:', { enemyName, enemyType, customName });
+    console.log('[QUEST PROGRESS] Current active quests:', activeQuests.length);
+    
     // Update active quests (predefined quests)
     const activeResult = updateQuestListForEnemyKill(
       activeQuests,
@@ -998,7 +1001,10 @@ const GameWorld = () => {
     );
     
     if (activeResult.anyUpdated) {
+      console.log('[QUEST PROGRESS] Active quests updated!', activeResult.updatedQuests);
       setActiveQuests(activeResult.updatedQuests);
+    } else {
+      console.log('[QUEST PROGRESS] No active quest match found');
     }
     
     // Update custom quests (player-created quests - require NPC assignment)
@@ -1877,8 +1883,14 @@ const GameWorld = () => {
   // ==================== CALLBACKS: Quest Management ====================
   // Quest handlers
   const handleAcceptQuest = useCallback((quest) => {
+    console.log('[QUEST] Accepting quest:', quest);
+    console.log('[QUEST] Quest objectives:', quest.objectives);
     // Add quest to active quests
-    setActiveQuests(prev => [...prev, { ...quest, acceptedAt: Date.now() }]);
+    setActiveQuests(prev => {
+      const updated = [...prev, { ...quest, acceptedAt: Date.now() }];
+      console.log('[QUEST] Updated active quests:', updated);
+      return updated;
+    });
     addNotification(`Quest accepted: ${quest.name}`, 'success');
     setIsQuestDialogOpen(false);
   }, [addNotification]);
