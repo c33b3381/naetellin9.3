@@ -2861,34 +2861,21 @@ const GameWorld = () => {
     const createCastle = (centerX, centerZ) => {
       const castleGroup = new THREE.Group();
       
-      // Load castle rock textures
+      // Load castle stone brick wall texture
       const textureLoader = new THREE.TextureLoader();
-      const rockColor = textureLoader.load('/textures/castle/Rocks004_1K-JPG_Color.jpg');
-      const rockRoughness = textureLoader.load('/textures/castle/Rocks004_1K-JPG_Roughness.jpg');
-      const rockNormal = textureLoader.load('/textures/castle/Rocks004_1K-JPG_NormalGL.jpg');
+      const stoneBrickTexture = textureLoader.load('/textures/castle/stone_brick_wall.png');
       
-      // Configure textures for tiling
-      [rockColor, rockRoughness, rockNormal].forEach(texture => {
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(2, 2); // Tile 2x2 on each wall
-        texture.anisotropy = 16;
-      });
+      // Configure texture for tiling
+      stoneBrickTexture.wrapS = THREE.RepeatWrapping;
+      stoneBrickTexture.wrapT = THREE.RepeatWrapping;
+      stoneBrickTexture.repeat.set(3, 3); // Tile 3x3 for better brick detail
+      stoneBrickTexture.anisotropy = 16;
       
-      console.log('[CASTLE] Loading rock textures...');
+      console.log('[CASTLE] Loading stone brick wall texture...');
       
       const stoneMaterial = new THREE.MeshStandardMaterial({ 
-        map: rockColor,
-        roughnessMap: rockRoughness,
-        normalMap: rockNormal,
-        roughness: 0.9 
-      });
-      const darkStoneMaterial = new THREE.MeshStandardMaterial({ 
-        map: rockColor,
-        roughnessMap: rockRoughness,
-        normalMap: rockNormal,
-        color: 0x808080, // Slight gray tint
-        roughness: 0.9 
+        map: stoneBrickTexture,
+        roughness: 0.8 
       });
       
       // Castle dimensions (based on Bodiam layout)
@@ -2915,21 +2902,6 @@ const GameWorld = () => {
         tower.position.set(pos.x, towerHeight/2, pos.z);
         tower.castShadow = true;
         castleGroup.add(tower);
-        
-        // Tower battlements
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          const battlement = new THREE.Mesh(
-            new THREE.BoxGeometry(1.2, 1.5, 0.8),
-            darkStoneMaterial
-          );
-          battlement.position.set(
-            pos.x + Math.cos(angle) * (towerRadius + 0.3),
-            towerHeight + 0.75,
-            pos.z + Math.sin(angle) * (towerRadius + 0.3)
-          );
-          castleGroup.add(battlement);
-        }
         
         // Tower windows
         for (let level = 0; level < 3; level++) {
@@ -3071,7 +3043,7 @@ const GameWorld = () => {
       // Chapel spire
       const spire = new THREE.Mesh(
         new THREE.ConeGeometry(1.5, 4, 8),
-        darkStoneMaterial
+        stoneMaterial
       );
       spire.position.set(-9, 9, -8);
       castleGroup.add(spire);
