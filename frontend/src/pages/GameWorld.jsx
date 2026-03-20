@@ -3505,15 +3505,44 @@ const GameWorld = () => {
     const createSmallHouse = (x, z, rotation = 0, color = 0x8B4513) => {
       const houseGroup = new THREE.Group();
       
-      // Walls
-      const wallMaterial = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9 });
+      // Load textures
+      const textureLoader = new THREE.TextureLoader();
+      
+      // Wood wall texture (same as big houses)
+      const woodTexture = textureLoader.load('/textures/houses/wood_wall.jpg');
+      woodTexture.wrapS = THREE.RepeatWrapping;
+      woodTexture.wrapT = THREE.RepeatWrapping;
+      woodTexture.repeat.set(1.5, 1.5);
+      
+      // Roof tiles texture (same as big houses)
+      const roofTexture = textureLoader.load('/textures/houses/roof_tiles.webp');
+      roofTexture.wrapS = THREE.RepeatWrapping;
+      roofTexture.wrapT = THREE.RepeatWrapping;
+      roofTexture.repeat.set(2, 2);
+      
+      // Door texture
+      const doorTexture = textureLoader.load('/textures/houses/door.png');
+      
+      // Window glass texture
+      const windowTexture = textureLoader.load('/textures/houses/window_glass.jpg');
+      
+      // Walls with wood texture + darker tint (using provided color)
+      const wallMaterial = new THREE.MeshStandardMaterial({ 
+        map: woodTexture,
+        color: color, // Apply the darker color tint
+        roughness: 0.9 
+      });
       const walls = new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 3.5), wallMaterial);
       walls.position.y = 1.25;
       walls.castShadow = true;
       houseGroup.add(walls);
       
-      // Roof
-      const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+      // Roof with tiles texture + dark brown tint
+      const roofMaterial = new THREE.MeshStandardMaterial({ 
+        map: roofTexture,
+        color: 0x654321, // Dark brown tint
+        roughness: 0.7
+      });
       const roofGeometry = new THREE.ConeGeometry(3.5, 1.5, 4);
       const roof = new THREE.Mesh(roofGeometry, roofMaterial);
       roof.position.y = 3.25;
@@ -3521,15 +3550,25 @@ const GameWorld = () => {
       roof.castShadow = true;
       houseGroup.add(roof);
       
-      // Door
-      const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
-      const door = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.1), doorMaterial);
+      // Door with texture
+      const doorMaterial = new THREE.MeshStandardMaterial({ 
+        map: doorTexture,
+        transparent: true,
+        color: 0x8B7355 // Slight brown tint to match darkness
+      });
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.8), doorMaterial);
       door.position.set(0, 0.9, 1.76);
       houseGroup.add(door);
       
-      // Window
-      const windowMaterial = new THREE.MeshStandardMaterial({ color: 0x87CEEB, emissive: 0x4169E1, emissiveIntensity: 0.2 });
-      const window1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.1), windowMaterial);
+      // Window with glass texture
+      const windowMaterial = new THREE.MeshStandardMaterial({ 
+        map: windowTexture,
+        transparent: true,
+        opacity: 0.8,
+        emissive: 0x4169E1, 
+        emissiveIntensity: 0.15
+      });
+      const window1 = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), windowMaterial);
       window1.position.set(1.2, 1.5, 1.76);
       houseGroup.add(window1);
       
