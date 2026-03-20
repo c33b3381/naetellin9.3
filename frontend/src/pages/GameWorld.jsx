@@ -2861,21 +2861,27 @@ const GameWorld = () => {
     const createCastle = (centerX, centerZ) => {
       const castleGroup = new THREE.Group();
       
-      // Load castle stone floor/wall texture
+      // Load castle paving stones PBR textures
       const textureLoader = new THREE.TextureLoader();
-      const stoneWallTexture = textureLoader.load('/textures/castle/stone_floor_wall.jpg');
+      const pavingColor = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_Color.jpg');
+      const pavingNormal = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_NormalGL.jpg');
+      const pavingRoughness = textureLoader.load('/textures/castle/PavingStones115C_1K-JPG_Roughness.jpg');
       
-      // Configure texture for tiling
-      stoneWallTexture.wrapS = THREE.RepeatWrapping;
-      stoneWallTexture.wrapT = THREE.RepeatWrapping;
-      stoneWallTexture.repeat.set(2, 2); // Tile 2x2 for natural stone look
-      stoneWallTexture.anisotropy = 16;
+      // Configure textures for tiling
+      [pavingColor, pavingNormal, pavingRoughness].forEach(texture => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2); // Tile 2x2 for paving stone pattern
+        texture.anisotropy = 16;
+      });
       
-      console.log('[CASTLE] Loading stone floor/wall texture...');
+      console.log('[CASTLE] Loading paving stones PBR textures...');
       
       const stoneMaterial = new THREE.MeshStandardMaterial({ 
-        map: stoneWallTexture,
-        roughness: 0.85 
+        map: pavingColor,
+        normalMap: pavingNormal,
+        roughnessMap: pavingRoughness,
+        roughness: 0.9 
       });
       
       // Castle dimensions (based on Bodiam layout)
