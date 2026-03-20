@@ -4762,10 +4762,10 @@ const GameWorld = () => {
       { x: castleCenterX + 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Guard' },
       
       // Courtyard forces
-      { x: castleCenterX - 5, z: castleCenterZ + 2, level: 4, name: 'Goblin Warrior' },
+      // Goblin Warriors REMOVED (invisible bug)
       { x: castleCenterX + 6, z: castleCenterZ - 3, level: 2, name: 'Goblin Scout' },
       { x: castleCenterX - 3, z: castleCenterZ - 5, level: 3, name: 'Goblin Raider' },
-      { x: castleCenterX + 4, z: castleCenterZ + 5, level: 4, name: 'Goblin Warrior' },
+      // Goblin Warriors REMOVED (invisible bug)
       
       // Boss
       { x: castleCenterX, z: castleCenterZ, level: 6, name: 'Goblin Chieftain' },
