@@ -2311,8 +2311,25 @@ const GameWorld = () => {
     // Start terrain loading (async)
     loadOrGenerateTerrain();
     
+    // Load aerial grass rock texture
+    const textureLoader = new THREE.TextureLoader();
+    const grassDiffuse = textureLoader.load('/textures/ground/aerial_grass_rock_diff_4k.jpg');
+    const grassRoughness = textureLoader.load('/textures/ground/aerial_grass_rock_rough_4k.jpg');
+    
+    // Configure texture tiling and quality
+    [grassDiffuse, grassRoughness].forEach(texture => {
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(40, 40); // Tile 40x40 across terrain
+      texture.anisotropy = 16; // Better quality at angles
+    });
+    
+    console.log('[TERRAIN] Loading aerial grass rock texture...');
+    
     const terrainMaterial = new THREE.MeshStandardMaterial({
-      vertexColors: true,
+      map: grassDiffuse,            // Grass color texture
+      roughnessMap: grassRoughness, // Surface roughness
+      vertexColors: true,           // Keep zone tinting
       roughness: 0.85,
       flatShading: false
     });
