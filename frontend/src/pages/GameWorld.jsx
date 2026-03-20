@@ -2676,9 +2676,8 @@ const GameWorld = () => {
     for (let i = 0; i < 100; i++) {
       const x = (Math.random() - 0.5) * 500;
       const z = (Math.random() - 0.5) * 500;
-      if (!isInWater(x, z)) {
-        createHillRock(x, z, 0.5 + Math.random() * 1.5);
-      }
+      // NOTE: isInWater check removed since no water bodies exist
+      createHillRock(x, z, 0.5 + Math.random() * 1.5);
     }
     
     // Beach/shore decoration around water
@@ -2695,8 +2694,9 @@ const GameWorld = () => {
       scene.add(shore);
     };
     
-    createShoreline(45, 45, 25); // Lake shore
-    createShoreline(-180, 30, 12); // Oasis shore
+    // NOTE: Shorelines disabled - water bodies removed
+    // createShoreline(45, 45, 25); // Lake shore
+    // createShoreline(-180, 30, 12); // Oasis shore
     
     // Zone transition portals/markers
     const createZonePortal = (x, z, targetZone, label) => {
