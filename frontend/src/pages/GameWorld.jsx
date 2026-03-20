@@ -986,6 +986,19 @@ const GameWorld = () => {
   // ==================== CALLBACKS: Quest Progress ====================
   // ==================== QUEST KILL TRACKING ====================
   // Update quest progress when an enemy is killed - using QuestProgressSystem
+  // Use ref to avoid stale closure issues with quest progress tracking
+  const activeQuestsRef = useRef(activeQuests);
+  const customQuestsRef = useRef(customQuests);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    activeQuestsRef.current = activeQuests;
+  }, [activeQuests]);
+  
+  useEffect(() => {
+    customQuestsRef.current = customQuests;
+  }, [customQuests]);
+  
   const updateQuestKillProgress = useCallback((enemyName, enemyType, customName) => {
     console.log('[QUEST PROGRESS] ===== ENEMY KILLED =====');
     console.log('[QUEST PROGRESS] Enemy details:', { 
@@ -995,12 +1008,17 @@ const GameWorld = () => {
       lowercaseName: enemyName?.toLowerCase(),
       lowercaseType: enemyType?.toLowerCase()
     });
-    console.log('[QUEST PROGRESS] Current active quests count:', activeQuests.length);
-    console.log('[QUEST PROGRESS] Active quests:', JSON.stringify(activeQuests, null, 2));
+    
+    // Read from refs to get latest state
+    const currentActiveQuests = activeQuestsRef.current;
+    const currentCustomQuests = customQuestsRef.current;
+    
+    console.log('[QUEST PROGRESS] Current active quests count:', currentActiveQuests.length);
+    console.log('[QUEST PROGRESS] Active quests:', JSON.stringify(currentActiveQuests, null, 2));
     
     // Update active quests (predefined quests)
     const activeResult = updateQuestListForEnemyKill(
-      activeQuests,
+      currentActiveQuests,
       enemyName,
       enemyType,
       customName,
@@ -1023,7 +1041,7 @@ const GameWorld = () => {
     
     // Update custom quests (player-created quests - require NPC assignment)
     const customResult = updateQuestListForEnemyKill(
-      customQuests,
+      currentCustomQuests,
       enemyName,
       enemyType,
       customName,
@@ -1037,7 +1055,7 @@ const GameWorld = () => {
     }
     
     return activeResult.anyUpdated || customResult.anyUpdated;
-  }, [activeQuests, customQuests, addNotification]);
+  }, [addNotification]); // Remove activeQuests and customQuests from dependencies
   // ==================== END QUEST KILL TRACKING ====================
 
   // ==================== CALLBACKS: Enemy Death & Loot ====================
