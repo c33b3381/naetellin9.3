@@ -3899,13 +3899,13 @@ const GameWorld = () => {
     
     // === PLACE ALL TOWN ELEMENTS ===
     
-    // Market stalls (8 stalls in market area - east side)
-    createMarketStall(12, 8, Math.PI * 0.5, 0xDC143C);      // Red canopy
-    createMarketStall(12, 4, Math.PI * 0.5, 0x228B22);      // Green canopy
-    createMarketStall(12, 0, Math.PI * 0.5, 0x4169E1);      // Blue canopy
-    createMarketStall(12, -4, Math.PI * 0.5, 0xFFD700);     // Gold canopy
-    createMarketStall(-12, 6, -Math.PI * 0.5, 0x9370DB);    // Purple canopy (west)
-    createMarketStall(-12, 2, -Math.PI * 0.5, 0xFF8C00);    // Orange canopy
+    // Market stalls (facing inward towards spawn center)
+    createMarketStall(12, 8, -Math.PI * 0.5, 0xDC143C);      // Red canopy - facing WEST (inward)
+    createMarketStall(12, 4, -Math.PI * 0.5, 0x228B22);      // Green canopy - facing WEST
+    createMarketStall(12, 0, -Math.PI * 0.5, 0x4169E1);      // Blue canopy - facing WEST
+    createMarketStall(12, -4, -Math.PI * 0.5, 0xFFD700);     // Gold canopy - facing WEST
+    createMarketStall(-12, 6, Math.PI * 0.5, 0x9370DB);    // Purple canopy - facing EAST (inward)
+    createMarketStall(-12, 2, Math.PI * 0.5, 0xFF8C00);    // Orange canopy - facing EAST
     createMarketStall(6, 14, Math.PI, 0xDC143C);            // North market
     createMarketStall(-6, 14, Math.PI, 0x228B22);           // North market
     
