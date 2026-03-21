@@ -3909,6 +3909,44 @@ const GameWorld = () => {
     createMarketStall(6, 14, Math.PI, 0xDC143C);            // North market
     createMarketStall(-6, 14, Math.PI, 0x228B22);           // North market
     
+    // ==================== TOWN SQUARE COBBLESTONE GROUND ====================
+    // Create cobblestone plaza in the spawn/market area
+    const createTownSquare = () => {
+      const textureLoader = new THREE.TextureLoader();
+      const cobbleTexture = textureLoader.load('/textures/town/cobblestone.jpg');
+      
+      // Configure texture for tiling
+      cobbleTexture.wrapS = THREE.RepeatWrapping;
+      cobbleTexture.wrapT = THREE.RepeatWrapping;
+      cobbleTexture.repeat.set(6, 4); // Tile 6x4 times for good detail
+      cobbleTexture.anisotropy = 16; // High quality filtering
+      
+      // Create ground plane material
+      const cobbleMaterial = new THREE.MeshStandardMaterial({
+        map: cobbleTexture,
+        roughness: 0.9,
+        metalness: 0.1
+      });
+      
+      // Town square dimensions (covering market stall area)
+      const squareWidth = 30;  // X dimension
+      const squareDepth = 24;  // Z dimension
+      
+      const squareGeometry = new THREE.PlaneGeometry(squareWidth, squareDepth);
+      const townSquare = new THREE.Mesh(squareGeometry, cobbleMaterial);
+      
+      // Position at spawn area (center of market)
+      townSquare.position.set(0, 0.05, 5); // Slightly above ground to prevent z-fighting
+      townSquare.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+      townSquare.receiveShadow = true;
+      
+      scene.add(townSquare);
+      console.log('[TOWN SQUARE] Cobblestone plaza created at spawn area');
+    };
+    
+    createTownSquare();
+    // ==================== END TOWN SQUARE ====================
+    
     // Props scattered around market
     // East market props
     createCrate(14, 10, 1, 0.2);
