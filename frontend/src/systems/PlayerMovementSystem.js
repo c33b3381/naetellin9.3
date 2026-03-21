@@ -26,8 +26,9 @@ import * as THREE from 'three';
 
 // Constants
 const MOVE_SPEED = 8; // units per second
-const JUMP_VELOCITY = 0.2;
-const GRAVITY = 0.01;
+const JUMP_VELOCITY = 14; // Initial upward velocity (units per second) - increased for snappier feel
+const GRAVITY = 45; // Gravity acceleration (units per second^2) - strong for grounded feel
+const FALL_GRAVITY_MULTIPLIER = 1.3; // Faster falling than rising (more natural feel)
 const WATER_SLOWDOWN = 0.3; // 30% slower in water
 const WORLD_BOUND = 115; // Reduced from 290 - Active gameplay zone limit
 const TERRAIN_FOLLOW_SPEED = 10;
@@ -415,11 +416,16 @@ export const updatePlayerMovement = (
   // Target height (terrain minus water if in water)
   const targetY = inWater ? Math.max(terrainHeight, 0.3 - waterDepth * 0.5) : terrainHeight;
   
-  // Jump physics
+  // Jump physics (frame-independent with delta time)
   if (movementState.isJumping) {
-    movementState.velocityY -= GRAVITY;
-    player.position.y += movementState.velocityY;
+    // Apply gravity (faster on descent for more natural feel)
+    const currentGravity = movementState.velocityY < 0 ? GRAVITY * FALL_GRAVITY_MULTIPLIER : GRAVITY;
+    movementState.velocityY -= currentGravity * delta;
     
+    // Update vertical position
+    player.position.y += movementState.velocityY * delta;
+    
+    // Landing detection
     if (player.position.y <= targetY) {
       player.position.y = targetY;
       movementState.isJumping = false;
