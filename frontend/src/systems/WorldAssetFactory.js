@@ -3129,60 +3129,100 @@ export const createQuestGiverMesh = (name, npcId, x, z, getTerrainHeight) => {
   
   // Invisible hitbox
   const hitbox = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 2.5, 1.2),
+    new THREE.BoxGeometry(1.2, 2.8, 1.2),
     new THREE.MeshBasicMaterial({ visible: false })
   );
-  hitbox.position.y = 1.2;
+  hitbox.position.y = 1.4;
   npcGroup.add(hitbox);
   
-  // Body - robed appearance (blue/purple)
-  const robeMaterial = new THREE.MeshStandardMaterial({ color: 0x4B0082 });
+  // Purple wizard robes - flowing appearance
+  const robeMaterial = new THREE.MeshStandardMaterial({ color: 0x6B46C1 }); // Rich purple
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 8, 16), robeMaterial);
   body.position.y = 0.9;
   body.castShadow = true;
   npcGroup.add(body);
   
-  // Robe bottom (wider skirt)
+  // Robe bottom (flowing wizard dress)
   const robeBottom = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.4, 0.5, 16),
+    new THREE.CylinderGeometry(0.2, 0.45, 0.6, 16),
     robeMaterial
   );
-  robeBottom.position.y = 0.35;
+  robeBottom.position.y = 0.3;
   npcGroup.add(robeBottom);
   
-  // Head
-  const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+  // Head - tan/beige face
+  const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xE5C29F }); // Warmer tan
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), skinMaterial);
   head.position.y = 1.55;
   head.castShadow = true;
   npcGroup.add(head);
   
-  // Hood
-  const hoodMaterial = new THREE.MeshStandardMaterial({ color: 0x2F0B5E });
-  const hood = new THREE.Mesh(
-    new THREE.SphereGeometry(0.25, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
-    hoodMaterial
-  );
-  hood.position.y = 1.6;
-  hood.rotation.x = 0.3;
-  npcGroup.add(hood);
+  // Simple facial features - eyes
+  const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x2F2F2F });
+  for (let side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMaterial);
+    eye.position.set(side * 0.08, 1.58, 0.16);
+    npcGroup.add(eye);
+  }
   
-  // Staff
-  const staffMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-  const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2, 8), staffMaterial);
-  staff.position.set(0.4, 1, 0);
+  // Simple smile (small arc)
+  const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x2F2F2F });
+  const smile = new THREE.Mesh(
+    new THREE.TorusGeometry(0.06, 0.015, 8, 16, Math.PI),
+    smileMaterial
+  );
+  smile.position.set(0, 1.48, 0.18);
+  smile.rotation.set(0.3, 0, Math.PI);
+  npcGroup.add(smile);
+  
+  // Purple wizard hat (tall pointed cone)
+  const wizardHatMaterial = new THREE.MeshStandardMaterial({ color: 0x6B46C1 }); // Match robe purple
+  const hatBrim = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.32, 0.35, 0.05, 16),
+    wizardHatMaterial
+  );
+  hatBrim.position.y = 1.73;
+  npcGroup.add(hatBrim);
+  
+  const hatCone = new THREE.Mesh(
+    new THREE.ConeGeometry(0.28, 0.7, 16),
+    wizardHatMaterial
+  );
+  hatCone.position.y = 2.1;
+  hatCone.castShadow = true;
+  npcGroup.add(hatCone);
+  
+  // Visible hands (tan spheres at robe sleeves)
+  for (let side of [-1, 1]) {
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), skinMaterial);
+    hand.position.set(side * 0.35, 0.85, 0.1);
+    hand.castShadow = true;
+    npcGroup.add(hand);
+  }
+  
+  // Black wizard staff with blue glowing orb
+  const staffMaterial = new THREE.MeshStandardMaterial({ color: 0x1F1F1F }); // Dark black/gray
+  const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.1, 8), staffMaterial);
+  staff.position.set(0.42, 1.05, 0);
   staff.rotation.z = 0.1;
+  staff.castShadow = true;
   npcGroup.add(staff);
   
-  // Staff orb
+  // Blue glowing orb on staff top
   const orbMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x00BFFF, 
-    emissive: 0x00BFFF, 
-    emissiveIntensity: 0.5 
+    color: 0x4A90E2,  // Bright blue
+    emissive: 0x2E7DD1, 
+    emissiveIntensity: 0.7 
   });
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), orbMaterial);
-  orb.position.set(0.45, 2.1, 0);
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), orbMaterial);
+  orb.position.set(0.47, 2.2, 0);
+  orb.castShadow = true;
   npcGroup.add(orb);
+  
+  // Add subtle glow effect around orb
+  const glowLight = new THREE.PointLight(0x4A90E2, 0.4, 2);
+  glowLight.position.set(0.47, 2.2, 0);
+  npcGroup.add(glowLight);
   
   // Quest marker - yellow exclamation mark style cone
   const markerMaterial = new THREE.MeshStandardMaterial({ 
@@ -3191,7 +3231,7 @@ export const createQuestGiverMesh = (name, npcId, x, z, getTerrainHeight) => {
     emissiveIntensity: 0.8 
   });
   const questMarker = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 8), markerMaterial);
-  questMarker.position.y = 2.3;
+  questMarker.position.y = 2.7;
   questMarker.userData.questMarker = true;
   npcGroup.add(questMarker);
   
