@@ -3959,7 +3959,7 @@ const GameWorld = () => {
       
       const squareGeometry = new THREE.PlaneGeometry(squareWidth, squareDepth, 32, 32);
       
-      // Lower the center vertices to create a depression
+      // Lower the center vertices to create a flatter, deeper depression
       const positions = squareGeometry.attributes.position;
       for (let i = 0; i < positions.count; i++) {
         const x = positions.getX(i);
@@ -3969,10 +3969,21 @@ const GameWorld = () => {
         const distanceFromCenter = Math.sqrt(x * x + z * z);
         const maxRadius = Math.min(squareWidth, squareDepth) / 2;
         
-        // Lower vertices near center (create bowl/depression)
-        if (distanceFromCenter < maxRadius * 0.8) {
-          const depthFactor = 1 - (distanceFromCenter / (maxRadius * 0.8));
-          const depression = depthFactor * 0.3; // Lower by up to 0.3 units at center
+        // Create flatter center with deeper depression
+        if (distanceFromCenter < maxRadius * 0.9) {
+          let depression;
+          
+          // Flat center zone (60% of radius)
+          if (distanceFromCenter < maxRadius * 0.6) {
+            depression = 0.8; // Flat lowered area - 0.8 units deep
+          } 
+          // Gradual slope at edges (60-90% of radius)
+          else {
+            const edgeDistance = (distanceFromCenter - maxRadius * 0.6) / (maxRadius * 0.3);
+            const slopeFactor = 1 - edgeDistance; // 1.0 at inner edge, 0.0 at outer edge
+            depression = 0.8 * slopeFactor; // Gradient from 0.8 to 0
+          }
+          
           positions.setZ(i, positions.getZ(i) - depression);
         }
       }
