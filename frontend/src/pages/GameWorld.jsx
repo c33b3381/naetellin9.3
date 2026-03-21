@@ -4996,8 +4996,92 @@ const GameWorld = () => {
     // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
     
     // ==================== CASTLE AREA ====================
-    // ALL CASTLE ENEMIES REMOVED - invisible bug issue
-    // Castle area is now completely clear
+    // Goblin castle garrison - 10 guards protecting the castle
+    const castleCenterX = -70;
+    const castleCenterZ = 60;
+    
+    const castleGoblins = [
+      // Main gate guards (2)
+      { x: castleCenterX - 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Gate Guard' },
+      { x: castleCenterX + 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Gate Guard' },
+      
+      // Courtyard patrol (3)
+      { x: castleCenterX - 5, z: castleCenterZ + 8, level: 2, name: 'Goblin Scout' },
+      { x: castleCenterX + 5, z: castleCenterZ + 8, level: 2, name: 'Goblin Scout' },
+      { x: castleCenterX, z: castleCenterZ + 3, level: 4, name: 'Goblin Sergeant' },
+      
+      // Perimeter guards (3)
+      { x: castleCenterX - 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
+      { x: castleCenterX + 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
+      { x: castleCenterX, z: castleCenterZ - 10, level: 3, name: 'Goblin Sentry' },
+      
+      // Interior guards (2)
+      { x: castleCenterX - 6, z: castleCenterZ - 2, level: 3, name: 'Goblin Warrior' },
+      { x: castleCenterX + 6, z: castleCenterZ - 2, level: 3, name: 'Goblin Warrior' },
+    ];
+    
+    // Spawn castle goblins with full loot system support
+    castleGoblins.forEach(goblinData => {
+      const goblinBase = {
+        label: 'Goblin',
+        color: '#4a7c23',
+        baseLevel: 1,
+        baseHealth: 50,
+        baseDamage: 3,
+        xpReward: 15,
+        goldDrop: [2, 8] // 2-8 gold per kill
+      };
+      
+      const levelMultiplier = 1 + (goblinData.level - goblinBase.baseLevel) * 0.1;
+      const balanceMultiplier = 0.35;
+      
+      const enemyData = {
+        enemyType: 'goblin',
+        name: goblinData.name,
+        level: goblinData.level,
+        maxHealth: Math.round(goblinBase.baseHealth * levelMultiplier * balanceMultiplier),
+        currentHealth: Math.round(goblinBase.baseHealth * levelMultiplier * balanceMultiplier),
+        damage: Math.round(goblinBase.baseDamage * levelMultiplier * balanceMultiplier),
+        xpReward: Math.round(goblinBase.xpReward * levelMultiplier),
+        goldDrop: goblinBase.goldDrop,
+        color: goblinBase.color,
+        aggroRange: AI_CONSTANTS.AGGRO_RANGE,
+        leashRange: AI_CONSTANTS.LEASH_RANGE
+      };
+      
+      // Create enemy mesh (this hooks into the full loot system)
+      const enemyId = `castle_guard_${goblinData.x}_${goblinData.z}`;
+      const enemyMesh = createEnemyMesh(
+        goblinData.x,
+        goblinData.z,
+        enemyData,
+        enemyId
+      );
+      
+      if (enemyMesh && sceneRef.current) {
+        sceneRef.current.add(enemyMesh);
+        enemyMeshesRef.current.push(enemyMesh);
+        selectableObjects.current.push(enemyMesh);
+        
+        // Store spawn data for respawning
+        enemySpawnDataRef.current.set(enemyId, {
+          x: goblinData.x,
+          z: goblinData.z,
+          enemyData: enemyData,
+          enemyId: enemyId
+        });
+        
+        // Add to placedEnemies state
+        setPlacedEnemies(prev => [...prev, {
+          ...enemyData,
+          x: goblinData.x,
+          z: goblinData.z,
+          enemyId: enemyId
+        }]);
+      }
+    });
+    console.log('[CASTLE] Spawned 10 goblin guards with full loot support');
+    // ==================== END CASTLE AREA ====================
     
     // ==================== FIELD GOBLINS (RESPAWNED) ====================
     // Goblin camp in open fields - away from castle
@@ -5189,13 +5273,13 @@ const GameWorld = () => {
           
           await waitForCreateEnemyMesh();
           
-          // Filter out castle enemies (invisible bug fix)
+          // Filter out OLD castle_goblin enemies (invisible bug) - allow NEW castle_guard enemies
           const validEnemies = data.enemies.filter(enemy => 
             !enemy.id?.includes('castle_goblin') && 
             !enemy.enemyId?.includes('castle_goblin')
           );
           
-          console.log(`[Enemy Load] Filtered ${data.enemies.length - validEnemies.length} castle enemies. Loading ${validEnemies.length} valid enemies.`);
+          console.log(`[Enemy Load] Filtered ${data.enemies.length - validEnemies.length} old castle_goblin enemies. Loading ${validEnemies.length} valid enemies.`);
           
           validEnemies.forEach(enemy => {
             // Use saved color or derive from enemy type
