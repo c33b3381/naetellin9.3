@@ -1097,10 +1097,9 @@ const GameWorld = () => {
     enemyMeshesRef.current = enemyMeshesRef.current.filter(e => e.userData.enemyId !== enemyId);
     console.log('[ENEMY DEATH] Removed from enemyMeshesRef:', originalMeshCount, '→', enemyMeshesRef.current.length);
     
-    // IMMEDIATELY remove from selectableObjects (before corpse transformation)
-    const originalSelectableCount = selectableObjects.current.length;
-    selectableObjects.current = selectableObjects.current.filter(obj => obj.userData.enemyId !== enemyId);
-    console.log('[ENEMY DEATH] Removed from selectableObjects:', originalSelectableCount, '→', selectableObjects.current.length);
+    // KEEP in selectableObjects for corpse looting (DO NOT REMOVE)
+    // Corpses need to stay selectable so right-click looting works
+    console.log('[ENEMY DEATH] Keeping corpse in selectableObjects for looting');
     
     // Clear patrol data
     if (enemyId) {
@@ -1142,10 +1141,19 @@ const GameWorld = () => {
     
     // ============ Transform to Corpse ============
     // Transform enemy mesh into lootable corpse (visual only)
+    console.log('[CORPSE] Transforming enemy to corpse, enemyId:', enemyId);
+    console.log('[CORPSE] Loot data to attach:', lootData);
     transformToLootableCorpse(enemy, getTerrainHeight, lootData);
     
     // Store corpse in lootable corpses map
     lootableCorpsesRef.current.set(enemyId, { mesh: enemy, loot: lootData });
+    console.log('[CORPSE] Stored in lootableCorpsesRef. Total corpses:', lootableCorpsesRef.current.size);
+    console.log('[CORPSE] Corpse userData:', {
+      isCorpse: enemy.userData.isCorpse,
+      enemyId: enemy.userData.enemyId,
+      interactable: enemy.userData.interactable,
+      lootData: enemy.userData.lootData
+    });
     
     // Add sparkle effect to corpse
     const sparkles = lootSystemCreateSparkles();
@@ -1273,12 +1281,20 @@ const GameWorld = () => {
   
   // Handle looting a corpse
   const handleOpenLoot = useCallback((corpseId) => {
+    console.log('[HANDLE OPEN LOOT] Called with corpseId:', corpseId);
     const corpseData = lootableCorpsesRef.current.get(corpseId);
-    if (!corpseData) return;
+    console.log('[HANDLE OPEN LOOT] Retrieved corpseData:', corpseData);
     
+    if (!corpseData) {
+      console.log('[HANDLE OPEN LOOT] No corpse data found, aborting');
+      return;
+    }
+    
+    console.log('[HANDLE OPEN LOOT] Setting loot panel state...');
     setCurrentLootData(corpseData.loot);
     setCurrentLootCorpse(corpseId);
     setIsLootPanelOpen(true);
+    console.log('[HANDLE OPEN LOOT] ✅ Loot panel should now be open!');
   }, []);
   
   // Handle looting an individual item - using LootSystem
@@ -5596,18 +5612,30 @@ const GameWorld = () => {
               
               // CORPSE LOOTING - Check if this is a lootable corpse
               if (targetObject.userData.isCorpse && targetObject.userData.enemyId) {
+                console.log('[RIGHT-CLICK] Clicked on corpse!');
+                console.log('[RIGHT-CLICK] Corpse enemyId:', targetObject.userData.enemyId);
+                console.log('[RIGHT-CLICK] Corpse userData:', targetObject.userData);
+                
                 const corpseId = targetObject.userData.enemyId;
                 const corpseData = lootableCorpsesRef.current.get(corpseId);
+                
+                console.log('[RIGHT-CLICK] Looking up corpseId in lootableCorpsesRef:', corpseId);
+                console.log('[RIGHT-CLICK] Found corpseData:', corpseData);
+                console.log('[RIGHT-CLICK] Total corpses in ref:', lootableCorpsesRef.current.size);
                 
                 // Check distance to corpse (must be within 8 yards - more lenient)
                 const dx = playerRef.current.position.x - targetObject.position.x;
                 const dz = playerRef.current.position.z - targetObject.position.z;
                 const distance = Math.sqrt(dx * dx + dz * dz);
                 
+                console.log('[RIGHT-CLICK] Distance to corpse:', distance.toFixed(2));
+                
                 if (distance <= 8) {
                   if (corpseData) {
+                    console.log('[RIGHT-CLICK] Opening loot panel with data:', corpseData.loot);
                     handleOpenLoot(corpseId);
                   } else {
+                    console.log('[RIGHT-CLICK] No corpse data found for:', corpseId);
                     addNotification('This corpse has no loot', 'info');
                   }
                 } else {
