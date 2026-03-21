@@ -4984,35 +4984,84 @@ const GameWorld = () => {
     // ==================== END DIRECTIONAL MARKERS ====================
     
     // ==================== TREE SPAWNING ====================
-    // Spawn simple geometric trees FAR from spawn in red-circled forest zones
-    console.log('[TREES] Spawning trees in distant forest zones...');
+    // Spawn trees with LARGE spacing in wilderness zones (far from buildings/graveyard)
+    console.log('[TREES] Spawning well-spaced trees in wilderness zones...');
     
     const treeZones = [
-      // Zone 1: Northwest forest (upper-left on aerial map)
-      { centerX: -35, centerZ: -25, radius: 10, count: 14 },
-      // Zone 2: Northeast forest (upper-right on aerial map)  
-      { centerX: 38, centerZ: -22, radius: 10, count: 16 },
-      // Zone 3: Southeast forest (bottom on aerial map)
-      { centerX: 30, centerZ: 38, radius: 12, count: 18 }
+      // Zone 1: Far northwest wilderness (away from graveyard)
+      { centerX: -55, centerZ: -45, radius: 20, count: 14 },
+      // Zone 2: Far northeast wilderness
+      { centerX: 60, centerZ: -40, radius: 20, count: 16 },
+      // Zone 3: Far southeast wilderness
+      { centerX: 55, centerZ: 55, radius: 22, count: 18 }
     ];
+    
+    // No-tree zones - keep trees away from buildings/graveyard/spawn
+    const treeExclusionZones = [
+      { x: 0, z: 0, radius: 30 },      // Spawn/town center
+      { x: -28, z: -14, radius: 15 },  // Graveyard area
+      { x: 30, z: 10, radius: 12 },    // Castle area
+      { x: -30, z: 10, radius: 10 }    // Church area
+    ];
+    
+    const isInTreeExclusionZone = (x, z) => {
+      for (const zone of treeExclusionZones) {
+        const dx = x - zone.x;
+        const dz = z - zone.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < zone.radius) return true;
+      }
+      return false;
+    };
     
     let totalTrees = 0;
     treeZones.forEach((zone) => {
+      const spawnedTrees = [];
+      const minDistance = 6.0; // Minimum 6 units between trees (increased spacing)
+      
       for (let i = 0; i < zone.count; i++) {
-        // Random position within circular zone
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * zone.radius;
-        const x = zone.centerX + Math.cos(angle) * dist;
-        const z = zone.centerZ + Math.sin(angle) * dist;
+        let x, z;
+        let attempts = 0;
+        let validPosition = false;
         
-        // Random scale for variety
-        const scale = 0.8 + Math.random() * 0.4;
-        createTree(x, z, scale);
-        totalTrees++;
+        while (!validPosition && attempts < 50) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * zone.radius;
+          x = zone.centerX + Math.cos(angle) * dist;
+          z = zone.centerZ + Math.sin(angle) * dist;
+          
+          // Check not in exclusion zone
+          if (isInTreeExclusionZone(x, z)) {
+            attempts++;
+            continue;
+          }
+          
+          // Check spacing from other trees
+          validPosition = true;
+          for (const tree of spawnedTrees) {
+            const dx = tree.x - x;
+            const dz = tree.z - z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance < minDistance) {
+              validPosition = false;
+              break;
+            }
+          }
+          
+          attempts++;
+        }
+        
+        if (validPosition) {
+          spawnedTrees.push({ x, z });
+          const scale = 0.8 + Math.random() * 0.4;
+          createTree(x, z, scale);
+          totalTrees++;
+        }
       }
     });
     
-    console.log(`[TREES] ✅ Spawned ${totalTrees} trees in ${treeZones.length} distant forest zones`);
+    console.log(`[TREES] ✅ Spawned ${totalTrees} well-spaced trees in wilderness (graveyard/buildings excluded)`);
     
     // ==================== END TREE SPAWNING ====================
     
