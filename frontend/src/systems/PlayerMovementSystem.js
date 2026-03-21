@@ -356,6 +356,10 @@ export const updatePlayerMovement = (
     rotatedDirection = direction.clone();
     rotatedDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraState.rotationY);
     
+    // CRITICAL: Re-normalize after rotation to ensure consistent speed
+    // Without this, rotated vectors can have different lengths
+    rotatedDirection.normalize();
+    
     // ==================== AXIS-SEPARATED COLLISION FOR WALL SLIDING ====================
     // Instead of moving both axes and reverting both on collision,
     // we test X and Z separately to allow sliding along walls
@@ -431,10 +435,12 @@ export const updatePlayerMovement = (
     }
   }
   
-  // Slow down in water
-  if (inWater && rotatedDirection.length() > 0) {
-    player.position.x -= rotatedDirection.x * moveSpeed * WATER_SLOWDOWN;
-    player.position.z -= rotatedDirection.z * moveSpeed * WATER_SLOWDOWN;
+  // Slow down in water (apply slowdown modifier to movement)
+  if (inWater && moved) {
+    // Reduce position change by water slowdown factor
+    const waterReduction = moveSpeed * WATER_SLOWDOWN;
+    player.position.x -= rotatedDirection.x * waterReduction;
+    player.position.z -= rotatedDirection.z * waterReduction;
   }
   
   // Clamp position to world bounds
