@@ -4995,41 +4995,33 @@ const GameWorld = () => {
     // createMonster(-28, 30, 0x4a7c23, 'Goblin Warrior', 'goblin', 3);
     // createMonster(-33, 22, 0x3d6b1a, 'Goblin Shaman', 'goblin', 5);
     
-    // ==================== CASTLE GOBLIN INVADERS ====================
-    // Pack of goblins have taken over the castle at (-70, 60)!
-    // These are properly configured with the enemy AI system
-    const castleCenterX = -70;
-    const castleCenterZ = 60;
+    // ==================== CASTLE AREA ====================
+    // ALL CASTLE ENEMIES REMOVED - invisible bug issue
+    // Castle area is now completely clear
     
-    // Define goblin positions with proper enemy data structure
-    const castleGoblins = [
-      // Entrance guards
-      { x: castleCenterX - 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Guard' },
-      { x: castleCenterX + 2, z: castleCenterZ + 18, level: 3, name: 'Goblin Guard' },
+    // ==================== FIELD GOBLINS (RESPAWNED) ====================
+    // Goblin camp in open fields - away from castle
+    const fieldGoblins = [
+      // North field patrol
+      { x: -30, z: 25, level: 2, name: 'Goblin Scout' },
+      { x: -35, z: 28, level: 1, name: 'Goblin Grunt' },
+      { x: -28, z: 30, level: 3, name: 'Goblin Warrior' },
       
-      // Courtyard forces
-      // Goblin Warriors REMOVED (invisible bug)
-      { x: castleCenterX + 6, z: castleCenterZ - 3, level: 2, name: 'Goblin Scout' },
-      { x: castleCenterX - 3, z: castleCenterZ - 5, level: 3, name: 'Goblin Raider' },
-      // Goblin Warriors REMOVED (invisible bug)
+      // East field group
+      { x: 30, z: 20, level: 2, name: 'Goblin Scout' },
+      { x: 35, z: 18, level: 2, name: 'Goblin Raider' },
       
-      // Boss
-      { x: castleCenterX, z: castleCenterZ, level: 6, name: 'Goblin Chieftain' },
+      // South patrol
+      { x: -20, z: -30, level: 1, name: 'Goblin Grunt' },
+      { x: -18, z: -35, level: 2, name: 'Goblin Scout' },
       
-      // Interior raiders
-      { x: castleCenterX - 8, z: castleCenterZ + 5, level: 2, name: 'Goblin Looter' },
-      { x: castleCenterX + 8, z: castleCenterZ - 8, level: 5, name: 'Goblin Shaman' },
-      
-      // Wall sentries
-      { x: castleCenterX - 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
-      { x: castleCenterX + 12, z: castleCenterZ + 12, level: 2, name: 'Goblin Lookout' },
-      { x: castleCenterX - 12, z: castleCenterZ - 12, level: 3, name: 'Goblin Sentry' },
-      { x: castleCenterX + 12, z: castleCenterZ - 12, level: 3, name: 'Goblin Sentry' },
+      // Forest edge
+      { x: 40, z: -20, level: 3, name: 'Goblin Warrior' },
+      { x: 38, z: -25, level: 2, name: 'Goblin Raider' },
     ];
     
-    // Create enemies with proper AI using the enemy system
-    castleGoblins.forEach(goblinData => {
-      // Get goblin stats from database
+    // Spawn field goblins using direct creation method
+    fieldGoblins.forEach(goblinData => {
       const goblinBase = {
         label: 'Goblin',
         color: '#4a7c23',
@@ -5041,7 +5033,7 @@ const GameWorld = () => {
       };
       
       const levelMultiplier = 1 + (goblinData.level - goblinBase.baseLevel) * 0.1;
-      const balanceMultiplier = 0.35; // Balanced stats (35% of base)
+      const balanceMultiplier = 0.35;
       
       const enemyData = {
         enemyType: 'goblin',
@@ -5053,14 +5045,12 @@ const GameWorld = () => {
         xpReward: Math.round(goblinBase.xpReward * levelMultiplier),
         goldDrop: goblinBase.goldDrop,
         color: goblinBase.color,
-        patrolRadius: 8, // Patrol within castle
-        respawnTime: 120, // 2 minute respawn
-        tier: 'tier1',
-        position: { x: goblinData.x, y: 0, z: goblinData.z }
+        aggroRange: AI_CONSTANTS.AGGRO_RANGE,
+        leashRange: AI_CONSTANTS.LEASH_RANGE
       };
       
-      // Create enemy with full AI
-      const enemyId = `castle_goblin_${goblinData.x}_${goblinData.z}`;
+      // Create enemy mesh directly
+      const enemyId = `field_goblin_${goblinData.x}_${goblinData.z}`;
       const enemyMesh = createEnemyMesh(
         goblinData.x,
         goblinData.z,
@@ -5071,7 +5061,7 @@ const GameWorld = () => {
       if (enemyMesh && sceneRef.current) {
         sceneRef.current.add(enemyMesh);
         enemyMeshesRef.current.push(enemyMesh);
-        selectableObjects.current.push(enemyMesh); // Add to selectable objects for targeting
+        selectableObjects.current.push(enemyMesh);
         
         // Store spawn data for respawning
         enemySpawnDataRef.current.set(enemyId, {
@@ -5090,7 +5080,7 @@ const GameWorld = () => {
         }]);
       }
     });
-    // ==================== END CASTLE GOBLIN INVADERS ====================
+    // ==================== END FIELD GOBLINS ====================
     
     // Wolf pack
     // createMonster(30, 25, 0x808080, 'Gray Wolf', 'wolf', 4);
@@ -5199,7 +5189,15 @@ const GameWorld = () => {
           
           await waitForCreateEnemyMesh();
           
-          data.enemies.forEach(enemy => {
+          // Filter out castle enemies (invisible bug fix)
+          const validEnemies = data.enemies.filter(enemy => 
+            !enemy.id?.includes('castle_goblin') && 
+            !enemy.enemyId?.includes('castle_goblin')
+          );
+          
+          console.log(`[Enemy Load] Filtered ${data.enemies.length - validEnemies.length} castle enemies. Loading ${validEnemies.length} valid enemies.`);
+          
+          validEnemies.forEach(enemy => {
             // Use saved color or derive from enemy type
             const color = enemy.color ? 
               (typeof enemy.color === 'string' ? parseInt(enemy.color.replace('#', ''), 16) : enemy.color) :
@@ -5236,12 +5234,12 @@ const GameWorld = () => {
             });
           });
           
-          // Store full enemy data including all properties
-          setPlacedEnemies(data.enemies.map(enemy => ({
+          // Store full enemy data including all properties (only valid enemies)
+          setPlacedEnemies(validEnemies.map(enemy => ({
             ...enemy,
             position: { x: enemy.x, y: enemy.y || 0, z: enemy.z }
           })));
-          console.log('Saved enemies loaded successfully');
+          console.log('Saved enemies loaded successfully (castle enemies excluded)');
         }
       } catch (err) {
         console.error('Failed to load saved enemies:', err);
