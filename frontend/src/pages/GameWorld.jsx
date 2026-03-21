@@ -190,6 +190,9 @@ const LoadingSpinner = () => (
  * logic now lives in dedicated system files.
  */
 
+// Terrain Version Constant - v7: Darker, richer green grass colors
+const TERRAIN_VERSION = 7;
+
 // Floating damage text component data
 const GameWorld = () => {
   // ==================== REFS: Three.js Core ====================
@@ -2361,7 +2364,6 @@ const GameWorld = () => {
     };
     
     // Load terrain from database or generate new
-    const TERRAIN_VERSION = 7; // v7: Darker, richer green grass colors
     const loadOrGenerateTerrain = async () => {
       try {
         const result = await fetchTerrain();
