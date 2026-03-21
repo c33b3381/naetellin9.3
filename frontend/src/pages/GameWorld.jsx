@@ -4983,6 +4983,33 @@ const GameWorld = () => {
     
     // ==================== END DIRECTIONAL MARKERS ====================
     
+    // ==================== TREE SPAWNING ====================
+    // Spawn simple geometric trees in red-circled zones from aerial map
+    console.log('[TREES] Spawning trees in forest zones...');
+    
+    const treeZones = [
+      { centerX: -6, centerZ: 14, radius: 3.5, count: 14 },   // Northwest zone
+      { centerX: 2, centerZ: 16, radius: 3.5, count: 16 },    // Northeast zone  
+      { centerX: -1, centerZ: 6, radius: 4.0, count: 18 }     // South zone
+    ];
+    
+    let totalTrees = 0;
+    treeZones.forEach((zone) => {
+      for (let i = 0; i < zone.count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * zone.radius;
+        const x = zone.centerX + Math.cos(angle) * dist;
+        const z = zone.centerZ + Math.sin(angle) * dist;
+        const scale = 0.8 + Math.random() * 0.4;
+        createTree(x, z, scale);
+        totalTrees++;
+      }
+    });
+    
+    console.log(`[TREES] ✅ Spawned ${totalTrees} trees in ${treeZones.length} zones`);
+    
+    // ==================== END TREE SPAWNING ====================
+    
     // ==================== END MARKET NPCs ====================
     
     // Monsters with health bars

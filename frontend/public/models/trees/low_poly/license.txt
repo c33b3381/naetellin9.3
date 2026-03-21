@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low Poly Stylized Tree
+* source:	https://sketchfab.com/3d-models/low-poly-stylized-tree-bc1df9f4b7de421886b84af8ee8bcea1
+* author:	3Dev (https://sketchfab.com/3Dev)
+
+Model License:
+* license type:	CC-BY-SA-4.0 (http://creativecommons.org/licenses/by-sa/4.0/)
+* requirements:	Author must be credited. Modified versions must have the same license. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low Poly Stylized Tree" (https://sketchfab.com/3d-models/low-poly-stylized-tree-bc1df9f4b7de421886b84af8ee8bcea1) by 3Dev (https://sketchfab.com/3Dev) licensed under CC-BY-SA-4.0 (http://creativecommons.org/licenses/by-sa/4.0/)
