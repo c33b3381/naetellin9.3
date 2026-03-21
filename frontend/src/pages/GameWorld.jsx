@@ -7057,7 +7057,7 @@ const GameWorld = () => {
         seed: 42,
         heightmap,
         colors,
-        version: 1
+        version: TERRAIN_VERSION // Use constant to stay in sync
       });
       
       addNotification('Terrain saved successfully!', 'success');
