@@ -3910,7 +3910,7 @@ const GameWorld = () => {
     createMarketStall(-6, 14, Math.PI, 0x228B22);           // North market
     
     // ==================== TOWN SQUARE COBBLESTONE GROUND ====================
-    // Create cobblestone plaza in the spawn/market area
+    // Create cobblestone plaza with soft edges and lowered ground
     const createTownSquare = () => {
       const textureLoader = new THREE.TextureLoader();
       const cobbleTexture = textureLoader.load('/textures/town/cobblestone.jpg');
@@ -3921,27 +3921,73 @@ const GameWorld = () => {
       cobbleTexture.repeat.set(6, 4); // Tile 6x4 times for good detail
       cobbleTexture.anisotropy = 16; // High quality filtering
       
-      // Create ground plane material
+      // Create alpha map for soft edges (fade at borders)
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      
+      // Create radial gradient for soft circular fade
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = canvas.width / 2;
+      
+      const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.5, centerX, centerY, radius);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');    // Fully opaque at center
+      gradient.addColorStop(0.7, 'rgba(255, 255, 255, 1)');  // Stay opaque
+      gradient.addColorStop(0.95, 'rgba(255, 255, 255, 0.3)'); // Fade at edges
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');    // Transparent at border
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const alphaTexture = new THREE.CanvasTexture(canvas);
+      
+      // Create ground plane material with soft edges
       const cobbleMaterial = new THREE.MeshStandardMaterial({
         map: cobbleTexture,
+        alphaMap: alphaTexture,
+        transparent: true,
         roughness: 0.9,
-        metalness: 0.1
+        metalness: 0.1,
+        side: THREE.DoubleSide
       });
       
       // Town square dimensions (covering market stall area)
-      const squareWidth = 30;  // X dimension
-      const squareDepth = 24;  // Z dimension
+      const squareWidth = 32;  // X dimension
+      const squareDepth = 26;  // Z dimension
       
-      const squareGeometry = new THREE.PlaneGeometry(squareWidth, squareDepth);
+      const squareGeometry = new THREE.PlaneGeometry(squareWidth, squareDepth, 32, 32);
+      
+      // Lower the center vertices to create a depression
+      const positions = squareGeometry.attributes.position;
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const z = positions.getY(i); // Y in plane geometry is Z in world
+        
+        // Calculate distance from center
+        const distanceFromCenter = Math.sqrt(x * x + z * z);
+        const maxRadius = Math.min(squareWidth, squareDepth) / 2;
+        
+        // Lower vertices near center (create bowl/depression)
+        if (distanceFromCenter < maxRadius * 0.8) {
+          const depthFactor = 1 - (distanceFromCenter / (maxRadius * 0.8));
+          const depression = depthFactor * 0.3; // Lower by up to 0.3 units at center
+          positions.setZ(i, positions.getZ(i) - depression);
+        }
+      }
+      positions.needsUpdate = true;
+      squareGeometry.computeVertexNormals(); // Recalculate normals for lighting
+      
       const townSquare = new THREE.Mesh(squareGeometry, cobbleMaterial);
       
       // Position at spawn area (center of market)
-      townSquare.position.set(0, 0.05, 5); // Slightly above ground to prevent z-fighting
+      townSquare.position.set(0, 0.02, 5); // Very close to ground
       townSquare.rotation.x = -Math.PI / 2; // Rotate to be horizontal
       townSquare.receiveShadow = true;
       
       scene.add(townSquare);
-      console.log('[TOWN SQUARE] Cobblestone plaza created at spawn area');
+      console.log('[TOWN SQUARE] Cobblestone plaza with soft edges and depression created');
     };
     
     createTownSquare();
