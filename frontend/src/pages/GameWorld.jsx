@@ -2306,6 +2306,57 @@ const GameWorld = () => {
     // Lighting setup
     setupWorldLighting(scene);
     
+    // ==================== PERFORMANCE: SHARED MATERIAL & GEOMETRY POOLS ====================
+    // Reuse materials and geometries to reduce draw calls and memory usage
+    console.log('[PERFORMANCE] Creating shared material/geometry pools...');
+    
+    const sharedMaterials = {
+      // Tree materials
+      treeTrunk: new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 }),
+      treeFoliage: new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.8 }),
+      treeFoliageDark: new THREE.MeshStandardMaterial({ color: 0x2E8B2E, roughness: 0.8 }),
+      
+      // Enemy materials (by type)
+      goblinBody: new THREE.MeshStandardMaterial({ color: 0x4a7c23 }),
+      wolfBody: new THREE.MeshStandardMaterial({ color: 0x5a5a5a }),
+      trollBody: new THREE.MeshStandardMaterial({ color: 0x6b8e23 }),
+      enemyEye: new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.8 }),
+      
+      // UI materials
+      healthBarBg: new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide }),
+      healthBarFill: new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide }),
+      invisibleHitbox: new THREE.MeshBasicMaterial({ visible: false }),
+      
+      // Building materials
+      stone: new THREE.MeshStandardMaterial({ color: 0x696969, roughness: 0.95 }),
+      wood: new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 }),
+    };
+    
+    const sharedGeometries = {
+      // Tree geometries (most common objects)
+      treeTrunk: new THREE.CylinderGeometry(0.25, 0.35, 2.5, 8),
+      treeFoliage1: new THREE.ConeGeometry(1.8, 3, 8),
+      treeFoliage2: new THREE.ConeGeometry(1.3, 2, 8),
+      
+      // Enemy hitboxes
+      goblinHitbox: new THREE.BoxGeometry(1.5, 1.5, 1.5),
+      wolfHitbox: new THREE.BoxGeometry(1.5, 1.5, 1.5),
+      trollHitbox: new THREE.BoxGeometry(2.5, 2.5, 2.5),
+      
+      // Enemy bodies (common shapes)
+      goblinBody: new THREE.CapsuleGeometry(0.2, 0.4, 8, 16),
+      goblinHead: new THREE.SphereGeometry(0.18, 16, 16),
+      goblinEye: new THREE.SphereGeometry(0.04, 8, 8),
+      wolfBody: new THREE.BoxGeometry(0.6, 0.4, 0.9),
+      wolfHead: new THREE.SphereGeometry(0.2, 16, 16),
+      
+      // Health bars
+      healthBarBg: new THREE.PlaneGeometry(1.0, 0.12),
+      healthBarFill: new THREE.PlaneGeometry(0.96, 0.08),
+    };
+    
+    console.log('[PERFORMANCE] ✓ Shared pools created - ready for reuse');
+    
     // ==================== TERRAIN WITH HILLS AND WATER ====================
     // Reduced world size for performance - single active zone around spawn
     
@@ -4828,7 +4879,7 @@ const GameWorld = () => {
     
     // ==================== END GRAVEYARD AREA ====================
     
-    // Trees
+    // Trees - optimized with shared materials/geometries
     const createTree = (x, z, scale = 1) => {
       // Skip if in water
       if (isInWater(x, z)) return null;
@@ -4836,29 +4887,29 @@ const GameWorld = () => {
       const treeGroup = new THREE.Group();
       treeGroup.userData = { type: 'tree', interactable: true, resource: 'wood' };
       
-      const trunkGeometry = new THREE.CylinderGeometry(0.25 * scale, 0.35 * scale, 2.5 * scale, 8);
-      const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
-      const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+      // PERFORMANCE: Reuse shared geometries and materials
+      // Trunk
+      const trunk = new THREE.Mesh(sharedGeometries.treeTrunk, sharedMaterials.treeTrunk);
+      trunk.scale.set(scale, scale, scale);
       trunk.position.y = 1.25 * scale;
-      trunk.castShadow = true;
-      trunk.receiveShadow = true;
+      trunk.castShadow = false; // Disabled for performance
+      trunk.receiveShadow = false; // Disabled for performance
       treeGroup.add(trunk);
       
-      const foliageGeometry = new THREE.ConeGeometry(1.8 * scale, 3 * scale, 8);
-      const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-      const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+      // Foliage layer 1
+      const foliage = new THREE.Mesh(sharedGeometries.treeFoliage1, sharedMaterials.treeFoliage);
+      foliage.scale.set(scale, scale, scale);
       foliage.position.y = 3.5 * scale;
-      foliage.castShadow = true;
-      foliage.receiveShadow = true;
+      foliage.castShadow = false; // Disabled for performance
+      foliage.receiveShadow = false; // Disabled for performance
       treeGroup.add(foliage);
       
-      const foliage2 = new THREE.Mesh(
-        new THREE.ConeGeometry(1.3 * scale, 2 * scale, 8),
-        new THREE.MeshStandardMaterial({ color: 0x2E8B2E })
-      );
+      // Foliage layer 2
+      const foliage2 = new THREE.Mesh(sharedGeometries.treeFoliage2, sharedMaterials.treeFoliageDark);
+      foliage2.scale.set(scale, scale, scale);
       foliage2.position.y = 5 * scale;
-      foliage2.castShadow = true;
-      foliage2.receiveShadow = true;
+      foliage2.castShadow = false; // Disabled for performance
+      foliage2.receiveShadow = false; // Disabled for performance
       treeGroup.add(foliage2);
       
       // Place tree at terrain height
@@ -5062,12 +5113,13 @@ const GameWorld = () => {
     });
     
     console.log(`[TREES] ✅ Spawned ${totalTrees} well-spaced trees in wilderness (graveyard/buildings excluded)`);
+    console.log(`[PERFORMANCE] Trees now use shared materials/geometries - reduced from ~${totalTrees * 3} materials to 3 reused materials!`);
     
     // ==================== END TREE SPAWNING ====================
     
     // ==================== END MARKET NPCs ====================
     
-    // Monsters with health bars
+    // Monsters with health bars - optimized with shared materials/geometries
     const createMonster = (x, z, color, name, type = 'goblin', level = 1, id = null, maxHealth = null, damage = null) => {
       const monsterGroup = new THREE.Group();
       monsterGroup.name = name;
@@ -5093,66 +5145,56 @@ const GameWorld = () => {
       
       const size = type === 'troll' ? 1.5 : type === 'wolf' ? 0.8 : 0.7;
       
-      // Invisible hitbox for easier clicking
+      // PERFORMANCE: Reuse shared hitbox geometry
       const hitboxSize = type === 'troll' ? 2.5 : type === 'wolf' ? 1.5 : 1.5;
-      const hitbox = new THREE.Mesh(
-        new THREE.BoxGeometry(hitboxSize, hitboxSize, hitboxSize),
-        new THREE.MeshBasicMaterial({ visible: false })
-      );
+      const hitboxGeom = type === 'troll' ? sharedGeometries.trollHitbox : 
+                        (type === 'wolf' ? sharedGeometries.wolfHitbox : sharedGeometries.goblinHitbox);
+      const hitbox = new THREE.Mesh(hitboxGeom, sharedMaterials.invisibleHitbox);
       hitbox.position.y = hitboxSize / 2;
       monsterGroup.add(hitbox);
       
+      // PERFORMANCE: Reuse shared geometries and materials based on type
       // Body
-      const bodyGeometry = type === 'wolf' 
-        ? new THREE.BoxGeometry(0.6, 0.4, 0.9)
-        : new THREE.CapsuleGeometry(0.2 * size, 0.4 * size, 8, 16);
-      const bodyMaterial = new THREE.MeshStandardMaterial({ color });
+      const bodyGeometry = type === 'wolf' ? sharedGeometries.wolfBody : sharedGeometries.goblinBody;
+      const bodyMaterial = type === 'wolf' ? sharedMaterials.wolfBody : 
+                          type === 'troll' ? sharedMaterials.trollBody : sharedMaterials.goblinBody;
       const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.scale.set(size, size, size);
       body.position.y = type === 'wolf' ? 0.4 : 0.5 * size;
-      body.castShadow = true;
+      body.castShadow = true; // Keep shadows for enemies (important for combat)
       monsterGroup.add(body);
       
       // Head
       const headSize = type === 'wolf' ? 0.2 : 0.18 * size;
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(headSize, 16, 16),
-        bodyMaterial
-      );
+      const headGeom = type === 'wolf' ? sharedGeometries.wolfHead : sharedGeometries.goblinHead;
+      const head = new THREE.Mesh(headGeom, bodyMaterial);
+      head.scale.set(headSize / 0.18, headSize / 0.18, headSize / 0.18); // Scale from base size
       head.position.y = type === 'wolf' ? 0.5 : 1 * size;
       head.position.z = type === 'wolf' ? 0.4 : 0;
       head.castShadow = true;
       monsterGroup.add(head);
       
-      // Eyes
-      const eyeMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xff0000, 
-        emissive: 0xff0000, 
-        emissiveIntensity: 0.8 
-      });
+      // Eyes - shared geometry and material
       const eyeSize = 0.04 * size;
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(eyeSize, 8, 8), eyeMaterial);
+      const leftEye = new THREE.Mesh(sharedGeometries.goblinEye, sharedMaterials.enemyEye);
+      leftEye.scale.set(eyeSize / 0.04, eyeSize / 0.04, eyeSize / 0.04);
       leftEye.position.set(-0.06 * size, type === 'wolf' ? 0.55 : 1.05 * size, type === 'wolf' ? 0.55 : 0.12 * size);
       monsterGroup.add(leftEye);
       
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(eyeSize, 8, 8), eyeMaterial);
+      const rightEye = new THREE.Mesh(sharedGeometries.goblinEye, sharedMaterials.enemyEye);
+      rightEye.scale.set(eyeSize / 0.04, eyeSize / 0.04, eyeSize / 0.04);
       rightEye.position.set(0.06 * size, type === 'wolf' ? 0.55 : 1.05 * size, type === 'wolf' ? 0.55 : 0.12 * size);
       monsterGroup.add(rightEye);
       
-      // Health bar background
+      // Health bar background - shared geometry and material
       const healthBarWidth = 1.0;
-      const healthBarBg = new THREE.Mesh(
-        new THREE.PlaneGeometry(healthBarWidth, 0.12),
-        new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide })
-      );
+      const healthBarBg = new THREE.Mesh(sharedGeometries.healthBarBg, sharedMaterials.healthBarBg);
       healthBarBg.position.y = type === 'wolf' ? 1.0 : 1.6 * size;
       healthBarBg.name = 'healthBarBg';
       monsterGroup.add(healthBarBg);
       
-      // Health bar fill (red)
-      const healthBarFill = new THREE.Mesh(
-        new THREE.PlaneGeometry(healthBarWidth - 0.04, 0.08),
-        new THREE.MeshBasicMaterial({ color: 0xdc2626, side: THREE.DoubleSide })
-      );
+      // Health bar fill (red) - shared geometry and material
+      const healthBarFill = new THREE.Mesh(sharedGeometries.healthBarFill, sharedMaterials.healthBarFill);
       healthBarFill.position.y = type === 'wolf' ? 1.0 : 1.6 * size;
       healthBarFill.position.z = 0.01;
       healthBarFill.name = 'healthBarFill';
@@ -6193,27 +6235,33 @@ const GameWorld = () => {
       mouseRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
       
-      // Check for lootable corpse hover (change cursor)
-      const hoverIntersects = raycasterRef.current.intersectObjects(selectableObjects.current, true);
-      let foundCorpse = false;
+      // PERFORMANCE: Throttle hover raycasting to every 3rd mouse move
+      if (!window.hoverRaycastCounter) window.hoverRaycastCounter = 0;
+      window.hoverRaycastCounter++;
       
-      for (let i = 0; i < hoverIntersects.length; i++) {
-        let obj = hoverIntersects[i].object;
-        while (obj) {
-          if (obj.userData && obj.userData.isCorpse) {
-            foundCorpse = true;
-            break;
+      if (window.hoverRaycastCounter % 3 === 0) {
+        // Check for lootable corpse hover (change cursor)
+        const hoverIntersects = raycasterRef.current.intersectObjects(selectableObjects.current, true);
+        let foundCorpse = false;
+        
+        for (let i = 0; i < hoverIntersects.length; i++) {
+          let obj = hoverIntersects[i].object;
+          while (obj) {
+            if (obj.userData && obj.userData.isCorpse) {
+              foundCorpse = true;
+              break;
+            }
+            obj = obj.parent;
           }
-          obj = obj.parent;
+          if (foundCorpse) break;
         }
-        if (foundCorpse) break;
-      }
-      
-      // Update cursor based on hover
-      if (foundCorpse) {
-        renderer.domElement.style.cursor = 'pointer';
-      } else if (!cameraState.current.isRightMouseDown) {
-        renderer.domElement.style.cursor = 'default';
+        
+        // Update cursor based on hover
+        if (foundCorpse) {
+          renderer.domElement.style.cursor = 'pointer';
+        } else if (!cameraState.current.isRightMouseDown) {
+          renderer.domElement.style.cursor = 'default';
+        }
       }
       
       // Update brush indicator when terrain editor is open
@@ -6551,6 +6599,18 @@ const GameWorld = () => {
     const animate = () => {
       requestAnimationFrame(animate);
       
+      // PERFORMANCE: Simple FPS counter
+      if (!window.fpsCounter) {
+        window.fpsCounter = { frames: 0, lastTime: performance.now(), fps: 0 };
+      }
+      window.fpsCounter.frames++;
+      const now = performance.now();
+      if (now >= window.fpsCounter.lastTime + 1000) {
+        window.fpsCounter.fps = Math.round((window.fpsCounter.frames * 1000) / (now - window.fpsCounter.lastTime));
+        window.fpsCounter.frames = 0;
+        window.fpsCounter.lastTime = now;
+      }
+      
       // Skip frame after tab switch to prevent speed spikes
       if (skipNextFrame) {
         skipNextFrame = false;
@@ -6798,19 +6858,26 @@ const GameWorld = () => {
           return true;
         });
         
-        // Make health bars face camera
-        Object.values(monsterHealthBarsRef.current).forEach(({ group }) => {
-          if (group) {
-            const healthBarBg = group.getObjectByName('healthBarBg');
-            const healthBarFill = group.getObjectByName('healthBarFill');
-            if (healthBarBg && camera) {
-              healthBarBg.lookAt(camera.position);
-              healthBarFill.lookAt(camera.position);
+        // Make health bars face camera (PERFORMANCE: throttled to every other frame)
+        if (!window.healthBarFrameCounter) window.healthBarFrameCounter = 0;
+        window.healthBarFrameCounter++;
+        
+        if (window.healthBarFrameCounter % 2 === 0) {
+          Object.values(monsterHealthBarsRef.current).forEach(({ group }) => {
+            if (group) {
+              const healthBarBg = group.getObjectByName('healthBarBg');
+              const healthBarFill = group.getObjectByName('healthBarFill');
+              if (healthBarBg && camera) {
+                healthBarBg.lookAt(camera.position);
+                healthBarFill.lookAt(camera.position);
+              }
             }
-          }
-        });
+          });
+        }
         
         // ==================== ENEMY PATROL SYSTEM (using EnemyAISystem) ====================
+        // PERFORMANCE: Distance culling - only process enemies within 60 units of player
+        const ENEMY_UPDATE_RANGE = 60;
         const patrolNow = Date.now();
         
         enemyMeshesRef.current.forEach(enemyMesh => {
@@ -6818,6 +6885,16 @@ const GameWorld = () => {
           
           // SKIP CORPSES - dead enemies don't patrol
           if (enemyMesh.userData.isCorpse) return;
+          
+          // PERFORMANCE: Distance culling - skip far enemies
+          const distToPlayer = Math.hypot(
+            enemyMesh.position.x - player.position.x,
+            enemyMesh.position.z - player.position.z
+          );
+          if (distToPlayer > ENEMY_UPDATE_RANGE) {
+            // Far enemies are frozen but still visible
+            return;
+          }
           
           const enemyId = enemyMesh.userData.enemyId;
           const isInCombat = combatEngagedEnemiesRef.current.has(enemyId);
@@ -6858,6 +6935,7 @@ const GameWorld = () => {
         }
         
         // NPC Combat AI - Process each enemy (using EnemyAISystem)
+        // PERFORMANCE: Distance culling applied here as well
         const combatNow = Date.now() / 1000;
         enemyMeshesRef.current.forEach(enemyMesh => {
           if (!enemyMesh || !enemyMesh.userData) return;
@@ -6866,6 +6944,13 @@ const GameWorld = () => {
           
           const enemyId = enemyMesh.userData.enemyId;
           const player = playerRef.current;
+          
+          // PERFORMANCE: Skip far enemies (already culled in patrol loop)
+          const distToPlayer = Math.hypot(
+            enemyMesh.position.x - player.position.x,
+            enemyMesh.position.z - player.position.z
+          );
+          if (distToPlayer > ENEMY_UPDATE_RANGE) return;
           
           // Get or initialize combat state (using EnemyAISystem)
           let combatState = npcCombatStateRef.current.get(enemyId);
@@ -7734,6 +7819,9 @@ const GameWorld = () => {
             </p>
             <p className="text-white text-sm font-mono">
               <span className="text-[#fbbf24]">Z:</span> {playerPosition.z.toFixed(1)}
+            </p>
+            <p className="text-white text-sm font-mono">
+              <span className="text-[#22c55e]">FPS:</span> {typeof window !== 'undefined' && window.fpsCounter ? window.fpsCounter.fps : '--'}
             </p>
             <p className="text-white text-sm font-mono">
               <span className="text-[#a8a29e]">Y:</span> {playerPosition.y.toFixed(1)}

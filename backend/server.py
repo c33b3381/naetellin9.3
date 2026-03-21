@@ -1144,6 +1144,10 @@ async def get_placed_enemies(skip: int = 0, limit: int = 200):
 @api_router.post("/world/enemies")
 async def save_placed_enemy(enemy: dict):
     """Save a single placed enemy to the world"""
+    # Validate required fields
+    if "id" not in enemy:
+        raise HTTPException(status_code=400, detail="Enemy must have an 'id' field")
+    
     # Use upsert to update if exists or insert if new
     await db.placed_enemies.update_one(
         {"id": enemy["id"]},

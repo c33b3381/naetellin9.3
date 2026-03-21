@@ -82,9 +82,9 @@ export const setupWorldLighting = (scene) => {
   directionalLight.position.set(50, 80, 30); // Higher and more angled for longer shadows
   directionalLight.castShadow = true;
   
-  // Shadow map configuration - higher quality for better depth
-  directionalLight.shadow.mapSize.width = 4096;
-  directionalLight.shadow.mapSize.height = 4096;
+  // Shadow map configuration - optimized for performance (2048 is plenty for browser games)
+  directionalLight.shadow.mapSize.width = 2048;
+  directionalLight.shadow.mapSize.height = 2048;
   directionalLight.shadow.camera.near = 1;
   directionalLight.shadow.camera.far = 200;
   
@@ -128,8 +128,8 @@ export const createWorldLights = () => {
   const directionalLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
   directionalLight.position.set(50, 80, 30);
   directionalLight.castShadow = true;
-  directionalLight.shadow.mapSize.width = 4096;
-  directionalLight.shadow.mapSize.height = 4096;
+  directionalLight.shadow.mapSize.width = 2048;
+  directionalLight.shadow.mapSize.height = 2048;
   directionalLight.shadow.camera.near = 1;
   directionalLight.shadow.camera.far = 200;
   directionalLight.shadow.camera.left = -100;
