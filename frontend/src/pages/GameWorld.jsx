@@ -572,6 +572,8 @@ const GameWorld = () => {
     activePanel, 
     fetchPlayer, 
     fetchQuests, 
+    acceptQuest,
+    updateQuestProgress,
     player,
     character,
     attackMonster,
@@ -1038,6 +1040,27 @@ const GameWorld = () => {
       console.log('[QUEST PROGRESS] ✅ Active quests UPDATED!');
       console.log('[QUEST PROGRESS] Updated quests:', JSON.stringify(activeResult.updatedQuests, null, 2));
       setActiveQuests(activeResult.updatedQuests);
+      
+      // SAVE PROGRESS TO BACKEND
+      activeResult.updatedQuests.forEach(async (quest) => {
+        const questId = quest.id || quest.quest_id;
+        
+        // Convert objectives array to progress dict format expected by backend
+        const progressDict = {};
+        if (quest.objectives) {
+          quest.objectives.forEach(obj => {
+            const objId = obj.id || obj.type || 'default';
+            progressDict[objId] = obj.current || 0;
+          });
+        }
+        
+        try {
+          await updateQuestProgress(questId, progressDict);
+          console.log('[QUEST PROGRESS] ✅ Saved to database:', questId, progressDict);
+        } catch (error) {
+          console.error('[QUEST PROGRESS] Failed to save:', error);
+        }
+      });
     } else {
       console.log('[QUEST PROGRESS] ❌ No active quest match found');
     }
@@ -1058,7 +1081,7 @@ const GameWorld = () => {
     }
     
     return activeResult.anyUpdated || customResult.anyUpdated;
-  }, [addNotification]); // Remove activeQuests and customQuests from dependencies
+  }, [addNotification, updateQuestProgress]); // Add updateQuestProgress dependency
   // ==================== END QUEST KILL TRACKING ====================
 
   // ==================== CALLBACKS: Enemy Death & Loot ====================
@@ -1967,34 +1990,45 @@ const GameWorld = () => {
   
   // ==================== CALLBACKS: Quest Management ====================
   // Quest handlers
-  const handleAcceptQuest = useCallback((quest) => {
+  const handleAcceptQuest = useCallback(async (quest) => {
     console.log('[QUEST] ===== ACCEPTING QUEST =====');
     console.log('[QUEST] Raw quest data:', JSON.stringify(quest, null, 2));
     
-    // Ensure objectives have proper structure with current field
-    const normalizedQuest = {
-      ...quest,
-      objectives: (quest.objectives || []).map(obj => ({
-        ...obj,
-        current: obj.current || 0, // Ensure current is set
-        required: obj.required || 1
-      })),
-      acceptedAt: Date.now()
-    };
-    
-    console.log('[QUEST] Normalized quest:', JSON.stringify(normalizedQuest, null, 2));
-    
-    // Add quest to active quests
-    setActiveQuests(prev => {
-      const updated = [...prev, normalizedQuest];
-      console.log('[QUEST] Total active quests after accept:', updated.length);
-      console.log('[QUEST] All active quests:', JSON.stringify(updated, null, 2));
-      return updated;
-    });
-    
-    addNotification(`Quest accepted: ${quest.name}`, 'success');
-    setIsQuestDialogOpen(false);
-  }, [addNotification]);
+    try {
+      // Call backend API to persist quest acceptance
+      const questId = quest.id || quest.quest_id;
+      await acceptQuest(questId);
+      
+      // Ensure objectives have proper structure with current field
+      const normalizedQuest = {
+        ...quest,
+        objectives: (quest.objectives || []).map(obj => ({
+          ...obj,
+          current: obj.current || 0, // Ensure current is set
+          required: obj.required || 1
+        })),
+        acceptedAt: Date.now()
+      };
+      
+      console.log('[QUEST] Normalized quest:', JSON.stringify(normalizedQuest, null, 2));
+      
+      // Add quest to active quests (local state for immediate UI update)
+      setActiveQuests(prev => {
+        const updated = [...prev, normalizedQuest];
+        console.log('[QUEST] Total active quests after accept:', updated.length);
+        console.log('[QUEST] All active quests:', JSON.stringify(updated, null, 2));
+        return updated;
+      });
+      
+      addNotification(`Quest accepted: ${quest.name}`, 'success');
+      setIsQuestDialogOpen(false);
+      
+      console.log('[QUEST] ✅ Quest saved to database');
+    } catch (error) {
+      console.error('[QUEST] Failed to accept quest:', error);
+      addNotification('Failed to accept quest', 'error');
+    }
+  }, [acceptQuest, addNotification]);
   
   const handleTurnInQuest = useCallback((quest) => {
     // Get rewards from quest
@@ -2213,7 +2247,30 @@ const GameWorld = () => {
       try {
         await fetchPlayer();
         await fetchGameState(); // Fetch game state including position BEFORE setting ready
-        await fetchQuests();
+        
+        // Load quests from backend and populate active quests
+        const questsData = await fetchQuests();
+        if (questsData && questsData.active) {
+          console.log('[QUEST LOAD] Loading', questsData.active.length, 'active quests from database');
+          // Map backend progress dict to objectives' current field for UI display
+          const mappedQuests = questsData.active.map(quest => {
+            const progress = quest.progress || {};
+            const mappedObjectives = (quest.objectives || []).map(obj => ({
+              ...obj,
+              current: progress[obj.id] || 0
+            }));
+            console.log('[QUEST LOAD] Quest:', quest.name, 'Progress:', progress, 'Mapped objectives:', mappedObjectives);
+            return {
+              ...quest,
+              objectives: mappedObjectives
+            };
+          });
+          setActiveQuests(mappedQuests);
+        }
+        if (questsData && questsData.completed) {
+          console.log('[QUEST LOAD] Loading', questsData.completed.length, 'completed quests from database');
+          setCompletedQuests(questsData.completed);
+        }
       } catch (err) {
         console.error('Init error:', err);
       }
